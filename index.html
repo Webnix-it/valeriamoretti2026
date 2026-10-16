@@ -76,6 +76,20 @@
     })();
   </script>
 
+  <!-- Rete di salvataggio: se uno script esterno (script.js / firebase-config.js)
+       va in errore, il loader viene nascosto e la pagina mostrata comunque. -->
+  <script>
+    window.addEventListener('error', function () {
+      var l = document.getElementById('site-loader');
+      if (l && !l.classList.contains('hidden')) {
+        l.classList.add('hidden');
+        setTimeout(function () { l.style.display = 'none'; }, 900);
+        document.body.classList.remove('loading');
+        document.body.classList.add('loaded');
+      }
+    });
+  </script>
+
   <!-- ============ HEADER ============ -->
   <header class="site-header">
     <div class="container nav-inner">
@@ -1078,6 +1092,29 @@
        Firebase a livello globale (window.firebaseDB, ...). Se script.js parte
        prima, i dati dal database non vengono mai recuperati. -->
   <script type="module" src="firebase-config.js"></script>
+  <script>
+    /* Sicurezza: la pagina non deve mai restare nascosta. Se per qualsiasi
+       motivo gli script esterni non completano l'avvio, qui foriamo la
+       visibilità di header, hero e footer e nascondiamo il loader. */
+    setTimeout(function () {
+      var l = document.getElementById('site-loader');
+      if (l && !l.classList.contains('hidden')) {
+        l.classList.add('hidden');
+        setTimeout(function () { l.style.display = 'none'; }, 900);
+      }
+      document.body.classList.remove('loading');
+      document.body.classList.add('loaded');
+      var h = document.querySelector('.site-header');
+      if (h) h.style.visibility = 'visible';
+      var f = document.querySelector('.site-footer');
+      if (f) f.style.visibility = 'visible';
+      document.querySelectorAll('.reveal:not(.visible)').forEach(function (el) {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+        el.classList.add('visible');
+      });
+    }, 6000);
+  </script>
   <script src="script.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script type="text/javascript">

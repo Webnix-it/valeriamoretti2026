@@ -1498,31 +1498,29 @@
     initAll();
   }
 
+  // ============================================================
+  //  Bottoni flottanti email / WhatsApp
+  //  Protetti con null-check: se il pulsante non esiste nella pagina
+  //  corrente, l'errore NON blocca più tutto il resto dello script.
+  // ============================================================
+  const btnEmail = document.getElementById("Btnemail");
+  if (btnEmail) {
+    btnEmail.addEventListener("click", function () {
+      window.location.href = "mailto:info@webnix.it";
+    });
+  }
+
+  const btnWhats = document.getElementById("Btnwhats");
+  if (btnWhats) {
+    btnWhats.addEventListener("click", function () {
+      const numero = "393458407102";
+      const messaggio = "Ciao! Vorrei avere maggiori informazioni.";
+      const link = "https://wa.me/" + numero + "?text=" + encodeURIComponent(messaggio);
+      window.open(link, "_blank");
+    });
+  }
+
 })();
-
-
-//email bottone
-
-
-
-  document.getElementById("Btnemail").addEventListener("click", function () {
-    window.location.href = "mailto:info@webnix.it";
-  });
-
-
-
-
-//whtasapp bottone
-
-document.getElementById("Btnwhats").addEventListener("click", function () {
-    const numero = "1234455465";
-    const messaggio = "Ciao! Vorrei avere maggiori informazioni.";
-
-    const link = "https://wa.me/" + numero +
-      "?text=" + encodeURIComponent(messaggio);
-
-    window.open(link, "_blank");
-  });
 
 
   /* ==========================================================
