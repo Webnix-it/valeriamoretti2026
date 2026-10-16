@@ -16,7 +16,11 @@ import {
   getFirestore, 
   doc, 
   getDoc, 
-  setDoc 
+  setDoc,
+  deleteDoc,
+  collection,
+  addDoc,
+  getDocs 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // 🔥 Configurazione del progetto Firebase
@@ -47,7 +51,11 @@ export {
   onAuthStateChanged, 
   doc, 
   getDoc, 
-  setDoc 
+  setDoc,
+  deleteDoc,
+  collection,
+  addDoc,
+  getDocs 
 };
 
 // ============================================
@@ -66,6 +74,10 @@ if (typeof window !== 'undefined') {
   window.firebaseDoc = doc;
   window.firebaseGetDoc = getDoc;
   window.firebaseSetDoc = setDoc;
+  window.firebaseDeleteDoc = deleteDoc;
+  window.firebaseCollection = collection;
+  window.firebaseAddDoc = addDoc;
+  window.firebaseGetDocs = getDocs;
   
   // Esponi funzioni Auth
   window.firebaseSignInWithPopup = signInWithPopup;

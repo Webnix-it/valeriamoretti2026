@@ -1289,7 +1289,43 @@ button { font-family: inherit; cursor: pointer; }
 .footer-brand .logo { color: var(--avorio); font-size: 1.4rem; }
 .footer-brand .logo span { color: var(--salvia); }
 .footer-brand p { font-size: 0.85rem; margin-top: 12px; opacity: 0.8; max-width: 300px; }
-.footer-bottom { border-top: 1px solid rgba(248, 245, 239, 0.15); padding-top: 22px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 0.78rem; opacity: 0.7; }
+.footer-bottom { border-top: 1px solid rgba(248, 245, 239, 0.15); padding-top: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 0.78rem; opacity: 0.7; }
+
+/* --- Footer: social icons --- */
+.footer-social .social-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.footer-social .socialContainer {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(248, 245, 239, 0.08);
+  color: var(--avorio); text-decoration: none;
+  transition: transform var(--transizione), background var(--transizione), color var(--transizione);
+}
+.footer-social .socialContainer:hover { transform: translateY(-3px); background: var(--salvia); color: #fff; }
+.footer-social .socialSvg { width: 18px; height: 18px; fill: currentColor; }
+.footer-social .socialIcon { font-size: 18px; line-height: 1; }
+
+/* --- Footer: watermark centrale --- */
+.footer-watermark {
+  order: 3;
+  flex-basis: 100%;
+  text-align: center;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+  font-size: 0.75rem;
+}
+
+/* --- Footer: link area admin --- */
+.footer-admin-link {
+  order: 4;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid rgba(248, 245, 239, 0.25);
+  color: var(--avorio); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+  text-decoration: none; opacity: 0.9;
+  transition: background var(--transizione), color var(--transizione);
+}
+.footer-admin-link:hover { background: var(--salvia); color: #fff; opacity: 1; }
+.footer-admin-link i { font-size: 0.85rem; }
 
 .cookie-banner {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(140%);
@@ -1411,6 +1447,9 @@ button { font-family: inherit; cursor: pointer; }
   .test-band { text-align: center; padding: 46px 28px; }
   .test-band .actions { justify-content: center; }
   .footer-grid { grid-template-columns: 1fr; gap: 26px; }
+  .footer-bottom { flex-direction: column; align-items: center; text-align: center; }
+  .footer-watermark { order: 0; }
+  .footer-admin-link { order: 0; }
   .section { padding: 64px 0; }
 }
 @media (max-width: 640px) {

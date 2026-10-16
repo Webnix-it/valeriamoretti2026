@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Area Riservata | Valeria Moretti — Pannello Amministrativo</title>
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================
+       ADMIN DASHBOARD — Valeria Moretti (stile coordinato al sito)
+       ========================================================== */
+    :root {
+      --verde-bosco: #2f4f3e;
+      --salvia: #8fac8f;
+      --crema: #faf6ee;
+      --avorio: #fffdf8;
+      --antracite: #2d2d2d;
+      --grigio: #6b7280;
+      --bordo: #591c2f;
+      --danger: #b3382f;
+      --warn: #c07f2a;
+      --ok: #2e7d4f;
+      --radius: 14px;
+      --shadow: 0 10px 30px rgba(47, 79, 62, .10);
+      --sidebar-w: 265px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--crema); color: var(--antracite); min-height: 100vh; }
+    button { font-family: inherit; cursor: pointer; }
+    input, textarea, select { font-family: inherit; font-size: 14px; color: var(--antracite); background: #fff; border: 1.5px solid #d9d3c6; border-radius: 8px; padding: 9px 12px; width: 100%; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--verde-bosco); box-shadow: 0 0 0 3px rgba(47,79,62,.12); }
+    label { display: block; font-size: 12.5px; font-weight: 600; color: var(--verde-bosco); margin-bottom: 5px; letter-spacing: .02em; }
+    h1, h2, h3, .serif { font-family: 'Playfair Display', Georgia, serif; }
+
+    /* ---------- LOGIN ---------- */
+    #login-view {
+      position: fixed; inset: 0; z-index: 50;
+      background: linear-gradient(150deg, var(--verde-bosco) 0%, #1d3529 60%, #142519 100%);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    #login-view[hidden] { display: none; }
+    .login-card {
+      background: var(--avorio); border-radius: 20px; padding: 44px 38px; width: 100%; max-width: 400px;
+      box-shadow: 0 25px 60px rgba(0,0,0,.35); text-align: center;
+    }
+    .login-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(47,79,62,.08); color: var(--verde-bosco); font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 999px; margin-bottom: 18px; }
+    .login-card h1 { font-size: 26px; color: var(--verde-bosco); margin-bottom: 6px; }
+    .login-card p.sub { color: var(--grigio); font-size: 14px; line-height: 1.55; margin-bottom: 26px; }
+    .btn-google {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+      background: #fff; border: 1.5px solid #d9d3c6; border-radius: 10px; padding: 13px 18px;
+      font-size: 15px; font-weight: 600; color: var(--antracite); transition: all .2s;
+    }
+    .btn-google:hover { border-color: var(--verde-bosco); box-shadow: var(--shadow); transform: translateY(-1px); }
+    .btn-google svg { width: 18px; height: 18px; }
+    .login-msg { margin-top: 16px; font-size: 13px; min-height: 18px; }
+    .login-msg.err { color: var(--danger); }
+    .login-foot { margin-top: 26px; font-size: 12px; color: var(--grigio); }
+    .login-foot a { color: var(--verde-bosco); }
+
+    /* ---------- LAYOUT ---------- */
+    #app-view { display: none; }
+    #app-view.active { display: block; }
+
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-w);
+      background: var(--verde-bosco); color: #e9efe7; padding: 22px 16px;
+      display: flex; flex-direction: column; z-index: 30; overflow-y: auto;
+    }
+    .side-brand { padding: 4px 10px 18px; border-bottom: 1px solid rgba(255,255,255,.14); margin-bottom: 16px; }
+    .side-brand strong { display: block; font-family: 'Playfair Display', serif; font-size: 19px; color: #fff; }
+    .side-brand span { font-size: 12px; opacity: .75; }
+    .side-brand .tag-private { display: inline-block; margin-top: 8px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.14); padding: 3px 10px; border-radius: 999px; }
+    .side-nav { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .side-btn {
+      display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
+      background: transparent; border: none; color: #d5e0d3; padding: 12px 14px;
+      border-radius: 10px; font-size: 14px; font-weight: 500; transition: all .15s;
+    }
+    .side-btn i { width: 20px; text-align: center; }
+    .side-btn small { display: block; font-size: 11px; opacity: .6; font-weight: 400; }
+    .side-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+    .side-btn.active { background: var(--salvia); color: var(--verde-bosco); font-weight: 600; }
+    .side-btn.active small { opacity: .75; }
+    .side-user { padding: 14px 10px 4px; border-top: 1px solid rgba(255,255,255,.14); margin-top: 14px; font-size: 12px; }
+    .side-user .u-email { opacity: .8; word-break: break-all; margin-bottom: 10px; }
+    .btn-logout { width: 100%; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 8px; padding: 9px; font-size: 13px; }
+    .btn-logout:hover { background: rgba(255,255,255,.2); }
+
+    .main { margin-left: var(--sidebar-w); min-height: 100vh; padding: 30px 34px 80px; }
+    .page-head { margin-bottom: 24px; }
+    .page-head h2 { font-size: 26px; color: var(--verde-bosco); }
+    .page-head p { color: var(--grigio); font-size: 13.5px; margin-top: 4px; }
+
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ---------- COMPONENTS ---------- */
+    .card { background: var(--avorio); border: 1px solid #ece5d8; border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; margin-bottom: 22px; }
+    .card > h3 { font-size: 18px; color: var(--verde-bosco); margin-bottom: 14px; display: flex; align-items: center; gap: 9px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .row > div { flex: 1; min-width: 160px; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 9px; padding: 11px 20px; font-size: 14px; font-weight: 600; transition: all .15s; }
+    .btn--primary { background: var(--verde-bosco); color: #fff; }
+    .btn--primary:hover { background: #234031; }
+    .btn--soft { background: rgba(143,172,143,.18); color: var(--verde-bosco); border: 1.5px solid var(--salvia); }
+    .btn--soft:hover { background: rgba(143,172,143,.32); }
+    .btn--danger { background: transparent; color: var(--danger); border: 1.5px solid #e3b7b2; }
+    .btn--danger:hover { background: #fbeceb; }
+    .btn--sm { padding: 7px 13px; font-size: 12.5px; border-radius: 7px; }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--grigio); padding: 10px 12px; border-bottom: 2px solid #e7e0d2; }
+    td { padding: 12px; border-bottom: 1px solid #efe9dc; vertical-align: top; }
+    tr:hover td { background: rgba(143,172,143,.06); }
+    .tbl-wrap { overflow-x: auto; }
+
+    .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .badge--on { background: #e2f2e7; color: var(--ok); }
+    .badge--off { background: #f3eaea; color: var(--danger); }
+    .badge--info { background: #e8eef7; color: #3b5b8c; }
+    .stars-view { color: #d9a419; letter-spacing: 1px; white-space: nowrap; }
+
+    .switch { position: relative; display: inline-block; width: 40px; height: 22px; flex: none; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider-sw { position: absolute; inset: 0; background: #cfc8ba; border-radius: 999px; transition: .2s; }
+    .slider-sw:before { content: ""; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+    .switch input:checked + .slider-sw { background: var(--ok); }
+    .switch input:checked + .slider-sw:before { transform: translateX(18px); }
+
+    .empty-note { color: var(--grigio); font-size: 13.5px; padding: 18px 6px; text-align: center; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 100;
+      background: var(--verde-bosco); color: #fff; padding: 13px 20px; border-radius: 10px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25); font-size: 14px; opacity: 0; transform: translateY(12px);
+      transition: all .25s; pointer-events: none; max-width: 340px;
+    }
+    #toast.show { opacity: 1; transform: none; }
+    #toast.err { background: var(--danger); }
+
+    /* Confirm modal */
+    #confirm-overlay { position: fixed; inset: 0; background: rgba(20,30,24,.55); z-index: 80; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    #confirm-overlay[hidden] { display: none; }
+    .confirm-box { background: var(--avorio); border-radius: 16px; max-width: 420px; width: 100%; padding: 28px; box-shadow: 0 25px 60px rgba(0,0,0,.35); }
+    .confirm-box h3 { color: var(--verde-bosco); margin-bottom: 10px; font-size: 19px; }
+    .confirm-box p { font-size: 14px; color: var(--antracite); line-height: 1.55; margin-bottom: 22px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* Option editor rows */
+    .opt-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .opt-row input[type=text] { flex: 1; }
+    .opt-row .profile-sel { width: 130px; flex: none; }
+    .icon-btn { background: transparent; border: none; color: var(--grigio); font-size: 14px; padding: 6px; border-radius: 6px; }
+    .icon-btn:hover { background: #eee7d9; color: var(--danger); }
+
+    .q-item { border: 1.5px solid #e7e0d2; border-radius: 10px; padding: 14px; margin-bottom: 12px; background: #fff; }
+    .q-item.disabled-q { opacity: .55; }
+    .q-item-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .q-num { font-weight: 700; color: var(--salvia); font-size: 15px; min-width: 26px; }
+    .q-text { flex: 1; font-size: 14px; font-weight: 500; }
+    .q-actions { display: flex; gap: 4px; }
+
+    .req-card { border: 1.5px solid #e7e0d2; border-left: 4px solid var(--salvia); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; background: #fff; }
+    .req-card summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--verde-bosco); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .req-body { margin-top: 12px; font-size: 13.5px; }
+    .req-body dl { display: grid; grid-template-columns: 160px 1fr; gap: 6px 14px; }
+    .req-body dt { color: var(--grigio); font-weight: 600; }
+
+    .loading-bar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 3px; background: transparent; z-index: 60; }
+    .loading-bar.busy:after { content: ""; display: block; height: 100%; width: 40%; background: var(--salvia); animation: slide 1s linear infinite; }
+    @keyframes slide { from { margin-left: -40%; } to { margin-left: 100%; } }
+
+    @media (max-width: 900px) {
+      .sidebar { position: static; width: 100%; flex-direction: column; padding: 16px; }
+      .side-nav { flex-direction: row; flex-wrap: wrap; }
+      .side-btn { width: auto; }
+      .main { margin-left: 0; padding: 20px 16px 60px; }
+      .loading-bar { left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== LOGIN ==================== -->
+  <div id="login-view">
+    <div class="login-card">
+      <span class="login-badge"><i class="fa-solid fa-lock"></i> Area riservata · Privato</span>
+      <h1>Valeria Moretti</h1>
+      <p class="sub">Pannello amministrativo<br />Accesso esclusivamente all'amministratrice autorizzata tramite account Google.</p>
+      <button type="button" class="btn-google" id="btn-login-google">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.24 1.05-3.71 1.05-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09A7 7 0 0 1 5.5 12c0-.73.13-1.43.34-2.09V7.07H2.18A11 11 0 0 0 1 12c0 1.77.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Accedi con Google
+      </button>
+      <div class="login-msg" id="login-msg" role="alert"></div>
+      <p class="login-foot">L'identità viene verificata tramite Firebase Authentication.<br /><a href="index.html">← Torna al sito pubblico</a></p>
+    </div>
+  </div>
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <div id="app-view">
+    <div class="loading-bar" id="loading-bar"></div>
+
+    <aside class="sidebar">
+      <div class="side-brand">
+        <strong>Valeria Moretti</strong>
+        <span>Pannello amministrativo</span><br />
+        <span class="tag-private"><i class="fa-solid fa-lock"></i>&nbsp; Privato</span>
+      </div>
+      <nav class="side-nav" aria-label="Sezioni della dashboard">
+        <button type="button" class="side-btn active" data-panel="recensioni">
+          <i class="fa-solid fa-star"></i>
+          <span>Recensioni<small>Aggiungi, modifica, cerca ed elimina le recensioni pubblicate in Home.</small></span>
+        </button>
+        <button type="button" class="side-btn" data-panel="test">
+          <i class="fa-solid fa-circle-question"></i>
+          <span>Test gratuito<small>Domande, risposte e ordine del test online.</small></span>
+        </button>
+        <button type="button" class="side-btn" data-panel="servizi">
+          <i class="fa-solid fa-briefcase"></i>
+          <span>Servizi e pacchetti<small>Pacchetti, moduli di richiesta e domande personalizzate.</small></span>
+        </button>
+      </nav>
+      <div class="side-user">
+        <div class="u-email"><i class="fa-solid fa-user-shield"></i>&nbsp; <span id="user-email">—</span></div>
+        <button type="button" class="btn-logout" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i>&nbsp; Esci</button>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <!-- ============ PANNELLO: RECENSIONI ============ -->
+      <section class="panel active" id="panel-recensioni">
+        <div class="page-head">
+          <h2>Recensioni</h2>
+          <p>Ogni recensione salvata qui viene pubblicata automaticamente nella sezione «Cosa dicono di me» della Home.</p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-plus-circle"></i> <span id="rev-form-title">Aggiungi una recensione</span></h3>
+          <form id="review-form">
+            <input type="hidden" id="rev-edit-id" value="" />
+            <div class="grid-2">
+              <div>
+                <label for="rev-name">Nome *</label>
+                <input type="text" id="rev-name" required placeholder="Es. Maria R." maxlength="60" />
+              </div>
+              <div>
+                <label for="rev-initial">Iniziale cognome *</label>
+                <input type="text" id="rev-initial" required maxlength="1" placeholder="Es. B." pattern="[A-Za-zÀ-ù]" style="text-transform: uppercase;" />
+              </div>
+              <div>
+                <label for="rev-stars">Stelle *</label>
+                <select id="rev-stars" required>
+                  <option value="5">★★★★★ — 5</option>
+                  <option value="4">★★★★ — 4</option>
+                  <option value="3">★★★ — 3</option>
+                  <option value="2">★★ — 2</option>
+                  <option value="1">★ — 1</option>
+                </select>
+              </div>
+              <div>
+                <label for="rev-date">Data *</label>
+                <input type="date" id="rev-date" required />
+              </div>
+            </div>
+            <div style="margin-top:14px;">
+              <label for="rev-text">Descrizione *</label>
+              <textarea id="rev-text" rows="4" required placeholder="Testo della recensione (solo testimonianze reali e autorizzate alla pubblicazione)."></textarea>
+            </div>
+            <div class="row" style="margin-top:16px;">
+              <button type="submit" class="btn btn--primary"><i class="fa-solid fa-floppy-disk"></i> Salva recensione</button>
+              <button type="button" class="btn btn--soft" id="rev-cancel-edit" hidden><i class="fa-solid fa-rotate-left"></i> Annulla modifica</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-list-check"></i> Recensioni pubblicate</h3>
+          <div class="row" style="margin-bottom:14px;">
+            <div>
+              <label for="rev-search">Cerca per nome o iniziale del cognome</label>
+              <input type="text" id="rev-search" placeholder="Es. Laura oppure L…" />
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr><th>Nome</th><th>Iniziale</th><th>Stelle</th><th>Data</th><th>Descrizione</th><th>Azioni</th></tr>
+              </thead>
+              <tbody id="reviews-tbody"></tbody>
+            </table>
+          </div>
+          <p class="empty-note" id="reviews-empty" hidden>Nessuna recensione trovata. Aggiungine una con il modulo qui sopra.</p>
+        </div>
+      </section>
+
+      <!-- ============ PANNELLO: TEST GRATUITO ============ -->
+      <section class="panel" id="panel-test">
+        <div class="page-head">
+          <h2>Test gratuito</h2>
+          <p>Le domande, le risposte e l'ordine che salvi qui compaiono direttamente nella pagina pubblica <a href="test.html" target="_blank">test.html</a>.</p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Impostazioni rapide</h3>
+          <div class="row">
+            <div>
+              <label for="quiz-title-input">Titolo del test</label>
+              <input type="text" id="quiz-title-input" placeholder="Scopri il tuo schema relazionale" />
+            </div>
+            <div style="flex:none;">
+              <label>&nbsp;</label>
+              <button type="button" class="btn btn--primary" id="btn-save-quiz-settings"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
+            </div>
+          </div>
+          <p style="font-size:12.5px;color:var(--grigio);margin-top:10px;"><i class="fa-solid fa-circle-info"></i> Le impostazioni vengono applicate anche ai pulsanti «Inizia il Test Rapido Gratis» presenti nel sito.</p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-sliders"></i> Elenco delle domande (<span id="quiz-count">0</span>)</h3>
+          <div id="questions-list"></div>
+          <p class="empty-note" id="questions-empty" hidden>Nessuna domanda attiva. Crea la prima qui sotto.</p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-plus-circle"></i> <span id="question-form-title">Crea una nuova domanda</span></h3>
+          <form id="question-form">
+            <input type="hidden" id="q-edit-key" value="" />
+            <label for="q-text">Testo della domanda *</label>
+            <textarea id="q-text" rows="2" required placeholder="Es. Quando ricevi un messaggio dalla persona che stai frequentando:"></textarea>
+            <div style="margin-top:14px;">
+              <label>Risposte disponibili *</label>
+              <div id="options-editor"></div>
+              <button type="button" class="btn btn--soft btn--sm" id="btn-add-option"><i class="fa-solid fa-plus"></i> Aggiungi risposta</button>
+              <p style="font-size:12px;color:var(--grigio);margin-top:8px;">La lettera indica il profilo risultante a cui contribuisce la risposta (A = Anima Generosa, B = Idealista Sognatore, C = Indipendente Solitario, D = Ricercatore di Sicurezza).</p>
+            </div>
+            <div class="row" style="margin-top:16px;">
+              <button type="submit" class="btn btn--primary"><i class="fa-solid fa-floppy-disk"></i> Salva domanda</button>
+              <button type="button" class="btn btn--soft" id="q-cancel-edit" hidden><i class="fa-solid fa-rotate-left"></i> Annulla modifica</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ============ PANNELLO: SERVIZI E PACCHETTI ============ -->
+      <section class="panel" id="panel-servizi">
+        <div class="page-head">
+          <h2>Servizi e pacchetti</h2>
+          <p>Gestisci i pacchetti mostrati nella Home, le domande del modulo popup e consulta le richieste inviate dai visitatori.</p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-boxes-stacked"></i> Pacchetti</h3>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr><th>Ordine</th><th>Nome</th><th>Prezzo</th><th>Attivo</th><th>In Home</th><th>Domande modulo</th><th>Azioni</th></tr>
+              </thead>
+              <tbody id="packages-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-plus-circle"></i> <span id="pkg-form-title">Aggiungi un nuovo pacchetto</span></h3>
+          <form id="package-form">
+            <input type="hidden" id="pkg-edit-key" value="" />
+            <div class="grid-2">
+              <div>
+                <label for="pkg-key">Identificativo (chiave univoca) *</label>
+                <input type="text" id="pkg-key" required placeholder="Es. sessione-weekend" pattern="[a-z0-9\-]+" />
+              </div>
+              <div>
+                <label for="pkg-name">Nome del servizio *</label>
+                <input type="text" id="pkg-name" required placeholder="Es. Sessione di coppia" />
+              </div>
+              <div>
+                <label for="pkg-type">Categoria</label>
+                <input type="text" id="pkg-type" placeholder="Es. Sessione Individuale" />
+              </div>
+              <div>
+                <label for="pkg-price">Prezzo (se previsto)</label>
+                <input type="text" id="pkg-price" placeholder="Es. 80 € · oppure: Prossimo avvio" />
+              </div>
+            </div>
+            <div style="margin-top:14px;">
+              <label for="pkg-desc">Descrizione / informazioni *</label>
+              <textarea id="pkg-desc" rows="3" required placeholder="Descrizione mostrata nel popup quando il visitatore sceglie il servizio."></textarea>
+            </div>
+            <div style="margin-top:14px;">
+              <label for="pkg-features">Punti elenco del pacchetto (uno per riga)</label>
+              <textarea id="pkg-features" rows="3" placeholder="Incontro di 90 minuti&#10;Esercizi personalizzati&#10;Follow-up via email"></textarea>
+            </div>
+            <div class="row" style="margin-top:16px;">
+              <div style="display:flex;gap:22px;align-items:center;">
+                <label style="display:flex;gap:8px;align-items:center;margin:0;font-weight:500;">
+                  <span class="switch"><input type="checkbox" id="pkg-active" checked /><span class="slider-sw"></span></span> Attivo
+                </label>
+                <label style="display:flex;gap:8px;align-items:center;margin:0;font-weight:500;">
+                  <span class="switch"><input type="checkbox" id="pkg-visible" checked /><span class="slider-sw"></span></span> Mostra nella Home
+                </label>
+              </div>
+            </div>
+            <div class="row" style="margin-top:16px;">
+              <button type="submit" class="btn btn--primary"><i class="fa-solid fa-floppy-disk"></i> Salva pacchetto</button>
+              <button type="button" class="btn btn--soft" id="pkg-cancel-edit" hidden><i class="fa-solid fa-rotate-left"></i> Annulla modifica</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-list-ol"></i> Domande personalizzate del modulo</h3>
+          <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Queste domande compaiono nel popup che si apre quando un visitatore sceglie un pacchetto, insieme ai campi standard (Nome, Cognome, Email).</p>
+          <div id="custom-questions-list"></div>
+          <form id="custom-question-form" style="margin-top:8px;">
+            <div class="grid-2">
+              <div style="flex:3;min-width:240px;">
+                <label for="cq-text">Testo della domanda *</label>
+                <input type="text" id="cq-text" required placeholder="Es. Qual è il tuo principale obiettivo?" />
+              </div>
+              <div>
+                <label for="cq-type">Tipo di campo *</label>
+                <select id="cq-type" required>
+                  <option value="short">Risposta breve</option>
+                  <option value="long">Risposta lunga</option>
+                  <option value="multiple">Scelta multipla (una opzione)</option>
+                  <option value="checkbox">Caselle di selezione (più opzioni)</option>
+                </select>
+              </div>
+              <div style="flex:none;display:flex;align-items:center;">
+                <label style="display:flex;gap:8px;align-items:center;font-weight:500;margin:0;">
+                  <span class="switch"><input type="checkbox" id="cq-required" checked /><span class="slider-sw"></span></span> Obbligatoria
+                </label>
+              </div>
+            </div>
+            <div id="cq-options-wrap" style="margin-top:12px;" hidden>
+              <label for="cq-options">Opzioni di risposta (separate da virgola) *</label>
+              <input type="text" id="cq-options" placeholder="Es. Comunicazione, Autostima, Gestione dell'ansia, Relazioni" />
+            </div>
+            <div style="margin-top:14px;">
+              <button type="submit" class="btn btn--primary btn--sm"><i class="fa-solid fa-plus"></i> Aggiungi domanda al modulo</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-inbox"></i> Richieste ricevute dai visitatori</h3>
+          <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Quando un visitatore invia il modulo popup di un pacchetto, la richiesta viene salvata e appare qui.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Data</th><th>Richiesta</th></tr></thead>
+              <tbody id="requests-tbody"></tbody>
+            </table>
+          </div>
+          <p class="empty-note" id="requests-empty" hidden>Nessuna richiesta ricevuta al momento.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Conferma eliminazione -->
+  <div id="confirm-overlay" hidden role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="confirm-box">
+      <h3 id="confirm-title">Confermi l'eliminazione?</h3>
+      <p id="confirm-text">Questa azione è definitiva.</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn--soft" id="confirm-no">Annulla</button>
+        <button type="button" class="btn btn--danger" id="confirm-yes"><i class="fa-solid fa-trash-can"></i> Elimina</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  <!-- Firebase (config globale) + logica admin -->
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

@@ -93,6 +93,17 @@
     { id: 'readiness', type: 'scale', label: 'Quanto ti senti pronto/a a lavorare su te stesso/a? (1-10) *', scaleMin: 'Per niente', scaleMax: 'Completamente' }
   ];
 
+  // 📦 Espone i dati predefiniti: servono alla dashboard admin per importare
+  // il contenuto attuale del sito nel database al primo accesso (seed).
+  window.__defaultQuizQuestions = defaultQuizQuestions;
+  window.__defaultQuizResults = defaultQuizResults;
+  window.__defaultQuizTitle = (defaultConfig.general && defaultConfig.general.quizTitle) || '';
+  window.__defaultServicePackages = [
+    { key: 'piano-autonomo', type: 'Piano Digitale', title: 'Piano autonomo P.E.R.S.M.A.R.T.', price: '50 € una tantum', desc: 'Stai per acquistare il questionario approfondito e il piano personale scritto da Valeria. Verrai reindirizzato alla pagina di checkout sicuro.', features: ['Questionario approfondito (14 domande)', 'Piano personale scritto da Valeria', 'Consegna tramite email protetta'] },
+    { key: 'sessione-studio', type: 'Sessione Individuale', title: 'Sessione in studio', price: '50 €/ora', desc: 'Stai per prenotare un incontro di 60 minuti nel mio studio a Valle Lomellina (PV). Verrai reindirizzato al calendario per scegliere data e ora.', features: ['Incontro individuale di 60 minuti', "Studio a Valle Lomellina (PV)", "Piano d'azione concordato"] },
+    { key: 'sessione-online', type: 'Sessione Individuale', title: 'Sessione online', price: '50 €/ora', desc: 'Stai per prenotare un incontro di 60 minuti tramite videochiamata. Verrai reindirizzato al calendario per scegliere data e ora.', features: ['Videochiamata di 60 minuti', 'Da qualsiasi luogo', 'Stesso metodo, più flessibilità'] },
+    { key: 'percorso-gruppo', type: 'Percorso di Gruppo', title: 'Percorsi di gruppo', price: 'Prossimo avvio', desc: "Lascia i tuoi dati per essere avvisato non appena si apriranno le iscrizioni al prossimo percorso di gruppo a numero chiuso.", features: ['Incontri guidati a numero chiuso', 'Obiettivi condivisi e supporto reciproco'] }
+  ];
   const defaultConfig = {
     colors: { primary: '#591c2f', hover: '#451624', secondary: '#7FC8C8', bg: '#edddc8', text: '#2D2D2D', navbarBg: '#1c1c1c', navbarText: '#ffffff', footerBg: '#141414', footerText: '#a3a3a3' },
     general: { quizTitle: 'Scopri il tuo schema relazionale', pixelId: '', maintenanceMode: false },
@@ -140,7 +151,188 @@
       applyConfig(defaultConfig);
     }
   }
+  // ============================================
+  // 2b. CONTENUTI DINAMICI DAL DATABASE (dashboard admin)
+  // Le raccolte Firestore gestite dalla dashboard:
+  //   'reviews' → recensioni pubblicate nella Home
+  //   'quiz_questions' → domande del test gratuito
+  //   'service_packages' / 'service_form_questions' → pacchetti e modulo
+  // Se una raccolta è vuota o non raggiungibile, il sito usa i contenuti statici.
+  // ============================================
+  async function fsGetAll(colName) {
+    if (!window.firebaseDB || !window.firebaseCollection || !window.firebaseGetDocs) return [];
+    const snap = await window.firebaseGetDocs(window.firebaseCollection(window.firebaseDB, colName));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
 
+  async function loadDynamicReviews() {
+    try {
+      const rows = await fsGetAll('reviews');
+      if (!rows.length) return false;
+      const list = rows
+        .slice()
+        .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
+        .map(r => ({ name: r.name + (r.initial ? ' ' + String(r.initial).toUpperCase() + '.' : ''), rating: Number(r.stars) || 5, date: fmtReviewDate(r.date), text: r.description || '' }));
+      renderReviews(list);
+      window.__testimonials = list.map(r => ({ name: r.name, text: r.text, time: r.date }));
+      console.log('✅ Recensioni dinamiche caricate dal database:', list.length);
+      return true;
+    } catch (error) {
+      console.warn('⚠️ Recensioni dinamiche non disponibili, uso elenco statico', error);
+      return false;
+    }
+  }
+
+  function fmtReviewDate(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+      return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (e) { return iso; }
+  }
+
+  async function loadDynamicQuizForHome() {
+    try {
+      const rows = await fsGetAll('quiz_questions');
+      const active = rows.filter(q => q.active !== false).sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+      if (!active.length) return;
+      window.dynamicQuizQuestions = active.map((q, i) => ({
+        id: q.id || i + 1, text: q.text,
+        options: (q.answers || []).map(a => ({ text: a.text, score: a.profile }))
+      }));
+      console.log('✅ Domande test dinamiche caricate dal database:', active.length);
+    } catch (error) {
+      console.warn('⚠️ Domande test dinamiche non disponibili', error);
+    }
+  }
+
+  async function loadDynamicServices() {
+    try {
+      const [pkgsRaw, cqsRaw, cfgSnap] = await Promise.all([
+        fsGetAll('service_packages'), fsGetAll('service_form_questions'),
+        (window.firebaseDB && window.firebaseDoc && window.firebaseGetDoc)
+          ? window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB, 'config', 'site_config')).catch(() => null)
+          : Promise.resolve(null)
+      ]);
+      // profili risultato / etichette del modulo dal documento config
+      const svcCfg = cfgSnap && cfgSnap.exists ? cfgSnap.data() : null;
+      if (svcCfg && svcCfg.quiz && svcCfg.quiz.profiles) {
+        window.__dynamicConfig = Object.assign({}, window.__dynamicConfig || {}, { quiz: svcCfg.quiz });
+      }
+      if (svcCfg && svcCfg.services) {
+        window.__dynamicServiceLabels = svcCfg.services;
+      }
+      const pkgs = pkgsRaw.filter(p => p.active !== false).sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+      if (!pkgs.length) return;
+      const cqList = cqsRaw.filter(q => q.active !== false).sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+      window.__dynamicPackages = {};
+      pkgs.forEach(p => { window.__dynamicPackages[p.key || p.id] = p; });
+      window.__dynamicFormQuestions = cqList;
+      renderDynamicServices(pkgs.filter(p => p.showInHome !== false));
+      console.log('✅ Pacchetti dinamici caricati dal database:', pkgs.length);
+    } catch (error) {
+      console.warn('⚠️ Pacchetti dinamici non disponibili, uso contenuto statico', error);
+    }
+  }
+
+  function renderDynamicServices(visiblePkgs) {
+    const grid = document.querySelector('#servizi .services-grid');
+    if (!grid || !visiblePkgs.length) return;
+    const icons = { 'Piano Digitale': 'fa-file-contract', 'Sessione Individuale': 'fa-location-dot', 'Percorso di Gruppo': 'fa-users' };
+    grid.innerHTML = visiblePkgs.map((p, i) => {
+      const feat = (p.features || []).map(f => '<li>' + escapeHtml(f) + '</li>').join('');
+      const delay = i > 0 ? ' reveal-delay-' + Math.min(i, 3) : '';
+      const featured = p.featured ? ' featured' : '';
+      const icon = icons[p.type] || 'fa-briefcase';
+      const tagHtml = p.tag ? '<span class="service-tag">' + escapeHtml(p.tag) + '</span>' : '';
+      const priceHtml = p.price ? '<div class="service-price">' + escapeHtml(p.price) + '</div>' : '';
+      const btnClass = 'btn btn--uiverse ' + (p.featured ? 'btn--forest' : 'btn--sage');
+      const btnLabel = escapeHtml(p.buttonLabel || 'Richiedi il servizio');
+      const pkgKey = escapeHtml(p.key || p.id);
+      return '<div class="service-card' + featured + ' reveal' + delay + '">' +
+        tagHtml +
+        '<h3><span class="service-title-icon"><i class="fa-solid ' + icon + '"></i></span> ' + escapeHtml(p.name) + '</h3>' +
+        priceHtml +
+        '<ul>' + feat + '</ul>' +
+        '<button type="button" class="' + btnClass + '" data-service-modal="' + pkgKey + '">' + btnLabel + '</button>' +
+        '</div>';
+    }).join('');
+    // riattiva listener mouse-hover sulle nuove card
+    if (typeof initMobileHoverEffects === 'function') initMobileHoverEffects();
+  }
+
+  // Riallunga i pulsanti «Leggi di più» dopo una ridefinizione dinamica delle recensioni
+  function initTestimonialsExpand() {
+    document.querySelectorAll('.testimonial-read-more').forEach((btn, idx) => {
+      btn.onclick = () => window.toggleReviewText(idx);
+    });
+  }
+  // ============================================
+  // 2c. PAGINA PUBBLICA test.html — domande, risposte e risultato dal database.
+  // Le modifiche salvate nella dashboard (sezione Test gratuito) compaiono qui,
+  // senza toccare il codice. Se il database non è raggiungibile o è vuoto,
+  // la pagina conserva il suo contenuto statico originale.
+  // ============================================
+  async function loadDynamicTestPage() {
+    const quizForm = document.getElementById('quiz-form');
+    if (!quizForm) return; // non siamo sulla pagina del test
+    try {
+      const [rows, cfgSnap] = await Promise.all([
+        fsGetAll('quiz_questions'),
+        (window.firebaseDB && window.firebaseDoc && window.firebaseGetDoc)
+          ? window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB, 'config', 'site_config')).catch(() => null)
+          : Promise.resolve(null)
+      ]);
+      const active = rows.filter(q => q.active !== false)
+        .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+      const cfg = cfgSnap && cfgSnap.exists ? cfgSnap.data() : null;
+      let changed = false;
+
+      // Titolo del test (dashboard → Impostazioni rapide)
+      const dynTitle = cfg && cfg.general && cfg.general.quizTitle;
+      if (dynTitle) {
+        const h1 = quizForm.querySelector('h1');
+        const p = quizForm.querySelector('p');
+        if (h1) h1.textContent = dynTitle;
+        if (p) p.textContent = `${active.length || quizForm.querySelectorAll('[data-question-block]').length} domande · risultato immediato · zero costi`;
+        changed = true;
+      }
+
+      // Domande e risposte dal database
+      if (active.length) {
+        quizForm.querySelectorAll('[data-question-block]').forEach(b => b.remove());
+        const submitBtn = quizForm.querySelector('.quiz-submit-button');
+        const letterMap = ['A', 'B', 'C', 'D', 'E'];
+        active.forEach((q, idx) => {
+          const blockEl = document.createElement('div');
+          blockEl.className = 'question-block';
+          blockEl.setAttribute('data-question-block', String(idx));
+          let inner = `<h3>${idx + 1}. ${escapeHtml(q.text)}</h3>`;
+          (q.answers || []).forEach((a, j) => {
+            const letter = letterMap[j] || String.fromCharCode(65 + j);
+            const inputId = `db-q${idx}-${letter}`;
+            inner += `<div class="radio-card">` +
+              `<input type="radio" id="${inputId}" name="question-${idx}" value="${escapeHtml(a.profile || 'A')}" required />` +
+              `<label for="${inputId}"><span class="option-letter">${letter}</span><span class="option-text">${escapeHtml(a.text)}</span></label>` +
+            `</div>`;
+          });
+          blockEl.innerHTML = inner;
+          quizForm.insertBefore(blockEl, submitBtn);
+        });
+        if (typeof initRadioCards === 'function') initRadioCards();
+        changed = true;
+        console.log('✅ test.html: domande dinamiche dal database:', active.length);
+      }
+
+      // Profili/risultato personalizzabili dalla dashboard (config.quiz.profiles)
+      if (cfg && cfg.quiz && cfg.quiz.profiles) {
+        window.__dynamicConfig = Object.assign({}, window.__dynamicConfig || {}, { quiz: cfg.quiz });
+      }
+      if (changed) updateQuizProgressBar();
+    } catch (err) {
+      console.warn('⚠️ test.html: uso contenuto statico (database non disponibile)', err);
+    }
+  }
   function applyConfig(config) {
     window.__dynamicConfig = config;
     if (config.colors) {
@@ -651,12 +843,20 @@
     const closeBtn = modal.querySelector('.modal-close');
     const cancelBtn = document.getElementById('modal-cancel-btn');
     const confirmBtn = document.getElementById('modal-confirm-btn');
-    const serviceData = {
+    let currentServiceKey = '';
+    let serviceData = {
       'piano-autonomo': { type: 'Piano Digitale', title: 'Piano autonomo P.E.R.S.M.A.R.T.', desc: 'Stai per acquistare il questionario approfondito e il piano personale scritto da Valeria. Verrai reindirizzato alla pagina di checkout sicuro.', actionUrl: 'acquista-piano.html' },
       'sessione-studio': { type: 'Sessione Individuale', title: 'Sessione in studio', desc: 'Stai per prenotare un incontro di 60 minuti nel mio studio a Valle Lomellina (PV). Verrai reindirizzato al calendario per scegliere data e ora.', actionUrl: 'prenota.html?tipo=studio' },
       'sessione-online': { type: 'Sessione Individuale', title: 'Sessione online', desc: 'Stai per prenotare un incontro di 60 minuti tramite videochiamata. Verrai reindirizzato al calendario per scegliere data e ora.', actionUrl: 'prenota.html?tipo=online' },
       'percorso-gruppo': { type: 'Percorso di Gruppo', title: 'Percorsi di gruppo', desc: 'Lascia i tuoi dati per essere avvisato non appena si apriranno le iscrizioni al prossimo percorso di gruppo a numero chiuso.', actionUrl: 'servizi.html#gruppi' }
     };
+    // Se la dashboard admin ha popolato 'service_packages', usa i pacchetti del database
+    if (window.__dynamicPackages && Object.keys(window.__dynamicPackages).length > 0) {
+      serviceData = {};
+      Object.entries(window.__dynamicPackages).forEach(([k, p]) => {
+        serviceData[k] = { type: p.type || 'Servizio', title: p.name || k, desc: p.desc || '', actionUrl: p.actionUrl || '' };
+      });
+    }
     function openModal(serviceKey) {
       const data = serviceData[serviceKey];
       if (!data) return;
@@ -664,6 +864,10 @@
       document.getElementById('modal-service-title').textContent = data.title;
       document.getElementById('modal-service-desc').textContent = data.desc;
       confirmBtn.setAttribute('data-target-url', data.actionUrl);
+      currentServiceKey = serviceKey;
+      // Modulo di richiesta personalizzato (domande create dalla dashboard):
+      // se attivo, il popup mostra Nome/Cognome/Email + domande invece del semplice «Procedi»
+      buildServiceRequestForm(serviceKey);
       modal.hidden = false;
       requestAnimationFrame(() => { modal.classList.add('is-open'); });
       document.body.style.overflow = 'hidden';
@@ -678,10 +882,101 @@
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
     if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-    confirmBtn.addEventListener('click', () => { const url = confirmBtn.getAttribute('data-target-url'); if (url) window.location.href = url; });
+    confirmBtn.addEventListener('click', () => {
+      const reqForm = document.getElementById('svc-request-fields');
+      if (reqForm && !reqForm.hidden) { submitServiceRequest(); return; }
+      const url = confirmBtn.getAttribute('data-target-url'); if (url) window.location.href = url;
+    });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
   }
 
+  // ---- MODULO DI RICHIESTA DEL PACCHETTO (popup Home, gestito dalla dashboard) ----
+  function getActiveFormQuestions() {
+    return (window.__dynamicFormQuestions || []).filter(q => q.active !== false)
+      .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+  }
+
+  function buildServiceRequestForm(serviceKey) {
+    const container = document.getElementById('svc-request-fields');
+    if (!container) return;
+    let questions = getActiveFormQuestions();
+    // se il pacchetto ha domande collegate solo per sé (questionKeys), usa quelle
+    const dynPkg = (window.__dynamicPackages || {})[serviceKey];
+    if (dynPkg && Array.isArray(dynPkg.questionKeys) && dynPkg.questionKeys.length > 0) {
+      questions = questions.filter(q => dynPkg.questionKeys.includes(q.id));
+    }
+    const labels = (window.__dynamicServiceLabels && window.__dynamicServiceLabels.formLabels) || {};
+    const lblNome = labels.nome || 'Nome', lblCognome = labels.cognome || 'Cognome', lblEmail = labels.email || 'Email';
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    if (!questions.length) {
+      container.hidden = true;
+      container.innerHTML = '';
+      if (confirmBtn) confirmBtn.innerHTML = 'Procedi <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i>';
+      return;
+    }
+    let html = '<div class="svc-std-fields">'
+      + '<label for="svc-nome">' + escapeHtml(lblNome) + ' *</label><input type="text" id="svc-nome" required />'
+      + '<label for="svc-cognome">' + escapeHtml(lblCognome) + ' *</label><input type="text" id="svc-cognome" required />'
+      + '<label for="svc-email">' + escapeHtml(lblEmail) + ' *</label><input type="email" id="svc-email" required /></div>';
+    questions.forEach((q, idx) => {
+      const reqMark = q.required ? ' *' : '';
+      html += `<div class="svc-q-field" data-qid="${q.id}" data-ftype="${q.fieldType}"><label>${escapeHtml(q.text)}${reqMark}</label>`;
+      if (q.fieldType === 'long') html += `<textarea rows="3" data-qinput></textarea>`;
+      else if (q.fieldType === 'multiple') html += `<select data-qinput><option value="">Seleziona…</option>` + (q.options || []).map(o => `<option>${escapeHtml(o)}</option>`).join('') + `</select>`;
+      else if (q.fieldType === 'checkbox') html += (q.options || []).map(o => `<label class="svc-check-label"><input type="checkbox" value="${escapeHtml(o)}" /> ${escapeHtml(o)}</label>`).join('');
+      else html += `<input type="text" data-qinput />`;
+      html += '</div>';
+    });
+    container.innerHTML = html;
+    container.hidden = false;
+    if (confirmBtn) confirmBtn.innerHTML = 'Invia richiesta <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i>';
+  }
+
+  async function submitServiceRequest() {
+    const nome = (document.getElementById('svc-nome')?.value || '').trim();
+    const cognome = (document.getElementById('svc-cognome')?.value || '').trim();
+    const email = (document.getElementById('svc-email')?.value || '').trim();
+    if (!nome || !cognome || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { alert('Inserisci nome, cognome e un\'email valida.'); return; }
+    const answers = {};
+    const requiredMissing = [];
+    document.querySelectorAll('#svc-request-fields .svc-q-field').forEach(div => {
+      const ftype = div.dataset.ftype;
+      const label = div.querySelector('label')?.textContent || div.dataset.qid;
+      let value = '';
+      if (ftype === 'checkbox') {
+        value = Array.from(div.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value);
+      } else {
+        const inp = div.querySelector('[data-qinput]');
+        value = inp ? inp.value.trim() : '';
+      }
+      const isReq = label.trim().endsWith('*');
+      const empty = Array.isArray(value) ? value.length === 0 : !value;
+      if (isReq && empty) requiredMissing.push(label.replace(' *', ''));
+      answers[label.replace(' *', '')] = value;
+    });
+    if (requiredMissing.length) { alert('Completa le domande obbligatorie: ' + requiredMissing.join(', ')); return; }
+    const btn = document.getElementById('modal-confirm-btn');
+    const pkg = (window.__dynamicPackages || {})[currentServiceKey] || {};
+    if (btn) btn.disabled = true;
+    try {
+      if (window.firebaseDB && window.firebaseCollection && window.firebaseAddDoc) {
+        await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, 'service_requests'), {
+          packageKey: currentServiceKey,
+          servizio: pkg.name || currentServiceKey,
+          nome, cognome, email, answers,
+          createdAt: new Date().toISOString()
+        });
+      } else { throw new Error('database non disponibile'); }
+      const okMsg = document.createElement('p');
+      okMsg.style.cssText = 'color:#2e7d4f;font-weight:600;margin-top:12px;';
+      okMsg.textContent = '✔ Richiesta inviata. Ti risponderò al più presto.';
+      document.getElementById('svc-request-fields').replaceChildren(okMsg);
+      setTimeout(() => { const m = document.getElementById('service-modal'); if (m) m.querySelector('.modal-close')?.click(); }, 2500);
+    } catch (err) {
+      console.error('Errore invio richiesta:', err);
+      alert('Invio non riuscito: riprova oppure contattami via email.');
+    } finally { if (btn) btn.disabled = false; }
+  }
   function initCertModal() {
     const modal = document.getElementById('cert-modal');
     if (!modal) return;
@@ -1196,6 +1491,14 @@
     initCountdown();
     initImageSlider();
     initTestimonials();
+    // 2b. Contenuti dinamici dal database (gestiti dalla dashboard admin):
+    // se il DB contiene dati, sovrascrivono automaticamente i contenuti statici.
+    loadDynamicReviews().then((hasDbReviews) => {
+      if (hasDbReviews) initTestimonialsExpand();
+    });
+    loadDynamicQuizForHome();
+    loadDynamicTestPage();
+    loadDynamicServices().then(() => { initServiceModal(); });
     initMobileHoverEffects();
     initViewportFix();
     initActiveNav(); // ✅ Gestisce lo stato attivo della navbar
