@@ -97,7 +97,6 @@
   // il contenuto attuale del sito nel database al primo accesso (seed).
   window.__defaultQuizQuestions = defaultQuizQuestions;
   window.__defaultQuizResults = defaultQuizResults;
-  window.__defaultQuizTitle = (defaultConfig.general && defaultConfig.general.quizTitle) || '';
   window.__defaultServicePackages = [
     { key: 'piano-autonomo', type: 'Piano Digitale', title: 'Piano autonomo P.E.R.S.M.A.R.T.', price: '50 € una tantum', desc: 'Stai per acquistare il questionario approfondito e il piano personale scritto da Valeria. Verrai reindirizzato alla pagina di checkout sicuro.', features: ['Questionario approfondito (14 domande)', 'Piano personale scritto da Valeria', 'Consegna tramite email protetta'] },
     { key: 'sessione-studio', type: 'Sessione Individuale', title: 'Sessione in studio', price: '50 €/ora', desc: 'Stai per prenotare un incontro di 60 minuti nel mio studio a Valle Lomellina (PV). Verrai reindirizzato al calendario per scegliere data e ora.', features: ['Incontro individuale di 60 minuti', "Studio a Valle Lomellina (PV)", "Piano d'azione concordato"] },
@@ -1442,6 +1441,12 @@
       btnEl.innerHTML = 'Leggi di più <i class="fa-solid fa-chevron-down"></i>';
     }
   };
+
+  // NOTA: __defaultQuizTitle viene esposto QUI (e non prima), perché la
+  // costante defaultConfig è dichiarata più in basso nel blocco: accedervi
+  // prima causava un ReferenceError TDZ ("Cannot access 'defaultConfig'
+  // before initialization") che abortava l'esecuzione dell'intero script.
+  window.__defaultQuizTitle = (defaultConfig.general && defaultConfig.general.quizTitle) || '';
 
   window.dynamicSiteConfig = {
     reload: loadSiteConfigFromFirebase,

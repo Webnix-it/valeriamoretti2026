@@ -79,6 +79,8 @@
   <!-- Rete di salvataggio: se uno script esterno (script.js / firebase-config.js)
        va in errore, il loader viene nascosto e la pagina mostrata comunque. -->
   <script>
+    /* Nota: gli errori nei moduli ES (firebase-config.js) NON passano da
+       qui; per quelli c'è il timeout di sicurezza a fine pagina. */
     window.addEventListener('error', function () {
       var l = document.getElementById('site-loader');
       if (l && !l.classList.contains('hidden')) {
