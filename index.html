@@ -1027,11 +1027,14 @@
   </div>
 
   <!-- ============ SCRIPTS ============ -->
+  <!-- firebase-config.js viene caricato PRIMA di script.js: espone le funzioni
+       Firebase a livello globale (window.firebaseDB, ...). Se script.js parte
+       prima, i dati dal database non vengono mai recuperati. -->
+  <script type="module" src="firebase-config.js"></script>
   <script src="script.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script type="text/javascript">
     (function() { emailjs.init("zTOU9dbAR0XbmjhoR"); })();
   </script>
-  <script type="module" src="firebase-config.js"></script>
 </body>
 </html>
