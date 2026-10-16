@@ -538,55 +538,21 @@
   // 3. CORE UI INITIALIZATIONS
   // ============================================
 
-  // Il preloader VIENE AVVIATO SUBITO, all'analisi di script.js, senza
-  // aspettare DOMContentLoaded e soprattutto senza aspettare il caricamento
-  // dei dati da Firebase (che prima bloccava l'intera initAll: se la rete
-  // era lenta o Firebase non rispondeva, il preloader non partiva affatto).
-  function initSiteLoader() {
+  // Il preloader ormai è gestito da uno script INLINE in index.html
+  // (auto-sufficiente, parte immediatamente durante il parsing del DOM).
+  // Qui ci limitiamo a una RETE DI SALVATAGGIO: se per qualsiasi motivo
+  // l'inline non fosse riuscito ad avviare/nascondere il loader, lo
+  // nascondiamo comunque noi — così la home non resta MAI bloccata.
+  function ensureLoaderHidden() {
     const siteLoader = document.getElementById('site-loader');
-    const loaderProgressBar = document.getElementById('loader-progress-bar');
-    const loaderPercentage = document.getElementById('loader-percentage');
-    if (!siteLoader || siteLoader.dataset.loaderStarted === 'true') return;
-    siteLoader.dataset.loaderStarted = 'true';
-    siteLoader.style.display = '';
-    siteLoader.classList.remove('hidden');
-    // Blocca lo scroll mentre il preloader è visibile
-    document.body.classList.add('loading');
-    let progress = 0;
-    let finished = false;
-
-    function hideLoader() {
-      if (finished) return;
-      finished = true;
-      clearInterval(interval);
-      if (loaderProgressBar) loaderProgressBar.style.width = '100%';
-      if (loaderPercentage) loaderPercentage.textContent = '100%';
-      setTimeout(() => {
-        siteLoader.classList.add('hidden');
-        setTimeout(() => {
-          siteLoader.style.display = 'none';
-          document.body.classList.remove('loading');
-          document.body.classList.add('loaded');
-        }, 900);
-      }, 400);
+    if (!siteLoader || siteLoader.style.display === 'none') return;
+    if (siteLoader.dataset.loaderStarted !== 'true') {
+      // Loader mai avviato: niente animazione, nascondilo direttamente.
+      siteLoader.style.display = 'none';
+      document.body.classList.remove('loading');
+      document.body.classList.add('loaded');
     }
-
-    const interval = setInterval(() => {
-      if (progress < 60) progress += Math.random() * 5 + 2;
-      else if (progress < 70) progress += Math.random() * 3 + 1;
-      else progress += Math.random() * 2 + 0.5;
-      if (progress >= 100) { progress = 100; hideLoader(); }
-      if (loaderProgressBar) loaderProgressBar.style.width = progress + '%';
-      if (loaderPercentage) loaderPercentage.textContent = Math.round(progress) + '%';
-    }, 100);
-
-    // Durata massima: il preloader non resta mai più di 4 secondi,
-    // nemmeno in caso di errori di rete/Firebase.
-    setTimeout(hideLoader, 4000);
-    if (document.readyState === 'complete') hideLoader();
-    else window.addEventListener('load', () => setTimeout(hideLoader, 600));
   }
-  initSiteLoader();
 
   function initHeader() {
     const header = document.querySelector('.site-header');
@@ -1487,11 +1453,11 @@
   // 6. MAIN INITIALIZATION
   // ============================================
   async function initAll() {
-    // NOTA: il preloader (initSiteLoader) è già partito all'analisi del file,
-    // quindi è sempre visibile anche se i dati da Firebase tardano o falliscono.
+    // NOTA: il preloader è avviato da uno script inline in index.html.
+    // Qui lo nascondiamo solo come rete di salvataggio se non ha preso il via.
+    ensureLoaderHidden();
 
     // 1. Inizializza UI di base (subito, senza attendere la rete)
-    initSiteLoader(); // no-op se già avviato
     initHeader();
     initMobileMenu();
     initReveal();

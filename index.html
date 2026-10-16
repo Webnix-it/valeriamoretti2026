@@ -15,7 +15,11 @@
 </head>
 <body class="page-home">
 
-  <!-- ============ SITE LOADER ============ -->
+  <!-- ============ SITE LOADER (PRELOADER) ============
+       Il preloader è AUTO-SUFFICIENTE: si avvia e si nasconde da solo grazie
+       allo script inline qui sotto, senza dipendere da script.js, da Firebase
+       o dalla rete. In questo modo compare SEMPRE, anche se uno di questi
+       fallisce, e sparisce comunque entro pochi secondi al massimo. -->
   <div id="site-loader" aria-hidden="true">
     <div id="loader-content">
       <h1 id="loader-title">
@@ -28,6 +32,49 @@
       <p id="loader-percentage">0%</p>
     </div>
   </div>
+  <script>
+    /* Preloader self-contained: parte all'istante (il DOM sopra è già
+       parsato) e non richiede alcun file esterno. */
+    (function () {
+      var loader = document.getElementById('site-loader');
+      if (!loader || loader.dataset.loaderStarted === 'true') return;
+      loader.dataset.loaderStarted = 'true';
+      var bar = document.getElementById('loader-progress-bar');
+      var pct = document.getElementById('loader-percentage');
+      document.body.classList.add('loading');
+      var progress = 0, finished = false;
+
+      function hideLoader() {
+        if (finished) return;
+        finished = true;
+        clearInterval(interval);
+        if (bar) bar.style.width = '100%';
+        if (pct) pct.textContent = '100%';
+        setTimeout(function () {
+          loader.classList.add('hidden');
+          setTimeout(function () {
+            loader.style.display = 'none';
+            document.body.classList.remove('loading');
+            document.body.classList.add('loaded');
+          }, 900);
+        }, 400);
+      }
+
+      var interval = setInterval(function () {
+        if (progress < 60) progress += Math.random() * 5 + 2;
+        else if (progress < 70) progress += Math.random() * 3 + 1;
+        else progress += Math.random() * 2 + 0.5;
+        if (progress >= 100) { progress = 100; hideLoader(); }
+        if (bar) bar.style.width = progress + '%';
+        if (pct) pct.textContent = Math.round(progress) + '%';
+      }, 100);
+
+      /* Durata massima garantita: 4 secondi, qualunque cosa succeda. */
+      setTimeout(hideLoader, 4000);
+      if (document.readyState === 'complete') hideLoader();
+      else window.addEventListener('load', function () { setTimeout(hideLoader, 600); });
+    })();
+  </script>
 
   <!-- ============ HEADER ============ -->
   <header class="site-header">
