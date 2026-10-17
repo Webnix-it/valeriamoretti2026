@@ -345,7 +345,7 @@ button { font-family: inherit; cursor: pointer; }
 .service-card > * { position: relative; z-index: 1; }
 .service-card:hover { border-color: var(--verde-bosco); transform: translateY(-6px) scale(1.015); box-shadow: 0 22px 44px rgba(49, 91, 85, 0.18); }
 .service-card:hover::before { transform: translateX(100%); }
-.service-card h3 { font-size: 1.25rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; color: var(--verde-bosco); }
+.service-card h3 { font-family: sans-serif; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; color: var(--verde-bosco); }
 .service-title-icon {
   flex: 0 0 auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
   font-size: 1.1rem; color: var(--verde-bosco); background: var(--salvia); border-radius: 12px;
