@@ -16,7 +16,10 @@
   let quizFinalProfile = '';
   let quizFinalProfileTitle = '';
   let contactCurrentStep = 1;
-  let contactTotalSteps = 8;
+  // Step fissi del modulo contatto: nome, cognome, email, telefono, messaggio, servizio, privacy
+  let contactFixedSteps = 7;
+  let contactTotalSteps = contactFixedSteps;
+  let selectedServiceName = '';
 
   const defaultQuizQuestions = [
     { id: 1, text: "Quando ricevi un messaggio dalla persona che stai frequentando:", options: [
@@ -110,7 +113,7 @@
     social: { instagram: 'https://www.instagram.com/mentalcoachvaleria95', tiktok: 'https://www.tiktok.com/@mentalcoachvaleria95', youtube: 'https://www.youtube.com/@mentalcoachvaleria95', telegram: 'https://t.me/mentalcoachvaleria95', whatsapp: 'https://wa.me/393458407102', email: 'mentalcoachvaleria@gmail.com', phone: '+39 345 840 7102', address: 'Valle Lomellina, Pavia (PV), Italia' },
     reviews: { list: [{ name: 'Webnix It', rating: 5, date: '4 mesi fa', text: 'Un percorso trasformativo. Valeria ha una capacità unica di guidare con empatia e precisione.' }, { name: 'Marika Tasca', rating: 4, date: '2 mesi fa', text: 'Finalmente ho capito i miei schemi relazionali. Consiglio vivamente!' }] },
     quiz: { title: 'Test del Pattern Relazionale', questions: [], profiles: {} },
-    contact: { sidebarTitle: 'Il cambiamento inizia con una parola.', sidebarList: 'Ascolto attivo\nRiservatezza\nApproccio personalizzato\nSpazio non giudicante', fields: [], successMessage: 'Grazie! Ti ricontatterò entro 24 ore. Nel frattempo, respira. 🌿' }
+    contact: { sidebarTitle: 'Il cambiamento inizia con una parola.', sidebarList: 'Ascolto attivo\nRiservatezza\nApproccio personalizzato\nSpazio non giudicante', fields: [], successMessage: 'Grazie! La tua richiesta è stata inviata. Ti risponderemo entro 24h. Nel frattempo, respira. 🌿' }
   };
 
   // ============================================
@@ -403,7 +406,7 @@
   function renderDynamicContactFields() {
     const container = document.getElementById('dynamic-contact-steps');
     const fields = getContactFields();
-    if (!container || !fields || fields.length === 0) return;
+    if (!container) return;
     container.innerHTML = '';
     fields.forEach((field, index) => {
       const stepNum = index + 1;
@@ -424,10 +427,13 @@
       }
       container.insertAdjacentHTML('beforeend', fieldHTML);
     });
-    contactTotalSteps = fields.length + 2;
-    const contactsStep = document.querySelector('[data-step="fixed-contacts"]');
+    // Gli step dinamici si inseriscono DOPO i 5 campi base e PRIMA di
+    // "servizio selezionato" + "privacy": ricalcolo gli indici degli step fissi finali.
+    const nDyn = fields ? fields.length : 0;
+    contactTotalSteps = 5 + nDyn + 2;
+    const serviceStep = document.querySelector('[data-step="fixed-service"]');
     const privacyStep = document.querySelector('[data-step="fixed-privacy"]');
-    if (contactsStep) contactsStep.setAttribute('data-step', contactTotalSteps - 1);
+    if (serviceStep) serviceStep.setAttribute('data-step', 5 + nDyn + 1);
     if (privacyStep) privacyStep.setAttribute('data-step', contactTotalSteps);
     initDynamicFieldListeners();
   }
@@ -862,7 +868,16 @@
     confirmBtn.addEventListener('click', () => {
       const reqForm = document.getElementById('svc-request-fields');
       if (reqForm && !reqForm.hidden) { submitServiceRequest(); return; }
-      const url = confirmBtn.getAttribute('data-target-url'); if (url) window.location.href = url;
+      const data = serviceData[currentServiceKey];
+      const url = confirmBtn.getAttribute('data-target-url') || '';
+      // Per i pacchetti prenotabili (o senza link proprio) apri il popup con il
+      // modulo di richiesta: servizio selezionato + nome, cognome, email, telefono, messaggio.
+      if (/prenota\.html/.test(url) || !url) {
+        closeModal();
+        setTimeout(() => openContactModal(contactFormTemplateId, data ? data.title : ''), 320);
+        return;
+      }
+      if (url) window.location.href = url;
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
   }
@@ -984,19 +999,36 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
   }
 
+  function showCopyToast(message) {
+    let toast = document.getElementById('copy-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'copy-toast';
+      toast.className = 'copy-toast';
+      toast.setAttribute('role', 'status');
+      document.body.appendChild(toast);
+    }
+    toast.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + message;
+    requestAnimationFrame(() => toast.classList.add('show'));
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
   function initCopyIban() {
     document.querySelectorAll('.btn-copy-iban').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (btn.dataset.copyBusy === '1') return;
         const iban = btn.getAttribute('data-copy-iban') || '';
         const done = ok => {
-          const label = btn.querySelector('span');
-          const icon = btn.querySelector('i');
-          if (!label) return;
-          const oldText = label.textContent, oldIcon = icon ? icon.className : '';
-          label.textContent = ok ? 'Copiato!' : 'IBAN: ' + iban;
-          if (icon) icon.className = ok ? 'fa-solid fa-check' : 'fa-solid fa-triangle-exclamation';
-          btn.classList.add('is-copied');
-          setTimeout(() => { label.textContent = oldText; if (icon) icon.className = oldIcon; btn.classList.remove('is-copied'); }, 1800);
+          btn.dataset.copyBusy = '1';
+          btn.classList.toggle('is-copied', !!ok);
+          btn.classList.toggle('copy-failed', !ok);
+          if (ok) showCopyToast('IBAN copiato negli appunti ✓');
+          else showCopyToast('Copia non riuscita: seleziona l\'IBAN e copialo manualmente');
+          setTimeout(() => {
+            btn.classList.remove('is-copied', 'copy-failed');
+            btn.dataset.copyBusy = '';
+          }, 2000);
         };
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(iban).then(() => done(true)).catch(() => fallback());
@@ -1125,9 +1157,11 @@
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Invio in corso...';
     submitBtn.disabled = true;
     const templateParams = {
-      name: document.getElementById('contact-name')?.value?.trim() || 'Non specificato',
+      name: ((document.getElementById('contact-name')?.value?.trim() || '') + ' ' + (document.getElementById('contact-cognome')?.value?.trim() || '')).trim() || 'Non specificato',
       email: document.getElementById('contact-email')?.value?.trim() || 'Non specificato',
       phone: document.getElementById('contact-phone')?.value?.trim() || 'Non specificato',
+      message: document.getElementById('contact-message')?.value?.trim() || '',
+      service: selectedServiceName || document.getElementById('contact-service')?.value || 'Richiesta generica',
       result: buildContactFormSummary(),
       privacy: document.getElementById('contact-privacy')?.checked ? 'Accettato' : 'Non accettato',
       sent_from: window.location.href,
@@ -1165,6 +1199,7 @@
       const formContent = document.getElementById('contact-form-content');
       const successState = document.getElementById('contact-success');
       if (form) form.reset();
+      setSelectedService('');
       if (formContent) formContent.classList.remove('hidden');
       if (successState) successState.classList.remove('visible');
       goToContactStep(1);
@@ -1177,9 +1212,22 @@
     goToContactStep(1);
   }
 
-  function openContactModal(templateId) {
+  // Mostra/nasconde lo step "Servizio selezionato" nel modulo contatto
+  function setSelectedService(name) {
+    selectedServiceName = name || '';
+    const step = document.querySelector('#contact-form [data-step="fixed-service"]')
+      || document.querySelector('#contact-form .selected-service-chip')?.closest('.contact-step');
+    const labelEl = document.getElementById('selected-service-name');
+    const hiddenEl = document.getElementById('contact-service');
+    if (labelEl) labelEl.textContent = selectedServiceName || 'Richiesta generica';
+    if (hiddenEl) hiddenEl.value = selectedServiceName;
+    if (step) step.style.display = selectedServiceName ? '' : 'none';
+  }
+
+  function openContactModal(templateId, serviceName) {
     const modal = document.getElementById('contact-modal');
     if (!modal) return;
+    setSelectedService(serviceName || '');
     if (activeModal) {
       const currentModal = document.getElementById(activeModal);
       if (currentModal) { currentModal.classList.remove('active'); document.body.classList.remove('modal-open'); document.body.style.top = ''; }
@@ -1193,7 +1241,7 @@
     activeModal = 'contact-modal';
     document.addEventListener('keydown', handleContactEscapeKey);
     window.resetContactForm();
-    setTimeout(() => { const nameInput = document.getElementById('contact-name'); if (nameInput) nameInput.focus(); }, 100);
+    setTimeout(() => { const firstInput = modal.querySelector('.contact-step.active input:not([type=hidden]), .contact-step.active textarea'); if (firstInput) firstInput.focus(); }, 100);
   }
 
   function closeContactModal() {

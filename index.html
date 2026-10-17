@@ -928,7 +928,7 @@
           <dl class="agr-pay-details">
             <div><dt><i class="fa-regular fa-user"></i> Intestatario</dt><dd>Valeria Ilaria Moretti</dd></div>
             <div><dt><i class="fa-solid fa-building-columns"></i> IBAN</dt><dd class="agr-iban">IT83E0338501601100080012640</dd>
-            <button type="button" class="btn-copy-iban" data-copy-iban="IT83E0338501601100080012640"><i class="fa-regular fa-copy"></i> Copia IBAN</button></div>
+            <button type="button" class="btn-copy-iban" data-copy-iban="IT83E0338501601100080012640"><span class="copy-inner"><i class="fa-regular fa-copy"></i><span>Copia IBAN</span></span><span class="copy-ok" aria-hidden="true"><i class="fa-solid fa-check"></i><span>Copiato!</span></span></button></div>
           </dl>
         </article>
       </div>
@@ -1111,14 +1111,31 @@
                   <span class="input-error" id="error-name">Inserisci il tuo nome</span>
                 </div>
                 <div class="contact-step" data-step="2">
+                  <label for="contact-cognome" class="step-label">Il tuo cognome *</label>
+                  <input type="text" id="contact-cognome" name="cognome" placeholder="Es. Rossi" required autocomplete="family-name">
+                  <span class="input-error" id="error-cognome">Inserisci il tuo cognome</span>
+                </div>
+                <div class="contact-step" data-step="3">
                   <label for="contact-email" class="step-label">La tua email *</label>
                   <input type="email" id="contact-email" name="email" placeholder="nome@esempio.it" required autocomplete="email">
                   <span class="input-error" id="error-email">Inserisci un'email valida</span>
                 </div>
-                <div class="contact-step" data-step="3">
+                <div class="contact-step" data-step="4">
                   <label for="contact-phone" class="step-label">Il tuo numero di telefono</label>
                   <input type="tel" id="contact-phone" name="phone" placeholder="+39 333 1234567" autocomplete="tel">
                   <small class="step-hint">Opzionale, ma utile per ricontattarti velocemente</small>
+                </div>
+                <div class="contact-step" data-step="5">
+                  <label for="contact-message" class="step-label">Messaggio</label>
+                  <textarea id="contact-message" name="message" rows="4" placeholder="Raccontami brevemente di cosa hai bisogno..."></textarea>
+                  <small class="step-hint">Opzionale</small>
+                </div>
+
+                <!-- Servizio selezionato (automatico dal pulsante cliccato) -->
+                <div class="contact-step" data-step="fixed-service">
+                  <label class="step-label">Servizio selezionato</label>
+                  <div class="selected-service-chip"><i class="fa-solid fa-tag" aria-hidden="true"></i> <span id="selected-service-name">Richiesta generica</span></div>
+                  <input type="hidden" id="contact-service" name="service">
                 </div>
                 
                 <!-- Step dinamici (vengono inseriti qui da script.js) -->
@@ -1128,7 +1145,7 @@
                 <div class="contact-step" data-step="fixed-privacy">
                   <label class="step-label checkbox-label">
                     <input type="checkbox" id="contact-privacy" name="privacy" required>
-                    <span>Ho letto e accetto la <a href="privacy.html" target="_blank">Privacy Policy</a> e il trattamento dei miei dati personali. *</span>
+                    <span>Dichiaro di aver letto la <a href="privacy.html" target="_blank">Privacy Policy</a> e acconsento al trattamento dei miei dati personali per la gestione della mia richiesta o per l'analisi del quiz compilato. Autorizzo l'invio delle informazioni inserite tramite il modulo al titolare del sito tramite il servizio EmailJS. Sono consapevole che i dati forniti possono includere informazioni personali relative alla mia situazione relazionale e acconsento volontariamente alla loro trasmissione. *</span>
                   </label>
                   <span class="input-error" id="error-privacy">Devi accettare per continuare</span>
                 </div>
@@ -1154,7 +1171,7 @@
                 <i class="fa-solid fa-circle-check"></i>
               </div>
               <h2>Richiesta inviata!</h2>
-              <p id="success-message">Grazie! Ti ricontatterò entro 24 ore. Nel frattempo, respira. 🌿</p>
+              <p id="success-message">Grazie! La tua richiesta è stata inviata. Ti risponderemo entro 24h. Nel frattempo, respira. 🌿</p>
               <button type="button" id="success-close-btn" class="btn btn--uiverse btn--forest">Chiudi</button>
             </div>
           </div>
