@@ -1103,6 +1103,11 @@
                 </div>
               </div>
               
+              <!-- Servizio selezionato: banner sempre visibile sopra il modulo -->
+              <div id="selected-service-banner" class="selected-service-banner" style="display:none;">
+                <i class="fa-solid fa-tag" aria-hidden="true"></i> Servizio selezionato: <strong id="selected-service-name">Richiesta generica</strong>
+              </div>
+
               <form id="contact-form" novalidate>
                 <!-- STEP 1: Dati personali -->
                 <div class="contact-step active" data-step="1">
@@ -1131,10 +1136,10 @@
                   <small class="step-hint">Opzionale</small>
                 </div>
 
-                <!-- Servizio selezionato (automatico dal pulsante cliccato) -->
+                <!-- Servizio selezionato (chip informativo nello step dedicato, nascosto se non serve) -->
                 <div class="contact-step" data-step="fixed-service">
                   <label class="step-label">Servizio selezionato</label>
-                  <div class="selected-service-chip"><i class="fa-solid fa-tag" aria-hidden="true"></i> <span id="selected-service-name">Richiesta generica</span></div>
+                  <div class="selected-service-chip"><i class="fa-solid fa-tag" aria-hidden="true"></i> <span class="selected-service-mirror">Richiesta generica</span></div>
                   <input type="hidden" id="contact-service" name="service">
                 </div>
                 
