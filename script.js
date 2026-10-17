@@ -827,22 +827,32 @@
     const cancelBtn = document.getElementById('modal-cancel-btn');
     const confirmBtn = document.getElementById('modal-confirm-btn');
     let currentServiceKey = '';
+    // "bookForm" = il servizio apre direttamente il modulo di prenotazione (popup),
+    // senza passare dal popup di avviso intermedio «Procedi / Annulla».
     let serviceData = {
       'piano-autonomo': { type: 'Piano Digitale', title: 'Piano autonomo P.E.R.S.M.A.R.T.', desc: 'Stai per acquistare il questionario approfondito e il piano personale scritto da Valeria. Verrai reindirizzato alla pagina di checkout sicuro.', actionUrl: 'acquista-piano.html' },
-      'sessione-studio': { type: 'Sessione Individuale', title: 'Sessione in studio', desc: 'Stai per prenotare un incontro di 60 minuti nel mio studio a Valle Lomellina (PV). Verrai reindirizzato al calendario per scegliere data e ora.', actionUrl: 'prenota.html?tipo=studio' },
-      'sessione-online': { type: 'Sessione Individuale', title: 'Sessione online', desc: 'Stai per prenotare un incontro di 60 minuti tramite videochiamata. Verrai reindirizzato al calendario per scegliere data e ora.', actionUrl: 'prenota.html?tipo=online' },
+      'sessione-studio': { type: 'Sessione Individuale', title: 'Sessione in studio', desc: '', actionUrl: 'prenota.html?tipo=studio', bookForm: true },
+      'sessione-online': { type: 'Sessione Individuale', title: 'Sessione online', desc: '', actionUrl: 'prenota.html?tipo=online', bookForm: true },
       'percorso-gruppo': { type: 'Percorso di Gruppo', title: 'Percorsi di gruppo', desc: 'Lascia i tuoi dati per essere avvisato non appena si apriranno le iscrizioni al prossimo percorso di gruppo a numero chiuso.', actionUrl: 'servizi.html#gruppi' }
     };
     // Se la dashboard admin ha popolato 'service_packages', usa i pacchetti del database
     if (window.__dynamicPackages && Object.keys(window.__dynamicPackages).length > 0) {
       serviceData = {};
       Object.entries(window.__dynamicPackages).forEach(([k, p]) => {
-        serviceData[k] = { type: p.type || 'Servizio', title: p.name || k, desc: p.desc || '', actionUrl: p.actionUrl || '' };
+        // mantieni il comportamento «modulo diretto» per le sessioni prenotabili
+        const isBookable = k === 'sessione-studio' || k === 'sessione-online';
+        serviceData[k] = { type: p.type || 'Servizio', title: p.name || k, desc: p.desc || '', actionUrl: p.actionUrl || '', bookForm: isBookable };
       });
     }
     function openModal(serviceKey) {
       const data = serviceData[serviceKey];
       if (!data) return;
+      // "Prenota in studio" / "Prenota online": niente popup di avviso intermedio,
+      // apri direttamente il modulo di prenotazione (servizio già selezionato).
+      if (data.bookForm || /prenota\.html/.test(data.actionUrl || '')) {
+        openContactModal(contactFormTemplateId, data.title);
+        return;
+      }
       document.getElementById('modal-service-type').textContent = data.type;
       document.getElementById('modal-service-title').textContent = data.title;
       document.getElementById('modal-service-desc').textContent = data.desc;
@@ -1237,6 +1247,8 @@
     document.documentElement.style.setProperty('--scroll-y', `${scrollY}px`);
     document.body.classList.add('modal-open');
     document.body.style.top = `-${scrollY}px`;
+    modal.classList.remove('hidden');
+    modal.removeAttribute('hidden'); // l'attributo hidden bloccherebbe il popup (CSS usa .hidden)
     modal.classList.add('active');
     activeModal = 'contact-modal';
     document.addEventListener('keydown', handleContactEscapeKey);
@@ -1248,6 +1260,7 @@
     const modal = document.getElementById('contact-modal');
     if (!modal) return;
     modal.classList.remove('active');
+    modal.setAttribute('hidden', ''); // nasconde davvero il popup (attributo hidden)
     document.removeEventListener('keydown', handleContactEscapeKey);
     setTimeout(() => {
       const scrollY = document.documentElement.style.getPropertyValue('--scroll-y');
