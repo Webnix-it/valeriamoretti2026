@@ -1240,6 +1240,7 @@
     const stepCounter = document.getElementById('quiz-step-counter');
     if (progressBar) progressBar.style.width = progress + '%';
     if (stepCounter) stepCounter.textContent = 'Domanda ' + (quizCurrentStep + 1) + ' di ' + questions.length;
+    updateQuizProgressPercent();
     const questionText = document.getElementById('quiz-question-text');
     const optionsContainer = document.getElementById('quiz-options-container');
     if (questionText) questionText.textContent = question.text;
@@ -1268,6 +1269,8 @@
     const resultContainer = document.getElementById('quiz-result-container');
     const contactSection = document.getElementById('quiz-contact-section');
     questionContainer.classList.add('hidden');
+    const pPct = document.getElementById('quiz-progress-percent'); if (pPct) pPct.textContent = '100%';
+    const pBar = document.getElementById('quiz-progress-bar'); if (pBar) pBar.style.width = '100%';
     resultContainer.classList.add('visible');
     let maxScore = 'A';
     for (let key in quizScores) { if (quizScores[key] > quizScores[maxScore]) maxScore = key; }
@@ -1279,7 +1282,9 @@
     document.getElementById('quiz-result-description').textContent = result.description || '';
     if (contactSection) {
       contactSection.classList.remove('hidden');
-      setTimeout(() => contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+      // scroll interno al popup (non della pagina): la sezione contatti è dentro .quiz-modal-container
+      const box = document.querySelector('.quiz-modal-container');
+      if (box) setTimeout(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }), 350);
     }
   }
 
@@ -1352,6 +1357,7 @@
   function openQuizModal() {
     const modal = document.getElementById('quiz-modal');
     if (!modal) return;
+    modal.hidden = false;
     if (activeModal) {
       const currentModal = document.getElementById(activeModal);
       if (currentModal) { currentModal.classList.remove('active'); document.body.classList.remove('modal-open'); document.body.style.top = ''; }
@@ -1363,7 +1369,8 @@
     modal.classList.add('active');
     activeModal = 'quiz-modal';
     document.addEventListener('keydown', handleQuizEscapeKey);
-    window.resetQuiz();
+    if (typeof window.resetQuiz === 'function') window.resetQuiz(); else resetQuiz();
+    updateQuizProgressPercent();
     setTimeout(() => { const firstQuestion = document.getElementById('quiz-question-text'); if (firstQuestion) firstQuestion.focus(); }, 100);
   }
 
@@ -1371,6 +1378,7 @@
     const modal = document.getElementById('quiz-modal');
     if (!modal) return;
     modal.classList.remove('active');
+    setTimeout(() => { modal.hidden = true; }, 420);
     document.removeEventListener('keydown', handleQuizEscapeKey);
     setTimeout(() => {
       const scrollY = document.documentElement.style.getPropertyValue('--scroll-y');
@@ -1384,8 +1392,19 @@
 
   function handleQuizEscapeKey(e) { if (e.key === 'Escape') { e.preventDefault(); closeQuizModal(); } }
 
+  // Etichetta percentuale accanto alla barra di avanzamento del popup
+  function updateQuizProgressPercent() {
+    const el = document.getElementById('quiz-progress-percent');
+    if (!el) return;
+    const questions = getQuizQuestions();
+    const pct = questions.length ? Math.round(((quizCurrentStep + 1) / questions.length) * 100) : 0;
+    el.textContent = Math.min(pct, 100) + '%';
+  }
+
   function resetQuiz() {
     quizCurrentStep = 0;
+    ['quiz-error-name','quiz-error-email','quiz-error-message','quiz-error-phone'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=''; });
+    document.querySelectorAll('#quiz-contact-form label.error').forEach(l => l.classList.remove('error'));
     quizScores = { A: 0, B: 0, C: 0, D: 0 };
     quizFinalProfile = '';
     quizFinalProfileTitle = '';
@@ -1411,8 +1430,17 @@
         if (label) label.classList.remove('error');
       });
     });
-    const quizBtn = document.getElementById('iniziatquiz');
-    if (quizBtn) quizBtn.addEventListener('click', function(e) { e.preventDefault(); openQuizModal(); });
+    const quizOpenButtons = ['iniziatquiz', 'quiz-open-hero', 'quiz-open-mm'];
+    quizOpenButtons.forEach(function(btnId) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        // se il menu mobile è aperto, chiudilo prima di mostrare il popup
+        if (typeof window.closeMobileMenu === 'function') { try { window.closeMobileMenu(); } catch (_) {} }
+        openQuizModal();
+      });
+    });
     const quizCloseBtn = document.getElementById('quiz-modal-close');
     if (quizCloseBtn) quizCloseBtn.addEventListener('click', closeQuizModal);
     const quizSuccessCloseBtn = document.getElementById('quiz-success-close-btn');
@@ -1447,6 +1475,10 @@
   // prima causava un ReferenceError TDZ ("Cannot access 'defaultConfig'
   // before initialization") che abortava l'esecuzione dell'intero script.
   window.__defaultQuizTitle = (defaultConfig.general && defaultConfig.general.quizTitle) || '';
+
+  window.resetQuiz = resetQuiz;
+  window.openQuizModal = openQuizModal;
+  window.closeQuizModal = closeQuizModal;
 
   window.dynamicSiteConfig = {
     reload: loadSiteConfigFromFirebase,

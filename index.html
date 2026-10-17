@@ -132,7 +132,7 @@
       <li><button type="button" class="nav-link-btn mm-item" data-open-agreement><i class="fa-solid fa-file-signature" aria-hidden="true"></i><span>Accordo di coaching</span></button></li>
       <li><a href="faq.html" class="mobile-nav-link"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>FAQ &amp; Contatti</span></a></li>
     </ul>
-    <a href="test.html" class="btn btn--uiverse btn--forest mm-cta">Inizia il test gratuito</a>
+    <button type="button" id="quiz-open-mm" class="btn btn--uiverse btn--forest mm-cta">Inizia il test gratuito</button>
   </nav>
 
   <main>
@@ -149,7 +149,7 @@
           </p>
           <div class="hero-actions reveal reveal-delay-3">
             <a href="#servizi" class="btn btn--uiverse btn--forest">Scopri i percorsi</a>
-            <a href="test.html" class="btn btn--uiverse btn--light">Fai il test gratuito</a>
+            <button type="button" id="quiz-open-hero" class="btn btn--uiverse btn--light">Fai il test gratuito</button>
           </div>
         </div>
         <div class="hero-visual reveal reveal-delay-2" role="img" aria-label="Valeria Moretti, Mental Coach">
@@ -208,7 +208,7 @@
             <p>10 domande, 3 minuti, risultato immediato con un esercizio pratico. Gratuito, senza email obbligatoria. Esplorativo, non diagnostico.</p>
           </div>
           <div class="actions">
-            <a href="test.html" class="btn btn--uiverse btn--light">Inizia il test gratuito</a>
+            <button type="button" id="iniziatquiz" class="btn btn--uiverse btn--light">Inizia il test gratuito</button>
           </div>
         </div>
       </div>
@@ -978,6 +978,80 @@
             Annulla
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============ MODALE: TEST GRATUITO (questionario popup) ============ -->
+  <div id="quiz-modal" class="quiz-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="quiz-question-text" hidden>
+    <div class="quiz-modal-container">
+      <button type="button" id="quiz-modal-close" class="quiz-modal-close" aria-label="Chiudi test">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="quiz-modal-header">
+        <span class="eyebrow">Test gratuito</span>
+        <h2 class="serif" id="quiz-modal-title">Dove si bloccano i tuoi obiettivi?</h2>
+        <div class="quiz-progress-info">
+          <span id="quiz-step-counter">Domanda 1</span>
+          <span id="quiz-progress-percent"></span>
+        </div>
+        <div class="quiz-progress-track"><div class="quiz-progress-bar" id="quiz-progress-bar" style="width:0%"></div></div>
+      </div>
+
+      <!-- Stato: domande -->
+      <div class="quiz-question-container" id="quiz-question-container">
+        <h3 class="quiz-question-text" id="quiz-question-text" tabindex="-1">&nbsp;</h3>
+        <div class="quiz-options-container" id="quiz-options-container"></div>
+      </div>
+
+      <!-- Stato: risultato -->
+      <div class="quiz-result-container" id="quiz-result-container">
+        <div class="quiz-result-badge"><i class="fa-solid fa-compass"></i></div>
+        <h3 class="serif" id="quiz-result-title"></h3>
+        <p class="quiz-result-description" id="quiz-result-description"></p>
+        <p class="quiz-result-note">Risultato esplorativo, non diagnostico.</p>
+      </div>
+
+      <!-- Sezione contatti post-risultato -->
+      <div class="quiz-contact-section hidden" id="quiz-contact-section">
+        <h4>Vuoi parlarne con me?</h4>
+        <p>Raccontami la tua situazione: ti ricontatterò entro 24 ore.</p>
+        <form id="quiz-contact-form" novalidate>
+          <div class="quiz-field">
+            <label for="quiz-contact-name" id="quiz-input-label-name">Nome *</label>
+            <input type="text" id="quiz-contact-name" name="name" placeholder="Il tuo nome" required autocomplete="name">
+            <span class="input-error" id="quiz-error-name"></span>
+          </div>
+          <div class="quiz-field">
+            <label for="quiz-contact-email" id="quiz-input-label-email">Email *</label>
+            <input type="email" id="quiz-contact-email" name="email" placeholder="nome@esempio.it" required autocomplete="email">
+            <span class="input-error" id="quiz-error-email"></span>
+          </div>
+          <div class="quiz-field">
+            <label for="quiz-contact-phone" id="quiz-input-label-phone">Telefono</label>
+            <input type="tel" id="quiz-contact-phone" name="phone" placeholder="+39 333 1234567" autocomplete="tel">
+            <span class="input-error" id="quiz-error-phone"></span>
+          </div>
+          <div class="quiz-field">
+            <label for="quiz-contact-message" id="quiz-input-label-message">Cosa vorresti condividere? *</label>
+            <textarea id="quiz-contact-message" name="message" rows="3" placeholder="Es. Vorrei lavorare sulla costanza nelle abitudini..."></textarea>
+            <span class="input-error" id="quiz-error-message"></span>
+          </div>
+          <div class="quiz-field quiz-privacy">
+            <label class="quiz-checkbox"><input type="checkbox" id="quiz-contact-privacy"> Accetto la <a href="privacy.html" target="_blank" rel="noopener">privacy policy</a> *</label>
+          </div>
+          <button type="submit" id="quiz-submit-btn" class="btn btn--uiverse btn--forest quiz-submit-button">Invia e prenota una chiacchierata <i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+      </div>
+
+      <!-- Stato: inviato -->
+      <div class="quiz-success" id="quiz-success">
+        <div class="quiz-success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <h3>Richiesta inviata!</h3>
+        <p id="quiz-success-message">Grazie! Ti ricontatterò entro 24 ore.</p>
+        <button type="button" id="quiz-success-close-btn" class="btn btn--uiverse btn--forest">Chiudi</button>
       </div>
     </div>
   </div>
