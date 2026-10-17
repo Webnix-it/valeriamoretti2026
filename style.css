@@ -1284,8 +1284,11 @@ button { font-family: inherit; cursor: pointer; }
 .site-footer { background: var(--verde-bosco); color: rgba(248, 245, 239, 0.85); padding: 60px 0 30px; }
 .footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
 .footer-grid h4 { color: var(--avorio); font-family: 'Inter', sans-serif; font-size: 0.85rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 16px; }
-.footer-grid a { display: block; font-size: 0.88rem; padding: 4px 0; opacity: 0.85; transition: opacity var(--transizione); }
+.footer-grid a, .footer-grid button.footer-link { display: block; font-size: 0.88rem; padding: 4px 0; opacity: 0.85; transition: opacity var(--transizione); }
 .footer-grid a:hover { opacity: 1; }
+/* "Test gratuito" nel footer è un bottone che apre il popup: stesso stile dei link */
+.footer-grid button.footer-link { background: none; border: none; color: inherit; font-family: inherit; text-align: left; cursor: pointer; line-height: inherit; }
+.footer-grid button.footer-link:hover { opacity: 1; }
 .footer-brand .logo { color: var(--avorio); font-size: 1.4rem; }
 .footer-brand .logo span { color: var(--salvia); }
 .footer-brand p { font-size: 0.85rem; margin-top: 12px; opacity: 0.8; max-width: 300px; }

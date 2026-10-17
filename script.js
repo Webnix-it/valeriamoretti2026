@@ -1430,15 +1430,25 @@
         if (label) label.classList.remove('error');
       });
     });
-    const quizOpenButtons = ['iniziatquiz', 'quiz-open-hero', 'quiz-open-mm'];
-    quizOpenButtons.forEach(function(btnId) {
-      const btn = document.getElementById(btnId);
-      if (!btn) return;
+    // Bottone "Test gratuito" nella navbar desktop: apre il popup (non va più a test.html)
+    document.querySelectorAll('.quiz-open-trigger').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.preventDefault();
-        // se il menu mobile è aperto, chiudilo prima di mostrare il popup
         if (typeof window.closeMobileMenu === 'function') { try { window.closeMobileMenu(); } catch (_) {} }
         openQuizModal();
+      });
+    });
+    const quizOpenButtons = ['iniziatquiz', 'quiz-open-hero'];
+    quizOpenButtons.forEach(function(btnId) {
+      const btns = document.querySelectorAll('[id="' + btnId + '"]'); // gestisce eventuali id duplicati
+      btns.forEach(function(btn) {
+        if (!btn) return;
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          // se il menu mobile è aperto, chiudilo prima di mostrare il popup
+          if (typeof window.closeMobileMenu === 'function') { try { window.closeMobileMenu(); } catch (_) {} }
+          openQuizModal();
+        });
       });
     });
     const quizCloseBtn = document.getElementById('quiz-modal-close');
