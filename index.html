@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mental Coach e Obiettivi Personali | Valeria Moretti</title>
+  <meta name="description" content="Valeria Moretti, Mental Coach. Il metodo P.E.R.S.M.A.R.T. trasforma i tuoi obiettivi in azioni concrete. Test gratuito, sessioni in studio e online." />
+  
+  <!-- Font e Icone -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
+  
+  <!-- Fogli di stile -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="page-home">
+
+  <!-- ============ SITE LOADER (PRELOADER) ============
+       Il preloader è AUTO-SUFFICIENTE: si avvia e si nasconde da solo grazie
+       allo script inline qui sotto, senza dipendere da script.js, da Firebase
+       o dalla rete. In questo modo compare SEMPRE, anche se uno di questi
+       fallisce, e sparisce comunque entro pochi secondi al massimo. -->
+  <div id="site-loader" aria-hidden="true">
+    <div id="loader-content">
+      <h1 id="loader-title">
+        <span>V</span><span>a</span><span>l</span><span>e</span><span>r</span><span>i</span><span>a</span><span class="loader-space">&nbsp;</span><i id="loader-logo"><i class="fa-solid fa-heart-pulse"></i></i><span class="loader-space">&nbsp;</span><span>M</span><span>o</span><span>r</span><span>e</span><span>t</span><span>t</span><span>i</span>
+      </h1>
+      <p id="loader-subtitle">Consulente Relazionale</p>
+      <div id="loader-progress-container">
+        <div id="loader-progress-bar"></div>
+      </div>
+      <p id="loader-percentage">0%</p>
+    </div>
+  </div>
+  <script>
+    /* Preloader self-contained: parte all'istante (il DOM sopra è già
+       parsato) e non richiede alcun file esterno. */
+    (function () {
+      var loader = document.getElementById('site-loader');
+      if (!loader || loader.dataset.loaderStarted === 'true') return;
+      loader.dataset.loaderStarted = 'true';
+      var bar = document.getElementById('loader-progress-bar');
+      var pct = document.getElementById('loader-percentage');
+      document.body.classList.add('loading');
+      var progress = 0, finished = false;
+
+      function hideLoader() {
+        if (finished) return;
+        finished = true;
+        clearInterval(interval);
+        if (bar) bar.style.width = '100%';
+        if (pct) pct.textContent = '100%';
+        setTimeout(function () {
+          loader.classList.add('hidden');
+          setTimeout(function () {
+            loader.style.display = 'none';
+            document.body.classList.remove('loading');
+            document.body.classList.add('loaded');
+          }, 900);
+        }, 400);
+      }
+
+      var interval = setInterval(function () {
+        if (progress < 60) progress += Math.random() * 5 + 2;
+        else if (progress < 70) progress += Math.random() * 3 + 1;
+        else progress += Math.random() * 2 + 0.5;
+        if (progress >= 100) { progress = 100; hideLoader(); }
+        if (bar) bar.style.width = progress + '%';
+        if (pct) pct.textContent = Math.round(progress) + '%';
+      }, 100);
+
+      /* Durata massima garantita: 4 secondi, qualunque cosa succeda. */
+      setTimeout(hideLoader, 4000);
+      if (document.readyState === 'complete') hideLoader();
+      else window.addEventListener('load', function () { setTimeout(hideLoader, 600); });
+    })();
+  </script>
+
+  <!-- Rete di salvataggio: se uno script esterno (script.js / firebase-config.js)
+       va in errore, il loader viene nascosto e la pagina mostrata comunque. -->
+  <script>
+    /* Nota: gli errori nei moduli ES (firebase-config.js) NON passano da
+       qui; per quelli c'è il timeout di sicurezza a fine pagina. */
+    window.addEventListener('error', function () {
+      var l = document.getElementById('site-loader');
+      if (l && !l.classList.contains('hidden')) {
+        l.classList.add('hidden');
+        setTimeout(function () { l.style.display = 'none'; }, 900);
+        document.body.classList.remove('loading');
+        document.body.classList.add('loaded');
+      }
+    });
+  </script>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="container nav-inner">
+      <a href="index.html" class="logo">Valeria Moretti<span>Mental Coach</span></a>
+      <nav aria-label="Navigazione principale">
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link active">Home</a></li>
+          <li><a href="#metodo" class="nav-link">Metodo</a></li>
+          <li><a href="#servizi" class="nav-link">Servizi</a></li>
+          <li><button type="button" id="quiz-open-nav" class="nav-link nav-link-btn quiz-open-trigger" data-open-quiz title="Apri il test gratuito in un popup">Test gratuito</button></li>
+          <li><a href="#chi-sono" class="nav-link">Chi sono</a></li>
+          <li><button type="button" class="nav-link-btn" data-open-agreement>Accordo di coaching</button></li>
+        </ul>
+      </nav>
+      <div class="nav-cta">
+        <button type="button" id="bntprenota" class="btn btn--uiverse btn--forest">Prenota una sessione</button>
+        <button class="burger" aria-label="Apri menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Menu mobile -->
+  <nav class="mobile-menu" aria-label="Menu mobile" id="mobileMenu">
+    <button type="button" class="menu-close" aria-label="Chiudi menu">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+    <ul class="mm-list">
+      <li><a href="index.html" class="mobile-nav-link"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a></li>
+      <li><a href="#metodo" class="mobile-nav-link"><i class="fa-solid fa-route" aria-hidden="true"></i><span>Metodo</span></a></li>
+      <li><a href="#servizi" class="mobile-nav-link"><i class="fa-solid fa-briefcase" aria-hidden="true"></i><span>Servizi &amp; Prezzi</span></a></li>
+      <li><button type="button" id="quiz-open-mm" class="mobile-nav-link quiz-open-trigger"><i class="fa-solid fa-circle-question" aria-hidden="true"></i><span>Test gratuito</span></button></li>
+      <li><a href="#chi-sono" class="mobile-nav-link"><i class="fa-solid fa-user" aria-hidden="true"></i><span>Chi sono</span></a></li>
+      <li><button type="button" id="mobile-Contattami" class="mobile-nav-link"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i><span>Prenota / Contatti</span></button></li>
+    </ul>
+    <ul class="mm-list mm-list-secondary">
+      <li><button type="button" class="nav-link-btn mm-item" data-open-agreement><i class="fa-solid fa-file-signature" aria-hidden="true"></i><span>Accordo di coaching</span></button></li>
+      <li><a href="faq.html" class="mobile-nav-link"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>FAQ &amp; Contatti</span></a></li>
+    </ul>
+    <button type="button" id="quiz-open-mm" class="btn btn--uiverse btn--forest mm-cta">Inizia il test gratuito</button>
+  </nav>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="home">
+      <div class="container hero-grid">
+        <div>
+          <span class="eyebrow reveal">Metodo P.E.R.S.M.A.R.T.</span>
+          <h1 class="reveal reveal-delay-1">Trasforma i tuoi obiettivi in <em>azioni concrete</em>, ogni giorno.</h1>
+          <p class="lead reveal reveal-delay-2">
+            Aiuto le persone a capire cosa ostacola i propri obiettivi e a costruire abitudini
+            reali e sostenibili. Niente promesse miracolose: solo un metodo pratico,
+            misurabile e su misura per te.
+          </p>
+          <div class="hero-actions reveal reveal-delay-3">
+            <a href="#servizi" class="btn btn--uiverse btn--forest">Scopri i percorsi</a>
+            <button type="button" id="quiz-open-hero" class="btn btn--uiverse btn--light">Fai il test gratuito</button>
+          </div>
+        </div>
+        <div class="hero-visual reveal reveal-delay-2" role="img" aria-label="Valeria Moretti, Mental Coach">
+          <span class="initials">VM</span>
+          <div class="hero-badge">
+            <strong>Valeria Moretti</strong> · Mental Coach — Valle Lomellina (PV)<br />
+            Sessioni in studio, online e piano digitale autonomo.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PROBLEMI COMUNI ============ -->
+    <section class="section section--salvia" id="problemi">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Ti riconosci?</span>
+          <h2>I blocchi più comuni tra te e i tuoi obiettivi</h2>
+          <p>Non è mancanza di volontà. Spesso è mancanza di chiarezza, struttura e costanza.</p>
+        </div>
+        <div class="pain-grid">
+          <div class="pain-card reveal">
+            <div class="icon"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i></div>
+            <h3>Rimandi da mesi</h3>
+            <p>Sai cosa dovresti fare, ma continui a posporre. Il tempo passa e la frustrazione cresce.</p>
+          </div>
+          <div class="pain-card reveal reveal-delay-1">
+            <div class="icon"><i class="fa-solid fa-smog" aria-hidden="true"></i></div>
+            <h3>Obiettivi poco chiari</h3>
+            <p>"Vorrei cambiare vita" non è un piano. Senza definizione precisa, ogni azione sembra inutile.</p>
+          </div>
+          <div class="pain-card reveal reveal-delay-2">
+            <div class="icon"><i class="fa-solid fa-fire-flame-curved" aria-hidden="true"></i></div>
+            <h3>Entusiasmo che dura poco</h3>
+            <p>Inizi motivato, dopo due settimane molla. La costanza non si improvvisa: si progetta.</p>
+          </div>
+          <div class="pain-card reveal reveal-delay-3">
+            <div class="icon"><i class="fa-solid fa-cubes-stacked" aria-hidden="true"></i></div>
+            <h3>Abitudini difficili da cambiare</h3>
+            <p>Le vecchie abitudini vincono sempre sul nuovo progetto. Serve un metodo, non solo forza di volontà.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    <!-- ============ TEST BAND ============ -->
+
+    <section class="section">
+      
+
+      <div class="container">
+        <div class="test-band reveal">
+          <div>
+            <h2>Dove si bloccano i tuoi obiettivi?</h2>
+            <p>10 domande, 3 minuti, risultato immediato con un esercizio pratico. Gratuito, senza email obbligatoria. Esplorativo, non diagnostico.</p>
+          </div>
+          <div class="actions">
+            <button type="button" id="iniziatquiz" class="btn btn--uiverse btn--light">Inizia il test gratuito</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ METODO ============ -->
+    <section class="section" id="metodo">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Il metodo</span>
+          <h2>P.E.R.S.M.A.R.T.: sei fasi per arrivare dove vuoi</h2>
+          <p>Un percorso strutturato che trasforma un'idea vaga in un piano d'azione realistico.</p>
+        </div>
+        <ol class="method-timeline">
+          <li class="timeline-item reveal">
+            <span class="timeline-circle" aria-hidden="true">P</span>
+            <div class="timeline-content"><h3>Posizione</h3><p>Dove sei oggi, senza giudizi: punti di partenza, risorse e ostacoli reali.</p></div>
+          </li>
+          <li class="timeline-item reveal">
+            <span class="timeline-circle" aria-hidden="true">E</span>
+            <div class="timeline-content"><h3>Esito</h3><p>Definire l'obiettivo in modo concreto, misurabile e desiderabile davvero.</p></div>
+          </li>
+          <li class="timeline-item reveal">
+            <span class="timeline-circle" aria-hidden="true">R</span>
+            <div class="timeline-content"><h3>Resistenza</h3><p>Emerso ciò che ti blocca: paure, abitudini, scuse ricorrenti.</p></div>
+          </li>
+          <li class="timeline-item reveal">
+            <span class="timeline-circle" aria-hidden="true">S</span>
+            <div class="timeline-content"><h3>Strategia</h3><p>Il piano d'azione personalizzato, con passi piccoli e verificabili.</p></div>
+          </li>
+          <li class="timeline-item reveal">
+            <span class="timeline-circle" aria-hidden="true">M</span>
+            <div class="timeline-content"><h3>Messa in moto</h3><p>Azione guidata, routine e strumenti per partire davvero.</p></div>
+          </li>
+          <li class="timeline-item reveal">
+            <span class="timeline-circle" aria-hidden="true">A</span>
+            <div class="timeline-content"><h3>Azione, Revisione, Tenacia</h3><p>Monitoraggio continuo, correzione della rotta e costanza nel tempo.</p></div>
+          </li>
+        </ol>
+        <p class="method-note reveal">L'espansione ufficiale dell'acronimo è in fase di conferma con la professionista.</p>
+        <div style="text-align:center; margin-top:26px;" class="reveal">
+          <a href="#servizi" class="btn btn--uiverse btn--sage">Trova il tuo percorso</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SERVIZI ============ -->
+    <section class="section section--salvia" id="servizi">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Servizi</span>
+          <h2>Scegli come vuoi lavorare insieme</h2>
+        </div>
+        <div class="services-grid">
+          <div class="service-card featured reveal">
+            <span class="service-tag">Il più completo</span>
+            <h3><span class="service-title-icon"><i class="fa-solid fa-file-contract"></i></span> Piano autonomo P.E.R.S.M.A.R.T.</h3>
+            <div class="service-price">50&nbsp;€ <small>una tantum · consegna digitale</small></div>
+            <ul>
+              <li>Questionario approfondito (14 domande)</li>
+              <li>Piano personale scritto da Valeria</li>
+              <li>Consegna tramite email protetta</li>
+            </ul>
+            <button type="button" class="btn btn--uiverse btn--forest" data-service-modal="piano-autonomo">Acquista il piano</button>
+          </div>
+          <div class="service-card reveal reveal-delay-1">
+            <h3><span class="service-title-icon"><i class="fa-solid fa-location-dot"></i></span> Sessione in studio</h3>
+            <div class="service-price">50&nbsp;€ <small>/ora</small></div>
+            <ul>
+              <li>Incontro individuale di 60 minuti</li>
+              <li>Studio a Valle Lomellina (PV)</li>
+              <li>Piano d'azione concordato</li>
+            </ul>
+            <button type="button" class="btn btn--uiverse btn--sage" data-service-modal="sessione-studio">Prenota in studio</button>
+          </div>
+          <div class="service-card reveal reveal-delay-2">
+            <h3><span class="service-title-icon"><i class="fa-solid fa-laptop"></i></span> Sessione online</h3>
+            <div class="service-price">50&nbsp;€ <small>/ora</small></div>
+            <ul>
+              <li>Videochiamata di 60 minuti</li>
+              <li>Da qualsiasi luogo</li>
+              <li>Stesso metodo, più flessibilità</li>
+            </ul>
+            <button type="button" class="btn btn--uiverse btn--sage" data-service-modal="sessione-online">Prenota online</button>
+          </div>
+          <div class="service-card reveal reveal-delay-3">
+            <h3><span class="service-title-icon"><i class="fa-solid fa-users"></i></span> Percorsi di gruppo</h3>
+            <div class="service-price">Prossimo <small>l'avvio</small></div>
+            <ul>
+              <li>Incontri guidati a numero chiuso</li>
+              <li>Obiettivi condivisi e supporto reciproco</li>
+            </ul>
+            <button type="button" class="btn btn--uiverse btn--sage" data-service-modal="percorso-gruppo">Lista d'interesse</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RECENSIONI ============ -->
+    <section id="testimonials" class="reveal">
+
+      <div class="container">               
+         <span class="eyebrow">Recensioni</span>
+
+        <div id="section-titolo">
+          <h2>Cosa dicono di me</h2>
+          <div class="stars">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+          <p id="rvg">Recensioni verificate da Google</p>
+        </div>
+        <div class="testimonials-wrapper">
+          <div class="testimonials-track" id="testimonials-track">
+            <!-- Le card vengono generate dinamicamente da script.js -->
+          </div>
+        </div>
+        <div class="testimonials-dots" id="testimonials-dots"></div>
+        
+        <!-- Bottone "Lascia una recensione" -->
+        <a href="https://g.page/r/CS3sicgCThgBEBM/review" target="_blank" rel="noopener" id="btn-recensione" class="btn-recensione">
+          <span class="btn-recensione-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+          </span>
+          <span class="btn-recensione-text">Lascia una recensione</span>
+          <i class="fa-solid fa-arrow-right btn-recensione-arrow"></i>
+        </a>
+      </div>
+    </section>
+
+
+
+
+    <!-- ==========================================================
+     FAQ — VALERIA MORETTI | MENTAL COACH
+     HTML + CSS + JavaScript
+     Palette: Avorio · Verde bosco · Salvia
+     ========================================================== -->
+
+<section id="faq-vm" class="faq-vm-section" aria-labelledby="faq-vm-title">
+
+  <div class="faq-vm-container">
+
+    <!-- Intestazione -->
+    <header class="faq-vm-header">
+      <span class="faq-vm-eyebrow">Hai qualche domanda?</span>
+
+      <h2 id="faq-vm-title">
+        Le risposte che <em>cercavi</em>
+      </h2>
+
+      <p class="faq-vm-intro">
+        Prima di iniziare un percorso, è naturale voler capire meglio
+        come funziona. Qui trovi le risposte alle domande più frequenti.
+      </p>
+    </header>
+
+    <!-- Accordion FAQ -->
+    <div class="faq-vm-list">
+
+      <article class="faq-vm-item">
+        <h3 class="faq-vm-question">
+          <button
+            class="faq-vm-trigger"
+            id="faq-vm-question-1"
+            aria-expanded="false"
+            aria-controls="faq-vm-answer-1"
+          >
+            <span class="faq-vm-number">01</span>
+            <span class="faq-vm-question-text">
+              Che cos'è la consulenza relazionale?
+            </span>
+            <span class="faq-vm-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M5 12H19"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </h3>
+
+        <div
+          class="faq-vm-answer"
+          id="faq-vm-answer-1"
+          role="region"
+          aria-labelledby="faq-vm-question-1"
+          hidden
+        >
+          <div class="faq-vm-answer-inner">
+            La consulenza relazionale è uno spazio di ascolto e
+            riflessione dedicato a comprendere meglio le proprie
+            dinamiche relazionali, riconoscere schemi ricorrenti
+            e sviluppare maggiore consapevolezza nelle relazioni
+            con gli altri.
+            <br><br>
+            L'obiettivo è aiutarti a individuare nuove prospettive
+            e scelte più in linea con i tuoi bisogni e i tuoi valori.
+          </div>
+        </div>
+      </article>
+
+      <article class="faq-vm-item">
+        <h3 class="faq-vm-question">
+          <button
+            class="faq-vm-trigger"
+            id="faq-vm-question-2"
+            aria-expanded="false"
+            aria-controls="faq-vm-answer-2"
+          >
+            <span class="faq-vm-number">02</span>
+            <span class="faq-vm-question-text">
+              A chi si rivolge il percorso?
+            </span>
+            <span class="faq-vm-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M5 12H19"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </h3>
+
+        <div
+          class="faq-vm-answer"
+          id="faq-vm-answer-2"
+          role="region"
+          aria-labelledby="faq-vm-question-2"
+          hidden
+        >
+          <div class="faq-vm-answer-inner">
+            È pensato per chi desidera comprendere meglio le proprie
+            relazioni, riconoscere comportamenti che tendono a ripetersi
+            e affrontare con maggiore consapevolezza le proprie scelte
+            affettive e personali.
+            <br><br>
+            Ogni percorso viene valutato in base alle esigenze e agli
+            obiettivi della persona.
+          </div>
+        </div>
+      </article>
+
+      <article class="faq-vm-item">
+        <h3 class="faq-vm-question">
+          <button
+            class="faq-vm-trigger"
+            id="faq-vm-question-3"
+            aria-expanded="false"
+            aria-controls="faq-vm-answer-3"
+          >
+            <span class="faq-vm-number">03</span>
+            <span class="faq-vm-question-text">
+              Come si svolge una sessione?
+            </span>
+            <span class="faq-vm-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M5 12H19"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </h3>
+
+        <div
+          class="faq-vm-answer"
+          id="faq-vm-answer-3"
+          role="region"
+          aria-labelledby="faq-vm-question-3"
+          hidden
+        >
+          <div class="faq-vm-answer-inner">
+            La sessione si svolge online, in uno spazio dedicato
+            all'ascolto, al confronto e alla riflessione.
+            Si parte da ciò che stai vivendo, dalle tue domande
+            e dagli obiettivi che desideri raggiungere.
+            <br><br>
+            Il lavoro viene sviluppato in modo graduale, rispettando
+            i tuoi tempi e le tue necessità.
+          </div>
+        </div>
+      </article>
+
+      <article class="faq-vm-item">
+        <h3 class="faq-vm-question">
+          <button
+            class="faq-vm-trigger"
+            id="faq-vm-question-4"
+            aria-expanded="false"
+            aria-controls="faq-vm-answer-4"
+          >
+            <span class="faq-vm-number">04</span>
+            <span class="faq-vm-question-text">
+              Quanto dura una sessione?
+            </span>
+            <span class="faq-vm-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M5 12H19"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </h3>
+
+        <div
+          class="faq-vm-answer"
+          id="faq-vm-answer-4"
+          role="region"
+          aria-labelledby="faq-vm-question-4"
+          hidden
+        >
+          <div class="faq-vm-answer-inner">
+            Una sessione individuale dura indicativamente 60 minuti.
+            Questo tempo permette di esplorare con calma i temi
+            che desideri affrontare e individuare i prossimi passi
+            del tuo percorso.
+          </div>
+        </div>
+      </article>
+
+      <article class="faq-vm-item">
+        <h3 class="faq-vm-question">
+          <button
+            class="faq-vm-trigger"
+            id="faq-vm-question-5"
+            aria-expanded="false"
+            aria-controls="faq-vm-answer-5"
+          >
+            <span class="faq-vm-number">05</span>
+            <span class="faq-vm-question-text">
+              Devo prepararmi prima del primo incontro?
+            </span>
+            <span class="faq-vm-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M5 12H19"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </h3>
+
+        <div
+          class="faq-vm-answer"
+          id="faq-vm-answer-5"
+          role="region"
+          aria-labelledby="faq-vm-question-5"
+          hidden
+        >
+          <div class="faq-vm-answer-inner">
+            Non è necessaria alcuna preparazione particolare.
+            Puoi arrivare con una domanda precisa oppure con il
+            desiderio di fare chiarezza su ciò che stai vivendo.
+            <br><br>
+            Non devi avere tutte le risposte: il primo incontro
+            è anche un'occasione per capire da dove iniziare.
+          </div>
+        </div>
+      </article>
+
+      <article class="faq-vm-item">
+        <h3 class="faq-vm-question">
+          <button
+            class="faq-vm-trigger"
+            id="faq-vm-question-6"
+            aria-expanded="false"
+            aria-controls="faq-vm-answer-6"
+          >
+            <span class="faq-vm-number">06</span>
+            <span class="faq-vm-question-text">
+              La consulenza si svolge online?
+            </span>
+            <span class="faq-vm-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M5 12H19"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </h3>
+
+        <div
+          class="faq-vm-answer"
+          id="faq-vm-answer-6"
+          role="region"
+          aria-labelledby="faq-vm-question-6"
+          hidden
+        >
+          <div class="faq-vm-answer-inner">
+            Sì, le sessioni individuali possono essere svolte online,
+            così puoi partecipare comodamente da un luogo tranquillo
+            e riservato, senza doverti spostare.
+          </div>
+        </div>
+      </article>
+
+      <article class="faq-vm-item">
+        <h3 class="faq-vm-question">
+          <button
+            class="faq-vm-trigger"
+            id="faq-vm-question-7"
+            aria-expanded="false"
+            aria-controls="faq-vm-answer-7"
+          >
+            <span class="faq-vm-number">07</span>
+            <span class="faq-vm-question-text">
+              Quanto dura un percorso completo?
+            </span>
+            <span class="faq-vm-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M5 12H19"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </h3>
+
+        <div
+          class="faq-vm-answer"
+          id="faq-vm-answer-7"
+          role="region"
+          aria-labelledby="faq-vm-question-7"
+          hidden
+        >
+          <div class="faq-vm-answer-inner">
+            La durata dipende dagli obiettivi, dalle esigenze personali
+            e dal tipo di percorso scelto.
+            <br><br>
+            Durante il primo confronto è possibile valutare insieme
+            quale soluzione sia più adatta alla tua situazione.
+          </div>
+        </div>
+      </article>
+
+      <article class="faq-vm-item">
+        <h3 class="faq-vm-question">
+          <button
+            class="faq-vm-trigger"
+            id="faq-vm-question-8"
+            aria-expanded="false"
+            aria-controls="faq-vm-answer-8"
+          >
+            <span class="faq-vm-number">08</span>
+            <span class="faq-vm-question-text">
+              Come posso prenotare una consulenza?
+            </span>
+            <span class="faq-vm-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M5 12H19"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </h3>
+
+        <div
+          class="faq-vm-answer"
+          id="faq-vm-answer-8"
+          role="region"
+          aria-labelledby="faq-vm-question-8"
+          hidden
+        >
+          <div class="faq-vm-answer-inner">
+            Puoi contattarmi attraverso i riferimenti presenti sul sito
+            oppure utilizzare il pulsante di prenotazione, se disponibile.
+            Potremo confrontarci sulle tue esigenze e valutare insieme
+            il percorso più adatto.
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- CTA finale -->
+    <div class="faq-vm-cta">
+      <div class="faq-vm-cta-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M21 11.5a8.4 8.4 0 0 1-.9 3.8
+            8.5 8.5 0 0 1-7.6 4.7
+            8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7
+            a8.4 8.4 0 0 1-.9-3.8
+            8.5 8.5 0 0 1 4.7-7.6
+            8.4 8.4 0 0 1 3.8-.9h.5
+            a8.5 8.5 0 0 1 8 8v.5Z"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <h3>Hai ancora qualche dubbio?</h3>
+
+      <p>
+        Ogni percorso inizia da una domanda.
+        Se hai bisogno di maggiori informazioni, puoi contattarmi.
+      </p>
+
+      <!-- Sostituisci #contatti con l'ID reale della tua sezione contatti -->
+      <a href="#contatti" class="faq-vm-cta-button">
+        Parliamone insieme
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12H19M12 5L19 12L12 19"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+
+
+
+
+    <!-- ============ CHI SONO ============ -->
+    <section class="section section--salvia" id="chi-sono">
+      <div class="container about-grid">
+        <div class="about-photo reveal" role="img" aria-label="Foto di Valeria Moretti (sostitutiva)">
+          <span class="initials">VM</span>
+        </div>
+        <div class="about-text reveal reveal-delay-1">
+          <span class="eyebrow">Chi sono</span>
+          <h2>Ciao, sono Valeria</h2>
+          <p>Sono una Mental Coach e aiuto le persone a passare dall'idea all'azione: obiettivi chiari, abitudini costruite con metodo, costanza allenata come una competenza.</p>
+          <p>Lavoro con sessioni individuali in studio e online, piani digitali personalizzati e percorsi di gruppo. Il mio approccio è pratico, umano e senza giudizio.</p>
+          <div class="about-values">
+            <span class="chip">Ascolto attivo</span>
+            <span class="chip">Metodo strutturato</span>
+            <span class="chip">Azioni misurabili</span>
+          </div>
+          
+<br>
+<hr><p>Contatti</p>
+
+<div id="spazio">
+<!-- Pulsante Email -->
+<button id="Btnemail" type="button">
+  <div id="sign">
+    <svg class="socialSvg emailSvg" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm9 8L3 7v10h18V7l-9 6zm0-2 8-4H4l8 4z"/>
+    </svg>
+  </div>
+  <div class="text">Email</div>
+</button>
+
+        <!-- From Uiverse.io by Gaurang7717 --> 
+<button id="Btnwhats">
+  <div id="sign">
+    <svg class="socialSvg whatsappSvg" viewBox="0 0 16 16">
+      <path
+        d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"
+      ></path>
+    </svg>
+  </div>
+
+  <div class="text">Whatsapp</div>
+</button>
+
+   </div>
+
+
+        
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STUDIO ============ -->
+    <section id="studio" class="section reveal">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Lo spazio</span>
+          <h2>Il mio <span class="highlight-text">Studio</span></h2>
+          <p>Un ambiente accogliente e riservato dove iniziare il tuo percorso di consapevolezza.</p>
+        </div>
+        <div class="studio-layout">
+          <div class="studio-map">
+            <iframe src="https://maps.google.com/maps?q=Valle%20Lomellina%20Pavia&t=&z=14&ie=UTF8&iwloc=&output=embed" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mappa Studio Valeria Moretti"></iframe>
+          </div>
+          <div class="studio-image">
+            <img alt="Studio Professionale Valeria Moretti" data-studio-img src="https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/3-fatto.png">
+            <div class="studio-overlay">
+              <div class="studio-overlay-content">
+                <i class="fa-solid fa-location-dot"></i>
+                <p>Valle Lomellina, Pavia (PV)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="studio-cta">
+          <button type="button" id="inziailtuoopercorso4" class="btn-studio-cta">
+            <span class="btn-studio-text">👉 Compila il modulo ora</span>
+          </button>
+          <div class="cta-pulse-text">
+            <span class="pulse-dot"></span>
+            Solo pochi posti disponibili
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="logo">Valeria Moretti<span>Mental Coach</span></a>
+          <p>Coaching per il cambiamento personale e il raggiungimento di obiettivi concreti. Non è psicoterapia né prestazione medica.</p>
+        </div>
+        <div>
+          <h4>Naviga</h4>
+          <a href="#metodo">Metodo P.E.R.S.M.A.R.T.</a>
+          <a href="#servizi">Servizi e prezzi</a>
+          <button type="button" class="footer-link quiz-open-trigger" data-open-quiz>Test gratuito</button>
+          <a href="#chi-sono">Chi sono</a>
+          <a href="prenota.html">Prenota / Contatti</a>
+        </div>
+        <div>
+          <h4>Legale</h4>
+          <a href="faq.html">FAQ</a>
+          <a href="privacy.html">Privacy &amp; Cookie</a>
+          <a href="termini.html">Termini e condizioni di vendita</a>
+        </div>
+        <div class="footer-social">
+          <h4>Seguimi</h4>
+          <div class="social-row">
+            <a href="https://www.instagram.com/mentalcoachvaleria95" target="_blank" rel="noopener noreferrer" class="socialContainer containerOne" data-social="instagram" aria-label="Instagram"><svg class="socialSvg instagramSvg" viewBox="0 0 16 16"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"></path></svg></a>
+            <a href="https://www.tiktok.com/@mentalcoachvaleria95" target="_blank" rel="noopener noreferrer" class="socialContainer containerFive" data-social="tiktok" aria-label="TikTok"><i class="fab fa-tiktok socialIcon"></i></a>
+            <a href="https://www.youtube.com/@mentalcoachvaleria95" target="_blank" rel="noopener noreferrer" class="socialContainer containerSix" data-social="youtube" aria-label="YouTube"><i class="fab fa-youtube socialIcon"></i></a>
+            <a href="https://t.me/mentalcoachvaleria95" target="_blank" rel="noopener noreferrer" class="socialContainer containerSeven" data-social="telegram" aria-label="Telegram"><i class="fab fa-telegram socialIcon"></i></a>
+            <a href="https://wa.me/393458407102" target="_blank" rel="noopener noreferrer" class="socialContainer containerFour" data-social="whatsapp" aria-label="WhatsApp"><svg class="socialSvg whatsappSvg" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"></path></svg></a>
+            <a href="mailto:mentalcoachvaleria@gmail.com" class="socialContainer containerEight" aria-label="Email"><i class="fas fa-envelope socialIcon"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span id="year"></span> Valeria Moretti — mentalcoachvaleria.it · P.IVA [da inserire]</span>
+        <span class="footer-watermark">sito realizzato da webnix</span>
+        <span>Valle Lomellina (PV) · Studio e online</span>
+        <a href="admin.html" class="footer-admin-link" aria-label="Accesso amministratore" title="Accesso amministratore"><i class="fas fa-user-shield"></i><span>admin</span></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============ COOKIE BANNER ============ -->
+  <div class="cookie-banner" role="dialog" aria-label="Gestione cookie">
+    <p>Usiamo solo cookie tecnici e, se lo consenti, strumenti di analisi per migliorare il sito. Nessun cookie di profilazione senza il tuo consenso.</p>
+    <div class="actions">
+      <button class="btn btn--uiverse btn--sage" data-consent="no">Solo tecnici</button>
+      <button class="btn btn--uiverse btn--forest" data-consent="yes">Accetta</button>
+    </div>
+  </div>
+
+  <!-- ============ MODALE: ACCORDO DI COACHING ============ -->
+  <div class="modal-overlay" id="agreement-modal" role="dialog" aria-modal="true" aria-labelledby="agr-title" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close" data-close-agreement aria-label="Chiudi finestra">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+      <header class="agr-head">
+        <span class="agr-badge"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Allineato al protocollo ICF</span>
+        <h2 id="agr-title">Accordo di Coaching</h2>
+        <div class="agr-tags">
+          <span class="agr-tag"><i class="fa-solid fa-video" aria-hidden="true"></i> Modalità Coaching</span>
+          <span class="agr-tag"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Struttura logistica</span>
+        </div>
+      </header>
+      <ul class="agr-stats">
+        <li class="agr-stat"><span class="agr-stat-ic"><i class="fa-regular fa-clock"></i></span><span class="agr-stat-k">Durata</span><span class="agr-stat-v">3–8 mesi</span></li>
+        <li class="agr-stat"><span class="agr-stat-ic"><i class="fa-solid fa-users"></i></span><span class="agr-stat-k">Sessioni</span><span class="agr-stat-v">4–10 incontri</span></li>
+        <li class="agr-stat"><span class="agr-stat-ic"><i class="fa-regular fa-clock"></i></span><span class="agr-stat-k">Durata sessione</span><span class="agr-stat-v">1h – 1h 30m</span></li>
+        <li class="agr-stat"><span class="agr-stat-ic"><i class="fa-solid fa-rotate"></i></span><span class="agr-stat-k">Frequenza</span><span class="agr-stat-v">Ogni 7–30 gg</span></li>
+        <li class="agr-stat"><span class="agr-stat-ic"><i class="fa-solid fa-globe"></i></span><span class="agr-stat-k">Modalità</span><span class="agr-stat-v">Dal vivo / Web</span></li>
+      </ul>
+      <div class="agr-text">
+        <p>Ti aiuterò a individuare e a raggiungere un tuo obiettivo specifico e concreto. Come coach non potrò darti consigli sulle scelte che dovrai intraprendere, ma ti aiuterò con un <strong>ascolto molto attento</strong>, incoraggiandoti e ponendoti domande che ti faranno riflettere.</p>
+        <p><strong>Entrambi siamo corresponsabili del risultato:</strong> io per la parte che riguarda il metodo, tu per i contenuti e le azioni concordate.</p>
+        <p>In quanto coach associato ICF, nel rispetto del codice etico ti assicuro <strong>riservatezza</strong> sugli argomenti sensibili.</p>
+      </div>
+      <div class="agr-clauses">
+        <article class="agr-card"><h3><i class="fa-regular fa-clock"></i> Durata sessioni</h3><p>Non conteggio il tempo in più fino a 15 minuti; oltre tale limite conteggeremo mezz'ora, oltre i 45 minuti conteggeremo 1h.</p></article>
+        <article class="agr-card"><h3><i class="fa-regular fa-envelope"></i> Extra sessioni</h3><p>Puoi contattarmi tra un incontro e l'altro via mail o telefono, e ti risponderò entro 24 ore.</p></article>
+        <article class="agr-card"><h3><i class="fa-solid fa-calendar-days"></i> Appuntamenti</h3><p>Programmeremo la data successiva a ogni incontro. Ti chiedo di limitare il numero delle riprogrammazioni.</p></article>
+        <article class="agr-card"><h3><i class="fa-solid fa-shield-halved"></i> Impegno</h3><p>Valuteremo se e come proseguire anche prima del tempo concordato, senza alcun impegno, se i progressi non fossero adeguati.</p></article>
+      </div>
+      <div class="agr-pay-box">
+        <article class="agr-pay-card">
+          <h3><i class="fa-solid fa-hand-holding-dollar"></i> Compenso e Accessibilità</h3>
+          <p class="agr-pay-rate"><span class="agr-pay-tag">Tariffa Base</span> <strong>50€/h</strong></p>
+          <p>Nel caso di difficoltà economiche, la tariffa potrà essere ridotta. La riduzione rimarrà <strong>strettamente riservata</strong> previa discussione diretta e documentazione.</p>
+        </article>
+        <article class="agr-pay-card">
+          <h3><i class="fa-solid fa-money-bill-transfer"></i> Modalità di Pagamento</h3>
+          <p class="agr-pay-rate"><span class="agr-pay-tag">Suggerita</span> <strong>contanti o Bonifico</strong></p>
+          <dl class="agr-pay-details">
+            <div><dt><i class="fa-regular fa-user"></i> Intestatario</dt><dd>Valeria Ilaria Moretti</dd></div>
+            <div><dt><i class="fa-solid fa-building-columns"></i> IBAN</dt><dd class="agr-iban">IT83E0338501601100080012640</dd>
+            <button type="button" class="btn-copy-iban" data-copy-iban="IT83E0338501601100080012640"><span class="copy-inner"><i class="fa-regular fa-copy"></i><span>Copia IBAN</span></span><span class="copy-ok" aria-hidden="true"><i class="fa-solid fa-check"></i><span>Copiato!</span></span></button></div>
+          </dl>
+        </article>
+      </div>
+      <button type="button" class="agr-cert" data-open-cert-modal>
+        <span class="agr-cert-ic"><i class="fa-solid fa-medal"></i></span>
+        <span><strong>Certificazioni Professionali</strong><small>Scopri le mie certificazioni — rigore scientifico ed etico</small></span>
+        <i class="fa-solid fa-arrow-right agr-cert-arrow"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ MODALE: CERTIFICAZIONI ============ -->
+  <div class="modal-overlay cert-modal" id="cert-modal" hidden aria-labelledby="cert-modal-title" role="dialog" aria-modal="true">
+    <div class="modal-box cert-modal-box" role="document">
+      <button type="button" class="modal-close cert-modal-close" data-close-cert aria-label="Chiudi certificazioni">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+      <header class="cert-modal-head">
+        <span class="cert-modal-ic"><i class="fa-solid fa-medal" aria-hidden="true"></i></span>
+        <div>
+          <h2 id="cert-modal-title">Certificazioni Professionali</h2>
+          <p>Rigore scientifico ed etico per la tua crescita</p>
+        </div>
+      </header>
+      <figure class="cert-modal-figure">
+        <img src="https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/refs/heads/main/certificato1.jpg" alt="Attestato di certificazione professionale" loading="lazy">
+        <figcaption>Certificazione — anteprima documento</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <!-- ============ MODALE: SERVIZI ============ -->
+  <div id="service-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-service-title" hidden>
+    <div class="modal-box service-modal-box">
+      <button type="button" class="modal-close" aria-label="Chiudi modale">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+      <div class="modal-content">
+        <span class="eyebrow" id="modal-service-type">Servizio</span>
+        <h2 id="modal-service-title" class="serif">Titolo Servizio</h2>
+        <p id="modal-service-desc" class="modal-desc">Descrizione breve del servizio selezionato.</p>
+        <div class="modal-actions">
+          <button id="modal-confirm-btn" class="btn btn--uiverse btn--forest" style="width: 100%;">
+            Procedi <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i>
+          </button>
+          <button id="modal-cancel-btn" class="btn btn--uiverse" style="background: transparent; border: 1.5px solid var(--salvia); color: var(--verde-bosco); width: 100%;">
+            Annulla
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============ MODALE: TEST GRATUITO (questionario popup) ============ -->
+  <div id="quiz-modal" class="quiz-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="quiz-question-text" hidden>
+    <div class="quiz-modal-container">
+      <button type="button" id="quiz-modal-close" class="quiz-modal-close" aria-label="Chiudi test">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="quiz-modal-header">
+        <span class="eyebrow">Test gratuito</span>
+        <h2 class="serif" id="quiz-modal-title">Dove si bloccano i tuoi obiettivi?</h2>
+        <div class="quiz-progress-info">
+          <span id="quiz-step-counter">Domanda 1</span>
+          <span id="quiz-progress-percent"></span>
+        </div>
+        <div class="quiz-progress-track"><div class="quiz-progress-bar" id="quiz-progress-bar" style="width:0%"></div></div>
+      </div>
+
+      <!-- Stato: domande -->
+      <div class="quiz-question-container" id="quiz-question-container">
+        <h3 class="quiz-question-text" id="quiz-question-text" tabindex="-1">&nbsp;</h3>
+        <div class="quiz-options-container" id="quiz-options-container"></div>
+      </div>
+
+      <!-- Stato: risultato -->
+      <div class="quiz-result-container" id="quiz-result-container">
+        <div class="quiz-result-badge"><i class="fa-solid fa-compass"></i></div>
+        <h3 class="serif" id="quiz-result-title"></h3>
+        <p class="quiz-result-description" id="quiz-result-description"></p>
+        <p class="quiz-result-note">Risultato esplorativo, non diagnostico.</p>
+      </div>
+
+      <!-- Sezione contatti post-risultato -->
+      <div class="quiz-contact-section hidden" id="quiz-contact-section">
+        <h4>Vuoi parlarne con me?</h4>
+        <p>Raccontami la tua situazione: ti ricontatterò entro 24 ore.</p>
+        <form id="quiz-contact-form" novalidate>
+          <div class="quiz-field">
+            <label for="quiz-contact-name" id="quiz-input-label-name">Nome *</label>
+            <input type="text" id="quiz-contact-name" name="name" placeholder="Il tuo nome" required autocomplete="name">
+            <span class="input-error" id="quiz-error-name"></span>
+          </div>
+          <div class="quiz-field">
+            <label for="quiz-contact-email" id="quiz-input-label-email">Email *</label>
+            <input type="email" id="quiz-contact-email" name="email" placeholder="nome@esempio.it" required autocomplete="email">
+            <span class="input-error" id="quiz-error-email"></span>
+          </div>
+          <div class="quiz-field">
+            <label for="quiz-contact-phone" id="quiz-input-label-phone">Telefono</label>
+            <input type="tel" id="quiz-contact-phone" name="phone" placeholder="+39 333 1234567" autocomplete="tel">
+            <span class="input-error" id="quiz-error-phone"></span>
+          </div>
+          <div class="quiz-field">
+            <label for="quiz-contact-message" id="quiz-input-label-message">Cosa vorresti condividere? *</label>
+            <textarea id="quiz-contact-message" name="message" rows="3" placeholder="Es. Vorrei lavorare sulla costanza nelle abitudini..."></textarea>
+            <span class="input-error" id="quiz-error-message"></span>
+          </div>
+          <div class="quiz-field quiz-privacy">
+            <label class="quiz-checkbox"><input type="checkbox" id="quiz-contact-privacy"> Accetto la <a href="privacy.html" target="_blank" rel="noopener">privacy policy</a> *</label>
+          </div>
+          <button type="submit" id="quiz-submit-btn" class="btn btn--uiverse btn--forest quiz-submit-button">Invia e prenota una chiacchierata <i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+      </div>
+
+      <!-- Stato: inviato -->
+      <div class="quiz-success" id="quiz-success">
+        <div class="quiz-success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <h3>Richiesta inviata!</h3>
+        <p id="quiz-success-message">Grazie! Ti ricontatterò entro 24 ore.</p>
+        <button type="button" id="quiz-success-close-btn" class="btn btn--uiverse btn--forest">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODALE: CONTATTO / PRENOTAZIONE ============ -->
+  <div id="contact-modal" class="contact-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title" hidden>
+    <div class="contact-modal-container">
+      <button type="button" id="contact-modal-close" class="contact-modal-close" aria-label="Chiudi">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="contact-modal-body" id="contact-modal-body">
+        <div class="contact-modal-grid">
+          <!-- SIDEBAR -->
+          <aside class="contact-sidebar">
+            <div class="contact-sidebar-content">
+              <div class="sidebar-quote">
+                <i class="fa-solid fa-quote-left"></i>
+                <p id="contact-modal-quote">"Il cambiamento inizia con una parola."</p>
+              </div>
+              <ul class="sidebar-list">
+                <li><i class="fa-solid fa-check"></i> Ascolto attivo</li>
+                <li><i class="fa-solid fa-check"></i> Riservatezza</li>
+                <li><i class="fa-solid fa-check"></i> Approccio personalizzato</li>
+                <li><i class="fa-solid fa-check"></i> Spazio non giudicante</li>
+              </ul>
+              <div class="sidebar-footer">
+                <i class="fa-solid fa-heart-pulse"></i>
+                <p>Valeria Moretti<br><small>Mental Coach</small></p>
+              </div>
+            </div>
+          </aside>
+          
+          <!-- FORM -->
+          <div class="contact-form-wrapper">
+            <div id="contact-form-content">
+              <div class="contact-form-header">
+                <h2 id="contact-modal-title">Iniziamo il tuo percorso</h2>
+                <p>Compila il modulo: ti ricontatterò entro 24 ore.</p>
+              </div>
+              
+              <!-- Progress bar -->
+              <div class="contact-progress">
+                <div class="contact-progress-bar-wrapper">
+                  <div class="contact-progress-bar" id="contact-progress-bar" style="width: 12.5%"></div>
+                </div>
+                <div class="contact-progress-info">
+                  <span id="contact-step-label">Step 1 di 8</span>
+                  <span id="contact-progress-percent">12%</span>
+                </div>
+              </div>
+              
+              <form id="contact-form" novalidate>
+                <!-- STEP 1: Dati personali -->
+                <div class="contact-step active" data-step="1">
+                  <label for="contact-name" class="step-label">Come ti chiami? *</label>
+                  <input type="text" id="contact-name" name="name" placeholder="Es. Marco Rossi" required autocomplete="name">
+                  <span class="input-error" id="error-name">Inserisci il tuo nome</span>
+                </div>
+                <div class="contact-step" data-step="2">
+                  <label for="contact-cognome" class="step-label">Il tuo cognome *</label>
+                  <input type="text" id="contact-cognome" name="cognome" placeholder="Es. Rossi" required autocomplete="family-name">
+                  <span class="input-error" id="error-cognome">Inserisci il tuo cognome</span>
+                </div>
+                <div class="contact-step" data-step="3">
+                  <label for="contact-email" class="step-label">La tua email *</label>
+                  <input type="email" id="contact-email" name="email" placeholder="nome@esempio.it" required autocomplete="email">
+                  <span class="input-error" id="error-email">Inserisci un'email valida</span>
+                </div>
+                <div class="contact-step" data-step="4">
+                  <label for="contact-phone" class="step-label">Il tuo numero di telefono</label>
+                  <input type="tel" id="contact-phone" name="phone" placeholder="+39 333 1234567" autocomplete="tel">
+                  <small class="step-hint">Opzionale, ma utile per ricontattarti velocemente</small>
+                </div>
+                <div class="contact-step" data-step="5">
+                  <label for="contact-message" class="step-label">Messaggio</label>
+                  <textarea id="contact-message" name="message" rows="4" placeholder="Raccontami brevemente di cosa hai bisogno..."></textarea>
+                  <small class="step-hint">Opzionale</small>
+                </div>
+
+                <!-- Servizio selezionato (automatico dal pulsante cliccato) -->
+                <div class="contact-step" data-step="fixed-service">
+                  <label class="step-label">Servizio selezionato</label>
+                  <div class="selected-service-chip"><i class="fa-solid fa-tag" aria-hidden="true"></i> <span id="selected-service-name">Richiesta generica</span></div>
+                  <input type="hidden" id="contact-service" name="service">
+                </div>
+                
+                <!-- Step dinamici (vengono inseriti qui da script.js) -->
+                <div id="dynamic-contact-steps"></div>
+                
+                <!-- STEP: Privacy -->
+                <div class="contact-step" data-step="fixed-privacy">
+                  <label class="step-label checkbox-label">
+                    <input type="checkbox" id="contact-privacy" name="privacy" required>
+                    <span>Dichiaro di aver letto la <a href="privacy.html" target="_blank">Privacy Policy</a> e acconsento al trattamento dei miei dati personali per la gestione della mia richiesta o per l'analisi del quiz compilato. Autorizzo l'invio delle informazioni inserite tramite il modulo al titolare del sito tramite il servizio EmailJS. Sono consapevole che i dati forniti possono includere informazioni personali relative alla mia situazione relazionale e acconsento volontariamente alla loro trasmissione. *</span>
+                  </label>
+                  <span class="input-error" id="error-privacy">Devi accettare per continuare</span>
+                </div>
+              </form>
+              
+              <!-- Navigation buttons -->
+              <div class="contact-nav">
+                <button type="button" id="contact-step-prev" class="btn-contact-prev">
+                  <i class="fa-solid fa-arrow-left"></i> Indietro
+                </button>
+                <button type="button" id="contact-step-next" class="btn-contact-next">
+                  Avanti <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <button type="submit" id="contact-submit-btn" form="contact-form" class="btn-contact-submit" style="display:none;">
+                  <i class="fa-solid fa-paper-plane"></i> Invia richiesta
+                </button>
+              </div>
+            </div>
+            
+            <!-- Success state -->
+            <div id="contact-success" class="contact-success">
+              <div class="success-icon">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <h2>Richiesta inviata!</h2>
+              <p id="success-message">Grazie! La tua richiesta è stata inviata. Ti risponderemo entro 24h. Nel frattempo, respira. 🌿</p>
+              <button type="button" id="success-close-btn" class="btn btn--uiverse btn--forest">Chiudi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCRIPTS ============ -->
+  <!-- firebase-config.js viene caricato PRIMA di script.js: espone le funzioni
+       Firebase a livello globale (window.firebaseDB, ...). Se script.js parte
+       prima, i dati dal database non vengono mai recuperati. -->
+  <script type="module" src="firebase-config.js"></script>
+  <script>
+    /* Sicurezza: la pagina non deve mai restare nascosta. Se per qualsiasi
+       motivo gli script esterni non completano l'avvio, qui foriamo la
+       visibilità di header, hero e footer e nascondiamo il loader. */
+    setTimeout(function () {
+      var l = document.getElementById('site-loader');
+      if (l && !l.classList.contains('hidden')) {
+        l.classList.add('hidden');
+        setTimeout(function () { l.style.display = 'none'; }, 900);
+      }
+      document.body.classList.remove('loading');
+      document.body.classList.add('loaded');
+      var h = document.querySelector('.site-header');
+      if (h) h.style.visibility = 'visible';
+      var f = document.querySelector('.site-footer');
+      if (f) f.style.visibility = 'visible';
+      document.querySelectorAll('.reveal:not(.visible)').forEach(function (el) {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+        el.classList.add('visible');
+      });
+    }, 6000);
+  </script>
+  <script src="script.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script type="text/javascript">
+    (function() { emailjs.init("zTOU9dbAR0XbmjhoR"); })();
+  </script>
+</body>
+</html>
