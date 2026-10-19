@@ -51,10 +51,20 @@ h1, h2, h3, .serif {
 .hero h1,
 .section-head h2,
 #section-titolo h2,
-#faq-vm .faq-vm-header h2 {
+#faq-vm .faq-vm-header h2,
+.about-text h2 {
   font-family: 'Heavitas', 'Playfair Display', serif;
   font-weight: 400; /* il font è già pesante: niente bold sintetico */
 }
+
+/* ---- Blocchi più comuni (pain card): titoli in sans-serif ---- */
+.pain-card h3 { font-family: sans-serif; }
+
+/* ---- "Ciao, sono Valeria": system-ui ---- */
+.about-text h2 { font-family: system-ui; }
+
+/* ---- Lettere P E R S M A della timeline metodo: Heavitas ---- */
+.timeline-circle { font-family: 'Heavitas', 'Playfair Display', serif; }
 
 /* FAQ: numeri e domande in Inter */
 #faq-vm .faq-vm-number,
@@ -1307,11 +1317,10 @@ button { font-family: inherit; cursor: pointer; }
 .site-footer { background: var(--verde-bosco); color: rgba(248, 245, 239, 0.85); padding: 60px 0 30px; }
 .footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
 .footer-grid h4 { color: var(--avorio); font-family: 'Inter', sans-serif; font-size: 0.85rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 16px; }
-.footer-grid a, .footer-grid button.footer-link { display: block; font-size: 0.88rem; padding: 4px 0; opacity: 0.85; transition: opacity var(--transizione); }
-.footer-grid a:hover { opacity: 1; }
+.footer-grid a, .footer-grid button.footer-link { display: block; width: fit-content; font-size: 0.88rem; padding: 4px 0; opacity: 0.85; transform-origin: left center; transition: opacity var(--transizione), transform 0.3s ease; }
+.footer-grid a:hover, .footer-grid button.footer-link:hover { opacity: 1; transform: scale(1.2); }
 /* "Test gratuito" nel footer è un bottone che apre il popup: stesso stile dei link */
 .footer-grid button.footer-link { background: none; border: none; color: inherit; font-family: inherit; text-align: left; cursor: pointer; line-height: inherit; }
-.footer-grid button.footer-link:hover { opacity: 1; }
 .footer-brand .logo { color: var(--avorio); font-size: 1.4rem; }
 .footer-brand .logo span { color: var(--salvia); }
 .footer-brand p { font-size: 0.85rem; margin-top: 12px; opacity: 0.8; max-width: 300px; }
