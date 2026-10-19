@@ -332,7 +332,8 @@ button { font-family: inherit; cursor: pointer; }
 .timeline-content > * { position: relative; z-index: 1; }
 .timeline-item:hover .timeline-content { border-color: var(--verde-bosco); transform: scale(1.03); box-shadow: 12px 17px 51px rgba(49, 91, 85, 0.26); }
 .timeline-item:hover .timeline-content::before { transform: translateX(100%); }
-.timeline-content h3 { font-size: 1.1rem; margin-bottom: 8px; }
+/* Mini titoli delle 6 fasi (Posizione, Esito, Resistenza...): Heavitas */
+.timeline-content h3 { font-family: 'Heavitas', 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 8px; }
 .timeline-content p { font-size: 0.9rem; color: var(--testo-soft); }
 .method-note { margin-top: 34px; text-align: center; font-size: 0.85rem; color: var(--testo-soft); font-style: italic; }
 
