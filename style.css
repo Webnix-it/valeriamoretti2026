@@ -39,6 +39,39 @@ h1, h2, h3, .serif {
   line-height: 1.2;
 }
 
+/* ---- Font Heavitas (titoli principali delle sezioni) ---- */
+@font-face {
+  font-family: 'Heavitas';
+  src: url('Heavitas.ttf') format('truetype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+.hero h1,
+.section-head h2,
+#section-titolo h2,
+#faq-vm .faq-vm-header h2,
+.about-text h2 {
+  font-family: 'Heavitas', 'Playfair Display', serif;
+  font-weight: 400; /* il font è già pesante: niente bold sintetico */
+}
+
+/* ---- Blocchi più comuni (pain card): titoli in sans-serif ---- */
+.pain-card h3 { font-family: sans-serif; }
+
+/* ---- "Ciao, sono Valeria": system-ui ---- */
+.about-text h2 { font-family: system-ui; }
+
+/* ---- Lettere P E R S M A della timeline metodo: Heavitas ---- */
+.timeline-circle { font-family: 'Heavitas', 'Playfair Display', serif; }
+
+/* FAQ: numeri e domande in Inter */
+#faq-vm .faq-vm-number,
+#faq-vm .faq-vm-question-text {
+  font-family: 'Inter', sans-serif !important;
+}
+
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
@@ -299,7 +332,8 @@ button { font-family: inherit; cursor: pointer; }
 .timeline-content > * { position: relative; z-index: 1; }
 .timeline-item:hover .timeline-content { border-color: var(--verde-bosco); transform: scale(1.03); box-shadow: 12px 17px 51px rgba(49, 91, 85, 0.26); }
 .timeline-item:hover .timeline-content::before { transform: translateX(100%); }
-.timeline-content h3 { font-size: 1.1rem; margin-bottom: 8px; }
+/* Mini titoli delle 6 fasi (Posizione, Esito, Resistenza...): Heavitas */
+.timeline-content h3 { font-family: 'Heavitas', 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 8px; }
 .timeline-content p { font-size: 0.9rem; color: var(--testo-soft); }
 .method-note { margin-top: 34px; text-align: center; font-size: 0.85rem; color: var(--testo-soft); font-style: italic; }
 
@@ -322,7 +356,7 @@ button { font-family: inherit; cursor: pointer; }
 .service-card > * { position: relative; z-index: 1; }
 .service-card:hover { border-color: var(--verde-bosco); transform: translateY(-6px) scale(1.015); box-shadow: 0 22px 44px rgba(49, 91, 85, 0.18); }
 .service-card:hover::before { transform: translateX(100%); }
-.service-card h3 { font-size: 1.25rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; color: var(--verde-bosco); }
+.service-card h3 { font-family: sans-serif; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; color: var(--verde-bosco); }
 .service-title-icon {
   flex: 0 0 auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
   font-size: 1.1rem; color: var(--verde-bosco); background: var(--salvia); border-radius: 12px;
@@ -1284,11 +1318,10 @@ button { font-family: inherit; cursor: pointer; }
 .site-footer { background: var(--verde-bosco); color: rgba(248, 245, 239, 0.85); padding: 60px 0 30px; }
 .footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
 .footer-grid h4 { color: var(--avorio); font-family: 'Inter', sans-serif; font-size: 0.85rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 16px; }
-.footer-grid a, .footer-grid button.footer-link { display: block; font-size: 0.88rem; padding: 4px 0; opacity: 0.85; transition: opacity var(--transizione); }
-.footer-grid a:hover { opacity: 1; }
+.footer-grid a, .footer-grid button.footer-link { display: block; width: fit-content; font-size: 0.88rem; padding: 4px 0; opacity: 0.85; transform-origin: left center; transition: opacity var(--transizione), transform 0.3s ease; }
+.footer-grid a:hover, .footer-grid button.footer-link:hover { opacity: 1; transform: scale(1.2); }
 /* "Test gratuito" nel footer è un bottone che apre il popup: stesso stile dei link */
 .footer-grid button.footer-link { background: none; border: none; color: inherit; font-family: inherit; text-align: left; cursor: pointer; line-height: inherit; }
-.footer-grid button.footer-link:hover { opacity: 1; }
 .footer-brand .logo { color: var(--avorio); font-size: 1.4rem; }
 .footer-brand .logo span { color: var(--salvia); }
 .footer-brand p { font-size: 0.85rem; margin-top: 12px; opacity: 0.8; max-width: 300px; }
@@ -1833,16 +1866,16 @@ body.loading { overflow: hidden; }
 #faq-vm .faq-vm-header h2 {
   margin: 0 0 18px;
   color: var(--faq-verde);
-  font-family: 'Playfair Display', serif;
+  font-family: 'Heavitas', 'Playfair Display', serif;
   font-size: clamp(2rem, 4.5vw, 3rem);
-  font-weight: 600;
+  font-weight: 400;
   line-height: 1.18;
   letter-spacing: -0.025em;
 }
 
 #faq-vm .faq-vm-header h2 em {
   color: var(--faq-testo);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 #faq-vm .faq-vm-intro {

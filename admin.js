@@ -196,6 +196,34 @@
     } finally { setBusy(false); }
   }
 
+  /* ---------- Rating a stelle animato (recensioni) ---------- */
+  function setStarRating(value) {
+    const v = Math.min(5, Math.max(1, Number(value) || 5));
+    const hidden = $('#rev-stars');
+    if (hidden) hidden.value = String(v);
+    $$('#rev-star-rating input[type=radio]').forEach(inp => { inp.checked = Number(inp.value) === v; });
+    // Stelle "piene" fino al valore selezionato (label con classe .checked → giallo + ombra nera)
+    $$('#rev-star-rating label[data-value]').forEach(lab => {
+      lab.classList.toggle('checked', Number(lab.dataset.value) <= v);
+    });
+    const sv = $('#rev-star-value');
+    if (sv) sv.textContent = v + ' / 5';
+  }
+
+  function currentStarRating() {
+    const checked = $('#rev-star-rating input[type=radio]:checked');
+    return checked ? Number(checked.value) : 5;
+  }
+
+  function initStarRating() {
+    const wrap = $('#rev-star-rating');
+    if (!wrap) return;
+    wrap.addEventListener('change', (e) => {
+      if (e.target && e.target.name === 'rev-stars-radio') setStarRating(e.target.value);
+    });
+    setStarRating(currentStarRating());
+  }
+
   function resetReviewForm() {
     $('#review-form').reset();
     $('#rev-edit-id').value = '';
@@ -203,13 +231,14 @@
     $('#rev-cancel-edit').hidden = true;
     const today = new Date().toISOString().slice(0, 10);
     $('#rev-date').value = today;
+    setStarRating(5);
   }
 
   function fillReviewForm(r) {
     $('#rev-edit-id').value = r.id;
     $('#rev-name').value = r.name || '';
     $('#rev-initial').value = (r.initial || '').toUpperCase();
-    $('#rev-stars').value = String(r.stars || 5);
+    setStarRating(r.stars || 5);
     $('#rev-date').value = r.date || '';
     $('#rev-text').value = r.description || '';
     $('#rev-form-title').textContent = 'Modifica recensione di ' + reviewDisplayName(r);
@@ -223,7 +252,7 @@
     const data = {
       name: $('#rev-name').value.trim(),
       initial: $('#rev-initial').value.trim().charAt(0).toUpperCase(),
-      stars: Number($('#rev-stars').value),
+      stars: currentStarRating(),
       date: $('#rev-date').value,
       description: $('#rev-text').value.trim(),
       updatedAt: new Date().toISOString()
@@ -263,6 +292,7 @@
   }
 
   function initReviewsSection() {
+    initStarRating();
     resetReviewForm();
     $('#review-form').addEventListener('submit', saveReview);
     $('#rev-search').addEventListener('input', renderReviewsTable);
@@ -532,6 +562,7 @@
         <td>${(p.questionKeys || []).length ? (p.questionKeys || []).length + ' domande collegate' : '<span style="color:#999;">nessuna</span>'}</td>
         <td style="white-space:nowrap;">
           <button class="btn btn--soft btn--sm" data-pkg-edit="${esc(p.id)}"><i class="fa-solid fa-pen"></i> Modifica</button>
+          <button class="btn btn--soft btn--sm" data-pkg-new="${esc(p.id)}" title="Duplica come nuovo pacchetto"><i class="fa-regular fa-copy"></i></button>
           <button class="btn btn--soft btn--sm" data-pkg-toggle="${esc(p.id)}" title="Attiva/disattiva"><i class="fa-solid fa-power-off"></i></button>
           <button class="btn btn--danger btn--sm" data-pkg-del="${esc(p.id)}"><i class="fa-solid fa-trash-can"></i></button>
         </td>
@@ -617,19 +648,28 @@
     $('#pkg-visible').checked = true;
   }
 
-  function fillPackageForm(p) {
-    $('#pkg-edit-key').value = p.id;
-    $('#pkg-key').value = p.key || p.id;
-    $('#pkg-key').disabled = true;
+  function fillPackageForm(p, asNew) {
+    if (asNew) {
+      // modalità «duplica»: crea un pacchetto nuovo precompilato
+      $('#pkg-edit-key').value = '';
+      $('#pkg-key').value = p.key || '';
+      $('#pkg-key').disabled = false;
+    } else {
+      $('#pkg-edit-key').value = p.id;
+      $('#pkg-key').value = p.key || p.id;
+      $('#pkg-key').disabled = true;
+    }
     $('#pkg-name').value = p.name || '';
     $('#pkg-type').value = p.type || '';
     $('#pkg-price').value = p.price || '';
     $('#pkg-desc').value = p.desc || '';
     $('#pkg-features').value = (p.features || []).join('\n');
+    $('#pkg-button-label').value = p.buttonLabel || '';
+    $('#pkg-action-url').value = p.actionUrl || '';
     $('#pkg-active').checked = p.active !== false;
     $('#pkg-visible').checked = p.showInHome !== false;
-    $('#pkg-form-title').textContent = 'Modifica pacchetto: ' + p.name;
-    $('#pkg-cancel-edit').hidden = false;
+    $('#pkg-form-title').textContent = asNew ? 'Duplica pacchetto: ' + p.name : (p.id ? 'Modifica pacchetto: ' + p.name : 'Aggiungi un nuovo pacchetto');
+    $('#pkg-cancel-edit').hidden = !p.id;
     document.getElementById('panel-servizi').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -648,6 +688,8 @@
       price: $('#pkg-price').value.trim(),
       desc: $('#pkg-desc').value.trim(),
       features: $('#pkg-features').value.split('\n').map(s => s.trim()).filter(Boolean),
+      buttonLabel: $('#pkg-button-label').value.trim(),
+      actionUrl: $('#pkg-action-url').value.trim(),
       active: $('#pkg-active').checked,
       showInHome: $('#pkg-visible').checked,
       questionKeys: existing ? (existing.questionKeys || []) : [],
@@ -655,7 +697,8 @@
     };
     setBusy(true);
     try {
-      await fsSet(PKG_COL, editId || ('pkg-' + key), data);
+      if (editId) await fsSet(PKG_COL, editId, data); // setDoc usa merge:true → non perde i campi non esposti nel form
+      else await fsSet(PKG_COL, 'pkg-' + key, data);  // nuovo pacchetto: documento completo
       toast('Pacchetto salvato: aggiornato nella Home e nel popup.');
       $('#pkg-key').disabled = false;
       resetPackageForm();
@@ -782,7 +825,13 @@
     $('#packages-tbody').addEventListener('click', (e) => {
       const t = e.target.closest('button');
       if (!t) return;
-      if (t.dataset.pkgEdit) { const p = packages.find(x => x.id === t.dataset.pkgEdit); if (p) fillPackageForm(p); }
+      if (t.dataset.pkgNew) {
+        // «Duplica» parte dai dati del pacchetto ma come NUOVO elemento:
+        // apre il form di aggiunta già compilato, senza chiave né editId.
+        const p = packages.find(x => x.id === t.dataset.pkgNew);
+        if (p) fillPackageForm({ ...p, id: '', key: p.key + '-copia', name: p.name + ' (copia)' }, true);
+      }
+      else if (t.dataset.pkgEdit) { const p = packages.find(x => x.id === t.dataset.pkgEdit); if (p) fillPackageForm(p); }
       else if (t.dataset.pkgDel) deletePackage(t.dataset.pkgDel);
       else if (t.dataset.pkgToggle) togglePackage(t.dataset.pkgToggle);
       else if (t.dataset.pkgMoveup) movePackage(t.dataset.pkgMoveup, -1);

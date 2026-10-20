@@ -208,6 +208,16 @@
     }
   }
 
+  // Pacchetti di default: se la dashboard non ha ancora popolato 'service_packages',
+  // la Home mostra comunque i pacchetti standard e la tabella admin parte già piena.
+  function defaultPackagesList() {
+    return (window.__defaultServicePackages || []).map((p, i) => ({
+      id: 'pkg-' + p.key, key: p.key, name: p.title, type: p.type, desc: p.desc,
+      price: p.price || '', features: p.features || [],
+      order: i + 1, active: true, showInHome: true, questionKeys: []
+    }));
+  }
+
   async function loadDynamicServices() {
     try {
       const [pkgsRaw, cqsRaw, cfgSnap] = await Promise.all([
@@ -224,7 +234,11 @@
       if (svcCfg && svcCfg.services) {
         window.__dynamicServiceLabels = svcCfg.services;
       }
-      const pkgs = pkgsRaw.filter(p => p.active !== false).sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+      const pkgs0 = pkgsRaw.filter(p => p.active !== false).sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+      // DB vuoto o non raggiungibile → usa i pacchetti standard del sito, così la
+      // Home resta identica e la dashboard mostra comunque una tabella da cui
+      // aggiungere/rimuovere/modificare i pacchetti.
+      const pkgs = pkgs0.length ? pkgs0 : defaultPackagesList();
       if (!pkgs.length) return;
       const cqList = cqsRaw.filter(q => q.active !== false).sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
       window.__dynamicPackages = {};
@@ -234,6 +248,17 @@
       console.log('✅ Pacchetti dinamici caricati dal database:', pkgs.length);
     } catch (error) {
       console.warn('⚠️ Pacchetti dinamici non disponibili, uso contenuto statico', error);
+      // Resilienza: anche se Firestore non risponde, mostra i pacchetti standard
+      // in modalità dinamica — così i pulsanti «Prenota in studio / online»
+      // aprono SEMPRE il popup con il modulo, come richiesto.
+      try {
+        const fallback = defaultPackagesList();
+        if (fallback.length) {
+          window.__dynamicPackages = {};
+          fallback.forEach(p => { window.__dynamicPackages[p.key] = p; });
+          renderDynamicServices(fallback);
+        }
+      } catch (e2) { console.warn('Fallback pacchetti non riuscito', e2); }
     }
   }
 
@@ -244,14 +269,23 @@
     grid.innerHTML = visiblePkgs.map((p, i) => {
       const feat = (p.features || []).map(f => '<li>' + escapeHtml(f) + '</li>').join('');
       const delay = i > 0 ? ' reveal-delay-' + Math.min(i, 3) : '';
-      const featured = p.featured ? ' featured' : '';
-      const icon = icons[p.type] || 'fa-briefcase';
-      const tagHtml = p.tag ? '<span class="service-tag">' + escapeHtml(p.tag) + '</span>' : '';
+      // evidenzia il pacchetto standard "Il più completo" anche in modalità dinamica
+      const featured = p.featured || p.key === 'piano-autonomo' ? true : false;
+      const icon = icons[p.type] || (p.key === 'sessione-online' ? 'fa-laptop' : 'fa-briefcase');
+      const tagHtml = (p.tag || featured) ? '<span class="service-tag">' + escapeHtml(p.tag || 'Il più completo') + '</span>' : '';
       const priceHtml = p.price ? '<div class="service-price">' + escapeHtml(p.price) + '</div>' : '';
-      const btnClass = 'btn btn--uiverse ' + (p.featured ? 'btn--forest' : 'btn--sage');
-      const btnLabel = escapeHtml(p.buttonLabel || 'Richiedi il servizio');
+      const btnClass = 'btn btn--uiverse ' + (featured ? 'btn--forest' : 'btn--sage');
+      // etichetta pulsante: quella impostata dalla dashboard, altrimenti una
+      // sensata in base al tipo di pacchetto
+      const rawLabel = p.buttonLabel || '';
+      let defaultLabel = 'Richiedi il servizio';
+      if (/prenota/i.test(rawLabel) || p.key === 'sessione-studio') defaultLabel = 'Prenota in studio';
+      else if (p.key === 'sessione-online') defaultLabel = 'Prenota online';
+      else if (p.key === 'percorso-gruppo') defaultLabel = 'Lista d\'interesse';
+      else if (p.key === 'piano-autonomo') defaultLabel = 'Acquista il piano';
+      const btnLabel = escapeHtml(rawLabel || defaultLabel);
       const pkgKey = escapeHtml(p.key || p.id);
-      return '<div class="service-card' + featured + ' reveal' + delay + '">' +
+      return '<div class="service-card' + (featured ? ' featured' : '') + ' reveal' + delay + '">' +
         tagHtml +
         '<h3><span class="service-title-icon"><i class="fa-solid ' + icon + '"></i></span> ' + escapeHtml(p.name) + '</h3>' +
         priceHtml +
@@ -827,22 +861,34 @@
     const cancelBtn = document.getElementById('modal-cancel-btn');
     const confirmBtn = document.getElementById('modal-confirm-btn');
     let currentServiceKey = '';
+    // "bookForm" = il servizio apre direttamente il modulo di prenotazione (popup),
+    // senza passare dal popup di avviso intermedio «Procedi / Annulla».
     let serviceData = {
       'piano-autonomo': { type: 'Piano Digitale', title: 'Piano autonomo P.E.R.S.M.A.R.T.', desc: 'Stai per acquistare il questionario approfondito e il piano personale scritto da Valeria. Verrai reindirizzato alla pagina di checkout sicuro.', actionUrl: 'acquista-piano.html' },
-      'sessione-studio': { type: 'Sessione Individuale', title: 'Sessione in studio', desc: 'Stai per prenotare un incontro di 60 minuti nel mio studio a Valle Lomellina (PV). Verrai reindirizzato al calendario per scegliere data e ora.', actionUrl: 'prenota.html?tipo=studio' },
-      'sessione-online': { type: 'Sessione Individuale', title: 'Sessione online', desc: 'Stai per prenotare un incontro di 60 minuti tramite videochiamata. Verrai reindirizzato al calendario per scegliere data e ora.', actionUrl: 'prenota.html?tipo=online' },
+      'sessione-studio': { type: 'Sessione Individuale', title: 'Sessione in studio', desc: '', actionUrl: 'prenota.html?tipo=studio', bookForm: true },
+      'sessione-online': { type: 'Sessione Individuale', title: 'Sessione online', desc: '', actionUrl: 'prenota.html?tipo=online', bookForm: true },
       'percorso-gruppo': { type: 'Percorso di Gruppo', title: 'Percorsi di gruppo', desc: 'Lascia i tuoi dati per essere avvisato non appena si apriranno le iscrizioni al prossimo percorso di gruppo a numero chiuso.', actionUrl: 'servizi.html#gruppi' }
     };
     // Se la dashboard admin ha popolato 'service_packages', usa i pacchetti del database
     if (window.__dynamicPackages && Object.keys(window.__dynamicPackages).length > 0) {
       serviceData = {};
       Object.entries(window.__dynamicPackages).forEach(([k, p]) => {
-        serviceData[k] = { type: p.type || 'Servizio', title: p.name || k, desc: p.desc || '', actionUrl: p.actionUrl || '' };
+        // mantieni il comportamento «modulo diretto» per le sessioni prenotabili;
+        // anche un pacchetto nuovo con link "prenota.html" apre direttamente il modulo
+        const isBookable = k === 'sessione-studio' || k === 'sessione-online'
+          || /prenota\.html/.test(p.actionUrl || '') || p.bookForm === true;
+        serviceData[k] = { type: p.type || 'Servizio', title: p.name || k, desc: p.desc || '', actionUrl: p.actionUrl || '', bookForm: isBookable };
       });
     }
     function openModal(serviceKey) {
       const data = serviceData[serviceKey];
       if (!data) return;
+      // "Prenota in studio" / "Prenota online": niente popup di avviso intermedio,
+      // apri direttamente il modulo di prenotazione (servizio già selezionato).
+      if (data.bookForm || /prenota\.html/.test(data.actionUrl || '')) {
+        openContactModal(contactFormTemplateId, data.title);
+        return;
+      }
       document.getElementById('modal-service-type').textContent = data.type;
       document.getElementById('modal-service-title').textContent = data.title;
       document.getElementById('modal-service-desc').textContent = data.desc;
@@ -1237,6 +1283,8 @@
     document.documentElement.style.setProperty('--scroll-y', `${scrollY}px`);
     document.body.classList.add('modal-open');
     document.body.style.top = `-${scrollY}px`;
+    modal.classList.remove('hidden');
+    modal.removeAttribute('hidden'); // l'attributo hidden bloccherebbe il popup (CSS usa .hidden)
     modal.classList.add('active');
     activeModal = 'contact-modal';
     document.addEventListener('keydown', handleContactEscapeKey);
@@ -1248,6 +1296,7 @@
     const modal = document.getElementById('contact-modal');
     if (!modal) return;
     modal.classList.remove('active');
+    modal.setAttribute('hidden', ''); // nasconde davvero il popup (attributo hidden)
     document.removeEventListener('keydown', handleContactEscapeKey);
     setTimeout(() => {
       const scrollY = document.documentElement.style.getPropertyValue('--scroll-y');
@@ -1578,7 +1627,10 @@
     
     // 3. Inizializza Modali e Funzionalità avanzate
     initAgreementModal();
-    initServiceModal();
+    // NOTA: initServiceModal() NON va chiamato qui due volte: la seconda
+    // registrazione aggiungerebbero listener duplicati sui pulsanti dei
+    // pacchetti (doppio click = doppio popup). Viene invocato solo dopo il
+    // caricamento dei pacchetti dal database, nella riga sopra.
     initCertModal();
     initContactModal();
     initQuizModal();
