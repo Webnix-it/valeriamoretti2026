@@ -875,6 +875,9 @@
      pacchetti attivi/visibili e domande attive del test. I colori dei
      pacchetti seguono il tema corrente (applyPreviewTheme).            */
   function renderLivePreview() {
+    // Dopo un salvataggio o un refresh, la "bozza" non serve più: il contenuto
+    // reale compare già nella lista sottostante.
+    renderDraftsCleared();
     // --- Recensioni (ordinate per data, come nella Home) ---
     const revBox = $('#pv-reviews');
     if (revBox) {
@@ -923,6 +926,122 @@
   function renderReviewsTableAndPreview() { renderReviewsTable(); renderLivePreview(); }
   function renderQuestionsListAndPreview() { renderQuestionsList(); renderLivePreview(); }
   function renderPackagesAndPreview() { renderPackages(); renderLivePreview(); }
+
+  /* ============ ANTEPRIMA MENTRE SCRIVI (draft live) ==============
+     Ogni volta che l'amministratrice digita in un form (nome recensione,
+     testo domanda, nome pacchetto...), la colonna di destra mostra
+     immediatamente l'elemento così come sta nascendo, evidenziato con
+     il bordo tratteggiato "bozza". La funzione è debounce 120ms per
+     restare fluida anche su digitazione veloce.                      */
+  const DRAFT_REV_IDS   = ['#rev-name', '#rev-initial', '#rev-text', '#rev-date'];
+  const DRAFT_Q_IDS     = ['#q-text'];
+  const DRAFT_PKG_IDS   = ['#pkg-name', '#pkg-type', '#pkg-price', '#pkg-desc', '#pkg-features'];
+  const DRAFT_CQ_IDS    = ['#cq-text', '#cq-type', '#cq-options', '#cq-required'];
+
+  function draftReviewHtml() {
+    const name = ($('#rev-name').value || '').trim();
+    const ini  = ($('#rev-initial').value || '').trim().toUpperCase();
+    const desc = ($('#rev-text').value || '').trim();
+    const date = ($('#rev-date').value || '').trim();
+    if (!name && !ini && !desc) return '';
+    const stars = currentStarRating();
+    return `
+      <div class="pv-review pv-draft">
+        <span class="pv-rname">${esc(name + (ini ? ' ' + ini + '.' : '')) || '<em style="color:#98917f;">Nome…</em>'}</span>
+        <span class="pv-rstars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</span>
+        <span class="pv-rdate">· ${esc(fmtDateIT(date))}</span>
+        <p>${esc(desc) || '<em style="color:#98917f;">La recensione comparirà qui mentre scrivi…</em>'}</p>
+      </div>`;
+  }
+
+  function draftQuestionHtml() {
+    const text = ($('#q-text').value || '').trim();
+    if (!text) return '';
+    const opts = $$('#options-editor .opt-row')
+      .map(r => r.querySelector('[data-opt-text]').value.trim()).filter(Boolean);
+    const nextNum = sortedQuestions().length + 1;
+    return `
+      <div class="pv-q pv-draft" style="display:block;">
+        <div><span class="pv-num">${nextNum}.</span> <strong>${esc(text)}</strong></div>
+        ${opts.length ? `<ul style="margin:4px 0 0 26px;font-size:11.5px;color:#6b6557;">${opts.map(o => `<li>${esc(o)}</li>`).join('')}</ul>` : '<div style="font-size:11px;color:#98917f;margin-top:3px;margin-left:26px;">Ancora nessuna risposta</div>'}
+      </div>`;
+  }
+
+  function draftPackageHtml() {
+    const name  = ($('#pkg-name').value || '').trim();
+    const type  = ($('#pkg-type').value || '').trim();
+    const price = ($('#pkg-price').value || '').trim();
+    const desc  = ($('#pkg-desc').value || '').trim();
+    const feats = ($('#pkg-features').value || '').split('\n').map(s => s.trim()).filter(Boolean);
+    if (!name && !type && !price && !desc) return '';
+    return `
+      <div class="pv-pkg pv-draft">
+        <div class="pv-pname">${esc(name) || '<em style="opacity:.6;">Nome pacchetto…</em>'}</div>
+        ${type ? `<div class="pv-pdesc" style="margin-top:0;">${esc(type)}</div>` : ''}
+        ${price ? `<div class="pv-pprice">${esc(price)}</div>` : ''}
+        <div class="pv-pdesc">${esc(desc) || '<em style="opacity:.6;">Descrizione…</em>'}</div>
+        ${feats.length ? `<ul style="margin:6px 0 0 16px;font-size:11px;color:var(--pv-text,#55534b);">${feats.slice(0, 6).map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
+        <span class="pv-pbtn">Prenota</span>
+      </div>`;
+  }
+
+  function draftCustomQuestionHtml() {
+    const text = ($('#cq-text').value || '').trim();
+    if (!text) return '';
+    const typeSel = $('#cq-type');
+    const typeLabel = typeSel.options[typeSel.selectedIndex].text;
+    const required = $('#cq-required').checked;
+    const options = ($('#cq-options').value || '').split(',').map(s => s.trim()).filter(Boolean);
+    let field = '';
+    if (typeSel.value === 'long') field = '<textarea rows="2" disabled placeholder="Risposta lunga…" style="width:100%;border:1px solid #ddd6c6;border-radius:8px;padding:6px 8px;font-size:11.5px;"></textarea>';
+    else if (typeSel.value === 'multiple') field = options.map(o => `<label style="display:block;font-size:11.5px;font-weight:400;"><input type="radio" disabled /> ${esc(o)}</label>`).join('');
+    else if (typeSel.value === 'checkbox') field = options.map(o => `<label style="display:block;font-size:11.5px;font-weight:400;"><input type="checkbox" disabled /> ${esc(o)}</label>`).join('');
+    else field = '<input type="text" disabled placeholder="Risposta breve…" style="width:100%;border:1px solid #ddd6c6;border-radius:8px;padding:6px 8px;font-size:11.5px;" />';
+    return `
+      <div class="pv-draft" style="padding:10px 12px;border-radius:10px;background:#fff;">
+        <div style="font-size:12.5px;font-weight:600;color:var(--antracite);">${esc(text)}${required ? ' <span style="color:#c0392b;">*</span>' : ''}</div>
+        <div style="font-size:10.5px;color:#98917f;margin-bottom:6px;">${esc(typeLabel)} · ${required ? 'obbligatoria' : 'facoltativa'}</div>
+        ${field}
+      </div>`;
+  }
+
+  function renderDrafts() {
+    const d1 = $('#pv-draft-review');   if (d1) d1.innerHTML = draftReviewHtml();
+    const d2 = $('#pv-draft-question'); if (d2) d2.innerHTML = draftQuestionHtml();
+    const d3 = $('#pv-draft-package');  if (d3) d3.innerHTML = draftPackageHtml();
+    const d4 = $('#pv-draft-cq');       if (d4) d4.innerHTML = draftCustomQuestionHtml();
+  }
+
+  // Svuota gli slot "bozza" (usato dopo un salvataggio: il dato reale entra nelle liste).
+  function renderDraftsCleared() {
+    ['#pv-draft-review', '#pv-draft-question', '#pv-draft-package', '#pv-draft-cq']
+      .forEach(sel => { const el = $(sel); if (el) el.innerHTML = ''; });
+  }
+
+  let draftTimer = null;
+  function scheduleDraftRender() {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(renderDrafts, 120);
+  }
+
+  function initDraftLivePreview() {
+    [...DRAFT_REV_IDS, ...DRAFT_Q_IDS, ...DRAFT_PKG_IDS, ...DRAFT_CQ_IDS].forEach(sel => {
+      const el = $(sel);
+      if (!el) return;
+      el.addEventListener('input', scheduleDraftRender);
+      el.addEventListener('change', renderDrafts); // select/checkbox reagiscono subito
+    });
+    // Le opzioni di risposta della domanda cambiano dinamicamente: intercetta gli input dentro l'editor
+    const optEd = $('#options-editor');
+    if (optEd) {
+      optEd.addEventListener('input', scheduleDraftRender);
+      optEd.addEventListener('click', scheduleDraftRender); // aggiunta/rimozione righe
+    }
+    // Stelle: aggiornate già via change, ma assicuriamoci all'apertura del pannello recensioni
+    const starWrap = $('#rev-star-rating');
+    if (starWrap) starWrap.addEventListener('change', renderDrafts);
+    renderDrafts();
+  }
 
   /* =================== COLORI & STILE (tema sito) ==================
      Il tema è salvato in Firestore (collection 'site_settings', doc
@@ -1079,6 +1198,7 @@
     initQuizSection();
     initServicesSection();
     initThemeSection();
+    initDraftLivePreview(); // anteprima live si aggiorna mentre scrivi nei form
     // Anteprima live: aggiorna anche manualmente
     const rb = $('#btn-preview-refresh');
     if (rb) rb.addEventListener('click', () => {

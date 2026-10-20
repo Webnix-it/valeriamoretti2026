@@ -134,6 +134,9 @@
     .pv-q:last-child { border-bottom: none; }
     .pv-q .pv-num { font-weight: 700; color: var(--salvia-dark, #7d9c7d); min-width: 20px; }
     .pv-q.off { opacity: .45; text-decoration: line-through; }
+    /* Bozza in corso di digitazione (anteprima live mentre scrivi nei form) */
+    .pv-draft { outline: 2px dashed var(--salvia-dark, #7d9c7d); outline-offset: 3px; border-radius: 10px; position: relative; }
+    .pv-draft::after { content: "bozza"; position: absolute; top: -9px; right: 6px; background: var(--salvia-dark, #7d9c7d); color: #fff; font-size: 9.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
     @media (max-width: 1199px) {
       .preview-pane { position: static; width: auto; border-left: none; border-top: 1px solid #ddd6c8; margin-left: var(--sidebar-w); }
       .preview-scroll { max-height: 520px; }
@@ -611,19 +614,26 @@
         <h3><i class="fa-solid fa-eye"></i> Anteprima live</h3>
         <button type="button" class="btn btn--soft btn--sm" id="btn-preview-refresh"><i class="fa-solid fa-rotate"></i> Aggiorna</button>
       </div>
-      <p class="preview-note">Riflette i dati salvati nel database e i colori correnti. Le recensioni sono ordinate per data, i pacchetti mostrano solo quelli attivi e visibili nella Home.</p>
+      <p class="preview-note">Si aggiorna mentre scrivi: mostra in tempo reale la recensione, il pacchetto o la domanda che stai componendo (evidenziata come «bozza»), insieme ai dati già salvati nel database.</p>
       <div class="preview-scroll">
         <section class="pv-block">
           <h4><i class="fa-solid fa-star"></i> Recensioni</h4>
+          <div id="pv-draft-review" class="pv-body"></div>
           <div id="pv-reviews" class="pv-body"></div>
         </section>
         <section class="pv-block">
           <h4><i class="fa-solid fa-briefcase"></i> Pacchetti in Home</h4>
+          <div id="pv-draft-package" class="pv-body"></div>
           <div id="pv-packages" class="pv-body"></div>
         </section>
         <section class="pv-block">
           <h4><i class="fa-solid fa-circle-question"></i> Test gratuito</h4>
+          <div id="pv-draft-question" class="pv-body"></div>
           <div id="pv-quiz" class="pv-body"></div>
+        </section>
+        <section class="pv-block">
+          <h4><i class="fa-solid fa-clipboard-list"></i> Modulo di richiesta</h4>
+          <div id="pv-draft-cq" class="pv-body"></div>
         </section>
       </div>
     </aside>
