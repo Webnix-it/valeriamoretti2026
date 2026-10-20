@@ -5,6 +5,7 @@
 // ============================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 import { 
   getAuth, 
   GoogleAuthProvider, 
@@ -25,16 +26,26 @@ import {
 
 // 🔥 Configurazione del progetto Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDv4CB_l9F3XRjlczYSRANG00jJ1y6UwcM",
-  authDomain: "consulting-relazioni.firebaseapp.com",
-  projectId: "consulting-relazioni",
-  storageBucket: "consulting-relazioni.firebasestorage.app",
-  messagingSenderId: "776293586666",
-  appId: "1:776293586666:web:e969ed7e846cd0522c6993"
+  apiKey: "AIzaSyAnHSIHLCo1A9OaeE30D_2OuYBt0qySGvk",
+  authDomain: "mental-coach-2026.firebaseapp.com",
+  projectId: "mental-coach-2026",
+  storageBucket: "mental-coach-2026.firebasestorage.app",
+  messagingSenderId: "562377626085",
+  appId: "1:562377626085:web:7806b7c95b50e241b61f0c",
+  measurementId: "G-R97QZPGJV3"
 };
 
 // ✅ Inizializza Firebase
 const app = initializeApp(firebaseConfig);
+
+// ✅ Analytics (opzionale — il measurementId G-R97QZPGJV3 è presente nella config)
+try {
+  isSupported().then((yes) => {
+    if (yes) getAnalytics(app);
+  });
+} catch (e) {
+  // analytics non disponibile: ignora, il resto della app funziona comunque
+}
 
 // ✅ Inizializza servizi Firebase
 export const auth = getAuth(app);
