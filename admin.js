@@ -190,7 +190,7 @@
     setBusy(true);
     try {
       allReviews = await fsGetAll(REV_COL);
-      renderReviewsTable();
+      renderReviewsTableAndPreview();
     } catch (e) {
       console.error(e); toast('Errore caricamento recensioni: ' + e.message, true);
     } finally { setBusy(false); }
@@ -346,7 +346,7 @@
     setBusy(true);
     try {
       quizQuestions = await fsGetAll(QUIZ_COL);
-      renderQuestionsList();
+      renderQuestionsListAndPreview();
       // titolo da config/site_config
       const snap = await FB.getDoc(FB.doc(FB.db, CONFIG_COL, CONFIG_DOC));
       const cfg = snap.exists() ? snap.data() : {};
@@ -385,7 +385,7 @@
       await FB.setDoc(FB.doc(FB.db, CONFIG_COL, CONFIG_DOC), cfgPayload, { merge: true });
       $('#quiz-title-input').value = window.__defaultQuizTitle || '';
       quizQuestions = await fsGetAll(QUIZ_COL);
-      renderQuestionsList();
+      renderQuestionsListAndPreview();
       toast('Test attuale importato nel database: ora è modificabile.');
     } catch (e) { console.error(e); }
     finally { setBusy(false); }
@@ -449,7 +449,7 @@
       toast('Domanda salvata: disponibile nel test pubblico.');
       resetQuestionForm();
       quizQuestions = await fsGetAll(QUIZ_COL);
-      renderQuestionsList();
+      renderQuestionsListAndPreview();
     } catch (err) { console.error(err); toast('Errore salvataggio: ' + err.message, true); }
     finally { setBusy(false); }
   }
@@ -464,7 +464,7 @@
       await fsDelete(QUIZ_COL, id);
       toast('Domanda eliminata dal test.');
       quizQuestions = await fsGetAll(QUIZ_COL);
-      renderQuestionsList();
+      renderQuestionsListAndPreview();
     } catch (err) { console.error(err); toast('Errore eliminazione: ' + err.message, true); }
     finally { setBusy(false); }
   }
@@ -485,7 +485,7 @@
         fsSet(QUIZ_COL, b.id, { order: newB.order })
       ]);
       quizQuestions = await fsGetAll(QUIZ_COL);
-      renderQuestionsList();
+      renderQuestionsListAndPreview();
       toast('Ordine aggiornato: il test pubblico segue il nuovo ordine.');
     } catch (err) { console.error(err); toast('Errore riordino: ' + err.message, true); }
     finally { setBusy(false); }
@@ -498,7 +498,7 @@
     try {
       await fsSet(QUIZ_COL, id, { active: q.active === false });
       q.active = q.active === false;
-      renderQuestionsList();
+      renderQuestionsListAndPreview();
       toast(q.active ? 'Domanda riattivata nel test.' : 'Domanda disattivata: non comparirà nel test.');
     } catch (err) { console.error(err); toast('Errore: ' + err.message, true); }
     finally { setBusy(false); }
@@ -610,7 +610,7 @@
         fsGetAll(PKG_COL), fsGetAll(CQ_COL), fsGetAll(REQ_COL)
       ]);
       packages = pkgs; customQuestions = cqs; requests = reqs;
-      renderPackages(); renderCustomQuestions(); renderRequests();
+      renderPackagesAndPreview(); renderCustomQuestions(); renderRequests();
       if (packages.length === 0) await seedPackagesFromDefaults();
     } catch (e) {
       console.error(e); toast('Errore caricamento servizi: ' + e.message, true);
@@ -633,7 +633,7 @@
         });
       }
       packages = await fsGetAll(PKG_COL);
-      renderPackages();
+      renderPackagesAndPreview();
       toast('Pacchetti attuali importati: ora puoi modificarli.');
     } catch (e) { console.error(e); }
     finally { setBusy(false); }
@@ -703,7 +703,7 @@
       $('#pkg-key').disabled = false;
       resetPackageForm();
       packages = await fsGetAll(PKG_COL);
-      renderPackages();
+      renderPackagesAndPreview();
     } catch (err) { console.error(err); toast('Errore salvataggio: ' + err.message, true); }
     finally { setBusy(false); }
   }
@@ -718,7 +718,7 @@
       await fsDelete(PKG_COL, id);
       toast('Pacchetto eliminato.');
       packages = await fsGetAll(PKG_COL);
-      renderPackages();
+      renderPackagesAndPreview();
     } catch (err) { console.error(err); toast('Errore eliminazione: ' + err.message, true); }
     finally { setBusy(false); }
   }
@@ -731,7 +731,7 @@
       const newState = p.active === false;
       await fsSet(PKG_COL, id, { active: newState, showInHome: newState ? (p.showInHome !== false) : false });
       p.active = newState; p.showInHome = newState ? p.showInHome !== false : false;
-      renderPackages();
+      renderPackagesAndPreview();
       toast(newState ? 'Pacchetto attivato.' : 'Pacchetto disattivato: nascosto dalla Home.');
     } catch (err) { console.error(err); toast('Errore: ' + err.message, true); }
     finally { setBusy(false); }
@@ -750,7 +750,7 @@
         fsSet(PKG_COL, b.id, { order: Number(a.order) })
       ]);
       packages = await fsGetAll(PKG_COL);
-      renderPackages();
+      renderPackagesAndPreview();
       toast('Ordine aggiornato nella Home.');
     } catch (err) { console.error(err); }
     finally { setBusy(false); }
@@ -856,7 +856,7 @@
       try {
         await fsSet(PKG_COL, pkg.id, { questionKeys: Array.from(keys) });
         pkg.questionKeys = Array.from(keys);
-        renderPackages();
+        renderPackagesAndPreview();
         toast(cb.checked ? 'Domanda collegata al pacchetto.' : 'Domanda scollegata dal pacchetto.');
       } catch (err) { console.error(err); toast('Errore collegamento: ' + err.message, true); }
       finally { setBusy(false); }
@@ -870,6 +870,205 @@
     $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
   }
 
+  /* ===================== ANTEPRIMA LIVE (destra) ==================
+     Ricrea in miniatura ciò che la Home pubblica mostra: recensioni,
+     pacchetti attivi/visibili e domande attive del test. I colori dei
+     pacchetti seguono il tema corrente (applyPreviewTheme).            */
+  function renderLivePreview() {
+    // --- Recensioni (ordinate per data, come nella Home) ---
+    const revBox = $('#pv-reviews');
+    if (revBox) {
+      const sorted = [...allReviews].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+      revBox.innerHTML = sorted.length
+        ? sorted.map(r => `
+          <div class="pv-review">
+            <span class="pv-rname">${esc(reviewDisplayName(r))}</span>
+            <span class="pv-rstars">${'★'.repeat(Number(r.stars) || 0)}${'☆'.repeat(5 - (Number(r.stars) || 0))}</span>
+            <span class="pv-rdate">· ${esc(fmtDateIT(r.date))}</span>
+            <p>${esc(r.description && r.description.length > 140 ? r.description.slice(0, 140) + '…' : r.description)}</p>
+          </div>`).join('')
+        : '<p class="pv-empty">Nessuna recensione nel database.</p>';
+    }
+    // --- Pacchetti attivi e visibili nella Home ---
+    const pkgBox = $('#pv-packages');
+    if (pkgBox) {
+      const visible = pkgSorted().filter(p => p.active !== false && p.showInHome !== false);
+      pkgBox.innerHTML = visible.length
+        ? visible.map(p => `
+          <div class="pv-pkg">
+            <div class="pv-pname">${esc(p.name)}</div>
+            ${p.type ? `<div class="pv-pdesc" style="margin-top:0;">${esc(p.type)}</div>` : ''}
+            ${p.price ? `<div class="pv-pprice">${esc(p.price)}</div>` : ''}
+            <div class="pv-pdesc">${esc(p.description && p.description.length > 90 ? p.description.slice(0, 90) + '…' : p.description)}</div>
+            <span class="pv-pbtn">Prenota</span>
+          </div>`).join('')
+        : '<p class="pv-empty">Nessun pacchetto attivo e visibile nella Home.</p>';
+    }
+    // --- Domande attive del test, in ordine ---
+    const quizBox = $('#pv-quiz');
+    if (quizBox) {
+      const qs = sortedQuestions();
+      quizBox.innerHTML = qs.length
+        ? qs.map((q, i) => `
+          <div class="pv-q${q.active === false ? ' off' : ''}">
+            <span class="pv-num">${i + 1}.</span>
+            <span>${esc(q.text)} <em style="color:#98917f;">(${(q.answers || []).length} risposte)</em></span>
+          </div>`).join('')
+        : '<p class="pv-empty">Nessuna domanda nel database.</p>';
+    }
+  }
+
+
+  // Wrapper: ogni rendering locale aggiorna automaticamente anche l'anteprima live a destra.
+  function renderReviewsTableAndPreview() { renderReviewsTable(); renderLivePreview(); }
+  function renderQuestionsListAndPreview() { renderQuestionsList(); renderLivePreview(); }
+  function renderPackagesAndPreview() { renderPackages(); renderLivePreview(); }
+
+  /* =================== COLORI & STILE (tema sito) ==================
+     Il tema è salvato in Firestore (collection 'site_settings', doc
+     'theme') e viene applicato alla Home da script.js tramite variabili
+     CSS. Qui l'admin lo modifica con un color picker per ogni voce.   */
+  const THEME_COL = 'site_settings';
+  const THEME_DOC = 'theme';
+
+  const THEME_DEFAULTS = {
+    heroBg: '#F8F5EF', heroText: '#2e3734',
+    methodBg: '#E3EBE5', methodText: '#2e3734',
+    servicesBg: '#F8F5EF', servicesText: '#2e3734',
+    testimonialsBg: '#E3EBE5', testimonialsText: '#2e3734',
+    faqBg: '#F8F5EF', faqText: '#2e3734',
+    cardBg: '#ffffff', cardText: '#2e3734',
+    btnPrimaryBg: '#315B55', btnPrimaryText: '#ffffff',
+    btnSecondaryBg: '#C6D6CA', btnSecondaryText: '#24443f',
+    btnNavBg: '#315B55', btnNavText: '#ffffff',
+    btnBookBg: '#FF0072', btnBookText: '#ffffff'
+  };
+
+  const THEME_SECTIONS = [
+    { group: 'Sezione Hero / Test gratuito' },
+    { key: 'heroBg', label: 'Sfondo sezione Hero' },
+    { key: 'heroText', label: 'Testo sezione Hero' },
+    { group: 'Sezione Metodo P.E.R.S.M.A.R.T.' },
+    { key: 'methodBg', label: 'Sfondo sezione Metodo' },
+    { key: 'methodText', label: 'Testo sezione Metodo' },
+    { group: 'Sezione Servizi' },
+    { key: 'servicesBg', label: 'Sfondo sezione Servizi' },
+    { key: 'servicesText', label: 'Testo sezione Servizi' },
+    { group: 'Card dei servizi' },
+    { key: 'cardBg', label: 'Sfondo card servizio' },
+    { key: 'cardText', label: 'Testo card servizio' },
+    { group: 'Sezione Recensioni' },
+    { key: 'testimonialsBg', label: 'Sfondo sezione Recensioni' },
+    { key: 'testimonialsText', label: 'Testo sezione Recensioni' },
+    { group: 'Sezione FAQ' },
+    { key: 'faqBg', label: 'Sfondo sezione FAQ' },
+    { key: 'faqText', label: 'Testo sezione FAQ' }
+  ];
+
+  const THEME_BUTTONS = [
+    { group: 'Bottoni principali (CTA)' },
+    { key: 'btnPrimaryBg', label: 'Background — bottoni primari' },
+    { key: 'btnPrimaryText', label: 'Testo — bottoni primari' },
+    { group: 'Bottoni secondari' },
+    { key: 'btnSecondaryBg', label: 'Background — bottoni secondari' },
+    { key: 'btnSecondaryText', label: 'Testo — bottoni secondari' },
+    { group: 'Bottone navbar "Prenota"' },
+    { key: 'btnNavBg', label: 'Background — bottone navbar' },
+    { key: 'btnNavText', label: 'Testo — bottone navbar' },
+    { group: 'Bottone "Prenota ora" sui pacchetti' },
+    { key: 'btnBookBg', label: 'Background — prenota ora' },
+    { key: 'btnBookText', label: 'Testo — prenota ora' }
+  ];
+
+  let currentTheme = { ...THEME_DEFAULTS };
+
+  function hexToCss(v, fallback) {
+    return /^#[0-9a-fA-F]{6}$/.test(String(v || '')) ? v : (fallback || '#000000');
+  }
+
+  function buildColorRows(containerSel, defs) {
+    const box = $(containerSel);
+    if (!box) return;
+    box.innerHTML = defs.map(d => d.group
+      ? `<div class="color-group-title">${esc(d.group)}</div>`
+      : `<div class="color-row">
+           <label class="cl" for="tc-${d.key}">${esc(d.label)}</label>
+           <input type="color" id="tc-${d.key}" data-tkey="${d.key}" value="${hexToCss(currentTheme[d.key], THEME_DEFAULTS[d.key])}" />
+           <span class="hexv" id="hv-${d.key}">${hexToCss(currentTheme[d.key], THEME_DEFAULTS[d.key])}</span>
+         </div>`).join('');
+  }
+
+  function applyPreviewTheme(t) {
+    const pane = $('#preview-pane');
+    if (!pane) return;
+    pane.style.setProperty('--pv-card-bg', hexToCss(t.cardBg, THEME_DEFAULTS.cardBg));
+    pane.style.setProperty('--pv-text', hexToCss(t.cardText, THEME_DEFAULTS.cardText));
+    pane.style.setProperty('--pv-heading', hexToCss(t.cardText, THEME_DEFAULTS.cardText));
+    pane.style.setProperty('--pv-btn-bg', hexToCss(t.btnBookBg, THEME_DEFAULTS.btnBookBg));
+    pane.style.setProperty('--pv-btn-txt', hexToCss(t.btnBookText, THEME_DEFAULTS.btnBookText));
+    pane.style.setProperty('--pv-border', hexToCss(t.servicesBg, THEME_DEFAULTS.servicesBg));
+  }
+
+  function onThemePickerChange(e) {
+    const inp = e.target.closest('input[type="color"][data-tkey]');
+    if (!inp) return;
+    const k = inp.dataset.tkey;
+    currentTheme[k] = inp.value;
+    const hv = $('#hv-' + k);
+    if (hv) hv.textContent = inp.value;
+    applyPreviewTheme(currentTheme);
+  }
+
+  async function loadTheme() {
+    setBusy(true);
+    try {
+      const ref = FB.doc(FB.db, THEME_COL, THEME_DOC);
+      const snap = await FB.getDoc(ref);
+      if (snap.exists()) currentTheme = { ...THEME_DEFAULTS, ...(snap.data() || {}) };
+    } catch (err) {
+      console.warn('Tema non caricato (uso default):', err);
+    } finally { setBusy(false); }
+    buildColorRows('#theme-sections-grid', THEME_SECTIONS);
+    buildColorRows('#theme-buttons-grid', THEME_BUTTONS);
+    applyPreviewTheme(currentTheme);
+  }
+
+  async function saveTheme() {
+    setBusy(true);
+    try {
+      await FB.setDoc(FB.doc(FB.db, THEME_COL, THEME_DOC), { ...currentTheme, updatedAt: new Date().toISOString() });
+      toast('Colori salvati: la Home li applica al prossimo caricamento.');
+    } catch (err) {
+      console.error(err);
+      toast('Errore salvataggio colori: ' + err.message, true);
+    } finally { setBusy(false); }
+  }
+
+  function initThemeSection() {
+    buildColorRows('#theme-sections-grid', THEME_SECTIONS);
+    buildColorRows('#theme-buttons-grid', THEME_BUTTONS);
+    const grid1 = $('#theme-sections-grid'), grid2 = $('#theme-buttons-grid');
+    [grid1, grid2].forEach(g => g && g.addEventListener('input', onThemePickerChange));
+    $('#btn-theme-save').addEventListener('click', saveTheme);
+    $('#btn-theme-reset').addEventListener('click', () => {
+      confirmAction('Ripristinare i colori originali?', 'Il tema personalizzato verrà eliminato dal database e la Home tornerà ai colori di default.')
+        .then(async (yes) => {
+          if (!yes) return;
+          setBusy(true);
+          try {
+            await FB.deleteDoc(FB.doc(FB.db, THEME_COL, THEME_DOC)).catch(() => {});
+            currentTheme = { ...THEME_DEFAULTS };
+            buildColorRows('#theme-sections-grid', THEME_SECTIONS);
+            buildColorRows('#theme-buttons-grid', THEME_BUTTONS);
+            applyPreviewTheme(currentTheme);
+            toast('Colori originali ripristinati.');
+          } catch (err) { console.error(err); toast('Errore: ' + err.message, true); }
+          finally { setBusy(false); }
+        });
+    });
+    loadTheme();
+  }
+
   /* =========================== BOOTSTRAP ======================== */
   let dashInited = false;
   function initDashboard() {
@@ -879,6 +1078,14 @@
     initReviewsSection();
     initQuizSection();
     initServicesSection();
+    initThemeSection();
+    // Anteprima live: aggiorna anche manualmente
+    const rb = $('#btn-preview-refresh');
+    if (rb) rb.addEventListener('click', () => {
+      loadReviews(); loadQuiz(); loadServices();
+      setTimeout(renderLivePreview, 700);
+      toast('Anteprima aggiornata.');
+    });
   }
 
   async function boot() {

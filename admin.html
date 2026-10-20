@@ -99,6 +99,54 @@
     .btn-logout:hover { background: rgba(255,255,255,.2); }
 
     .main { margin-left: var(--sidebar-w); min-height: 100vh; padding: 30px 34px 80px; }
+    /* ---------- ANTEPRIMA LIVE (pannello destro) ---------- */
+    @media (min-width: 1200px) {
+      .main { margin-right: 390px; }
+    }
+    .preview-pane {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 370px; z-index: 25;
+      background: #f4f1ea; border-left: 1px solid #ddd6c8; padding: 20px 18px;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .preview-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .preview-head h3 { font-family: 'Heavitas', system-ui, sans-serif; color: var(--verde-bosco); font-size: 17px; margin: 0; }
+    .preview-note { font-size: 12px; color: var(--grigio); line-height: 1.5; margin: 8px 0 12px; }
+    .preview-scroll { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; padding-right: 4px; }
+    .pv-block { background: #fff; border: 1px solid #e3ddcf; border-radius: 12px; padding: 14px 14px 16px; box-shadow: 0 2px 8px rgba(40,50,40,.05); }
+    .pv-block h4 { font-family: 'Heavitas', system-ui, sans-serif; font-size: 13.5px; color: var(--verde-bosco); margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+    .pv-empty { font-size: 12.5px; color: #98917f; font-style: italic; margin: 0; }
+    /* card anteprima recensioni */
+    .pv-review { border-bottom: 1px dashed #e6e0d2; padding: 9px 2px; }
+    .pv-review:last-child { border-bottom: none; }
+    .pv-review .pv-rname { font-weight: 600; font-size: 13px; color: var(--antracite); }
+    .pv-review .pv-rstars { color: #d9a419; font-size: 13px; letter-spacing: 1px; }
+    .pv-review .pv-rdate { font-size: 11px; color: var(--grigio); }
+    .pv-review p { font-size: 12.5px; line-height: 1.5; margin: 4px 0 0; color: #4c4a42; }
+    /* card anteprima pacchetti (ricrea lo stile della Home con i temi correnti) */
+    .pv-pkg { border: 1.5px solid var(--pv-border, #dcd6c6); border-radius: 12px; padding: 12px; margin-bottom: 10px; background: var(--pv-card-bg, #fff); }
+    .pv-pkg:last-child { margin-bottom: 0; }
+    .pv-pkg .pv-pname { font-weight: 700; font-size: 13.5px; color: var(--pv-heading, var(--verde-bosco)); font-family: 'Heavitas', system-ui, sans-serif; }
+    .pv-pkg .pv-pprice { font-size: 12.5px; color: var(--pv-text, var(--antracite)); margin-top: 2px; }
+    .pv-pkg .pv-pdesc { font-size: 12px; color: var(--pv-text, #55534b); line-height: 1.5; margin-top: 5px; }
+    .pv-pkg .pv-pbtn { display: inline-block; margin-top: 8px; font-size: 11.5px; font-weight: 600; padding: 6px 12px; border-radius: 8px; background: var(--pv-btn-bg, var(--verde-bosco)); color: var(--pv-btn-txt, #fff); }
+    /* chip anteprima quiz */
+    .pv-q { display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; padding: 5px 0; border-bottom: 1px dashed #eee7d8; }
+    .pv-q:last-child { border-bottom: none; }
+    .pv-q .pv-num { font-weight: 700; color: var(--salvia-dark, #7d9c7d); min-width: 20px; }
+    .pv-q.off { opacity: .45; text-decoration: line-through; }
+    @media (max-width: 1199px) {
+      .preview-pane { position: static; width: auto; border-left: none; border-top: 1px solid #ddd6c8; margin-left: var(--sidebar-w); }
+      .preview-scroll { max-height: 520px; }
+    }
+    @media (max-width: 760px) {
+      .preview-pane { margin-left: 0; }
+    }
+    /* ---------- COLORI & STILE ---------- */
+    .color-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid #e5dfd0; border-radius: 10px; background: #fbfaf6; }
+    .color-row label.cl { margin: 0; flex: 1; font-size: 13px; }
+    .color-row input[type="color"] { width: 46px; height: 34px; padding: 2px; border: 1px solid #cfc8ba; border-radius: 8px; background: #fff; cursor: pointer; flex: none; }
+    .color-row .hexv { font-size: 11px; color: var(--grigio); font-family: ui-monospace, monospace; min-width: 62px; text-align: right; }
+    .color-group-title { grid-column: 1 / -1; font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--salvia-dark, #7d9c7d); margin: 8px 0 0; }
     .page-head { margin-bottom: 24px; }
     .page-head h2 { font-size: 26px; color: var(--verde-bosco); }
     .page-head p { color: var(--grigio); font-size: 13.5px; margin-top: 4px; }
@@ -274,6 +322,10 @@
         <button type="button" class="side-btn" data-panel="servizi">
           <i class="fa-solid fa-briefcase"></i>
           <span>Servizi e pacchetti<small>Pacchetti, moduli di richiesta e domande personalizzate.</small></span>
+        </button>
+        <button type="button" class="side-btn" data-panel="colori">
+          <i class="fa-solid fa-palette"></i>
+          <span>Colori &amp; stile<small>Sfondi, testi e bottoni del sito pubblico.</small></span>
         </button>
       </nav>
       <div class="side-user">
@@ -527,7 +579,54 @@
         </div>
       </section>
 
+      <!-- ============ PANNELLO: COLORI & STILE ============ -->
+      <section class="panel" id="panel-colori">
+        <div class="page-head">
+          <h2>Colori &amp; stile</h2>
+          <p>Cambia i colori del sito pubblico: sfondi delle sezioni, testi e bottoni (background e testo di ogni singolo bottone). Le modifiche sono salvate nel database e si vedono subito nella Home e nell'anteprima live a destra.</p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-fill-drip"></i> Sfondi e testi delle sezioni</h3>
+          <div class="grid-2" id="theme-sections-grid"><!-- righe generate da admin.js --></div>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-toggle-on"></i> Bottoni</h3>
+          <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Per ogni tipo di bottone puoi impostare separatamente il colore di sfondo e il colore del testo.</p>
+          <div class="grid-2" id="theme-buttons-grid"><!-- righe generate da admin.js --></div>
+        </div>
+
+        <div class="row" style="margin-top:16px;">
+          <button type="button" class="btn btn--primary" id="btn-theme-save"><i class="fa-solid fa-floppy-disk"></i> Salva colori</button>
+          <button type="button" class="btn btn--soft" id="btn-theme-reset"><i class="fa-solid fa-rotate-left"></i> Ripristina colori originali</button>
+        </div>
+      </section>
+
     </main>
+
+    <!-- ============ ANTEPRIMA LIVE (a destra) ============ -->
+    <aside class="preview-pane" id="preview-pane" aria-label="Anteprima live del sito">
+      <div class="preview-head">
+        <h3><i class="fa-solid fa-eye"></i> Anteprima live</h3>
+        <button type="button" class="btn btn--soft btn--sm" id="btn-preview-refresh"><i class="fa-solid fa-rotate"></i> Aggiorna</button>
+      </div>
+      <p class="preview-note">Riflette i dati salvati nel database e i colori correnti. Le recensioni sono ordinate per data, i pacchetti mostrano solo quelli attivi e visibili nella Home.</p>
+      <div class="preview-scroll">
+        <section class="pv-block">
+          <h4><i class="fa-solid fa-star"></i> Recensioni</h4>
+          <div id="pv-reviews" class="pv-body"></div>
+        </section>
+        <section class="pv-block">
+          <h4><i class="fa-solid fa-briefcase"></i> Pacchetti in Home</h4>
+          <div id="pv-packages" class="pv-body"></div>
+        </section>
+        <section class="pv-block">
+          <h4><i class="fa-solid fa-circle-question"></i> Test gratuito</h4>
+          <div id="pv-quiz" class="pv-body"></div>
+        </section>
+      </div>
+    </aside>
   </div>
 
   <!-- Conferma eliminazione -->

@@ -1596,10 +1596,80 @@
   // ============================================
   // 6. MAIN INITIALIZATION
   // ============================================
+  /* ---- Tema personalizzato (salvato dalla dashboard "Colori & stile") ----
+     Lettura di site_settings/theme da Firestore e applicazione come variabili
+     CSS inline sul <html>, con regole !important per sovrascrivere lo stile.
+     Se il documento non esiste o Firestore non è raggiungibile, il sito resta
+     con i colori originali di style.css.                                      */
+  const THEME_CSS_MAP = {
+    heroBg: ['#home', '--theme-hero-bg', 'background'],
+    heroText: ['#home', '--theme-hero-txt', 'color'],
+    methodBg: ['#metodo', '--theme-method-bg', 'background'],
+    methodText: ['#metodo', '--theme-method-txt', 'color'],
+    servicesBg: ['#servizi', '--theme-services-bg', 'background'],
+    servicesText: ['#servizi', '--theme-services-txt', 'color'],
+    testimonialsBg: ['#testimonials', '--theme-testi-bg', 'background'],
+    testimonialsText: ['#testimonials', '--theme-testi-txt', 'color'],
+    faqBg: ['#faq-vm', '--theme-faq-bg', 'background'],
+    faqText: ['#faq-vm', '--theme-faq-txt', 'color'],
+    cardBg: ['.service-card,.pain-card,.testimonial-card', '--theme-card-bg', 'background'],
+    cardText: ['.service-card,.pain-card,.testimonial-card', '--theme-card-txt', 'color']
+  };
+  const THEME_BTN_MAP = {
+    // Bottoni principali (CTA verdi "Prenota una sessione", "Acquista il piano"…)
+    btnPrimaryBg: ['.btn--forest', '--theme-btn1-bg'],
+    btnPrimaryText: ['.btn--forest', '--theme-btn1-txt'],
+    // Bottoni chiari ("Fai il test gratuito")
+    btnSecondaryBg: ['.btn--light', '--theme-btn2-bg'],
+    btnSecondaryText: ['.btn--light', '--theme-btn2-txt'],
+    // Bottone "Prenota" nella navbar + CTA menu mobile
+    btnNavBg: ['#bntprenota', '#quiz-open-mm'],
+    btnNavText: ['#bntprenota', '#quiz-open-mm'],
+    // Bottoni salvia sulle card dei pacchetti ("Prenota in studio/online", ecc.)
+    btnBookBg: ['.service-card .btn--sage, .pain-card .btn--sage', '--theme-btnbook-bg'],
+    btnBookText: ['.service-card .btn--sage, .pain-card .btn--sage', '--theme-btnbook-txt']
+  };
+
+  function isHex(v) { return /^#[0-9a-fA-F]{3,8}$/.test(String(v || '')); }
+
+  function applySiteTheme(t) {
+    if (!t) return;
+    const root = document.documentElement;
+    let css = '';
+    Object.entries(THEME_CSS_MAP).forEach(([key, [sel, varName, prop]]) => {
+      if (isHex(t[key])) {
+        root.style.setProperty(varName, t[key]);
+        const imp = prop === 'background' ? 'background' : prop;
+        css += `\n${sel}{ ${imp}: var(${varName}) !important; }`;
+        if (prop === 'color') css += `\n${sel} h1,${sel} h2,${sel} h3,${sel} p,${sel} li{ color: inherit; }`;
+      }
+    });
+    Object.entries(THEME_BTN_MAP).forEach(([key, sels]) => {
+      if (isHex(t[key])) {
+        const part = key.endsWith('Bg') ? 'background' : 'color';
+        css += `\n${sels.join(',')}{ ${part}: ${t[key]} !important; }`;
+      }
+    });
+    if (css) {
+      let st = document.getElementById('site-theme-style');
+      if (!st) { st = document.createElement('style'); st.id = 'site-theme-style'; document.head.appendChild(st); }
+      st.textContent = css;
+    }
+  }
+
+  async function loadSiteTheme() {
+    try {
+      if (!window.firebaseDB || !window.firebaseDoc || !window.firebaseGetDoc) return;
+      const snap = await window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB, 'site_settings', 'theme'));
+      if (snap && snap.exists()) applySiteTheme(snap.data());
+    } catch (e) { console.warn('Tema sito non applicato:', e && e.message); }
+  }
+
   async function initAll() {
     // NOTA: il preloader è avviato da uno script inline in index.html.
     // Qui lo nascondiamo solo come rete di salvataggio se non ha preso il via.
     ensureLoaderHidden();
+    loadSiteTheme(); // applica i colori personalizzati salvati dalla dashboard
 
     // 1. Inizializza UI di base (subito, senza attendere la rete)
     initHeader();
