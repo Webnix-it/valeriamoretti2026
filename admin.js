@@ -196,6 +196,34 @@
     } finally { setBusy(false); }
   }
 
+  /* ---------- Rating a stelle animato (recensioni) ---------- */
+  function setStarRating(value) {
+    const v = Math.min(5, Math.max(1, Number(value) || 5));
+    const hidden = $('#rev-stars');
+    if (hidden) hidden.value = String(v);
+    $$('#rev-star-rating input[type=radio]').forEach(inp => { inp.checked = Number(inp.value) === v; });
+    // Stelle "piene" fino al valore selezionato (label con classe .checked → giallo + ombra nera)
+    $$('#rev-star-rating label[data-value]').forEach(lab => {
+      lab.classList.toggle('checked', Number(lab.dataset.value) <= v);
+    });
+    const sv = $('#rev-star-value');
+    if (sv) sv.textContent = v + ' / 5';
+  }
+
+  function currentStarRating() {
+    const checked = $('#rev-star-rating input[type=radio]:checked');
+    return checked ? Number(checked.value) : 5;
+  }
+
+  function initStarRating() {
+    const wrap = $('#rev-star-rating');
+    if (!wrap) return;
+    wrap.addEventListener('change', (e) => {
+      if (e.target && e.target.name === 'rev-stars-radio') setStarRating(e.target.value);
+    });
+    setStarRating(currentStarRating());
+  }
+
   function resetReviewForm() {
     $('#review-form').reset();
     $('#rev-edit-id').value = '';
@@ -203,13 +231,14 @@
     $('#rev-cancel-edit').hidden = true;
     const today = new Date().toISOString().slice(0, 10);
     $('#rev-date').value = today;
+    setStarRating(5);
   }
 
   function fillReviewForm(r) {
     $('#rev-edit-id').value = r.id;
     $('#rev-name').value = r.name || '';
     $('#rev-initial').value = (r.initial || '').toUpperCase();
-    $('#rev-stars').value = String(r.stars || 5);
+    setStarRating(r.stars || 5);
     $('#rev-date').value = r.date || '';
     $('#rev-text').value = r.description || '';
     $('#rev-form-title').textContent = 'Modifica recensione di ' + reviewDisplayName(r);
@@ -223,7 +252,7 @@
     const data = {
       name: $('#rev-name').value.trim(),
       initial: $('#rev-initial').value.trim().charAt(0).toUpperCase(),
-      stars: Number($('#rev-stars').value),
+      stars: currentStarRating(),
       date: $('#rev-date').value,
       description: $('#rev-text').value.trim(),
       updatedAt: new Date().toISOString()
@@ -263,6 +292,7 @@
   }
 
   function initReviewsSection() {
+    initStarRating();
     resetReviewForm();
     $('#review-form').addEventListener('submit', saveReview);
     $('#rev-search').addEventListener('input', renderReviewsTable);

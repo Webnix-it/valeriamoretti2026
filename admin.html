@@ -7,9 +7,15 @@
   <meta name="robots" content="noindex, nofollow" />
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
+    /* Font Heavitas locale per i titoli della dashboard */
+    @font-face {
+      font-family: 'Heavitas';
+      src: url('Heavitas.ttf') format('truetype');
+      font-weight: normal; font-style: normal; font-display: swap;
+    }
     /* ==========================================================
        ADMIN DASHBOARD — Valeria Moretti (stile coordinato al sito)
        ========================================================== */
@@ -34,7 +40,8 @@
     input, textarea, select { font-family: inherit; font-size: 14px; color: var(--antracite); background: #fff; border: 1.5px solid #d9d3c6; border-radius: 8px; padding: 9px 12px; width: 100%; }
     input:focus, textarea:focus, select:focus { outline: none; border-color: var(--verde-bosco); box-shadow: 0 0 0 3px rgba(47,79,62,.12); }
     label { display: block; font-size: 12.5px; font-weight: 600; color: var(--verde-bosco); margin-bottom: 5px; letter-spacing: .02em; }
-    h1, h2, h3, .serif { font-family: 'Playfair Display', Georgia, serif; }
+    /* Titoli dashboard in Heavitas, tutto il resto sans-serif */
+    h1, h2, h3, .serif { font-family: 'Heavitas', system-ui, sans-serif; letter-spacing: .01em; }
 
     /* ---------- LOGIN ---------- */
     #login-view {
@@ -72,7 +79,7 @@
       display: flex; flex-direction: column; z-index: 30; overflow-y: auto;
     }
     .side-brand { padding: 4px 10px 18px; border-bottom: 1px solid rgba(255,255,255,.14); margin-bottom: 16px; }
-    .side-brand strong { display: block; font-family: 'Playfair Display', serif; font-size: 19px; color: #fff; }
+    .side-brand strong { display: block; font-family: 'Heavitas', system-ui, sans-serif; font-size: 19px; color: #fff; }
     .side-brand span { font-size: 12px; opacity: .75; }
     .side-brand .tag-private { display: inline-block; margin-top: 8px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.14); padding: 3px 10px; border-radius: 999px; }
     .side-nav { display: flex; flex-direction: column; gap: 6px; flex: 1; }
@@ -116,6 +123,45 @@
     .btn--danger:hover { background: #fbeceb; }
     .btn--sm { padding: 7px 13px; font-size: 12.5px; border-radius: 7px; }
     .btn[disabled] { opacity: .5; cursor: not-allowed; }
+    /* Hover zoom 1.2 sui bottoni principali (Salva recensione / Annulla modifica) */
+    #review-form .btn, #review-form .btn:hover { transform-origin: center; }
+    #review-form .btn:hover:not([disabled]) { transform: scale(1.2); z-index: 1; position: relative; }
+    #review-form .btn { transition: all .2s ease; }
+
+    /* ---------- RATING A STELLE (aggiunta/modifica recensione) ---------- */
+    .star-rating { display: flex; gap: 6px; align-items: center; margin-top: 2px; }
+    .star-rating input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+    .star-rating label {
+      cursor: pointer; font-size: 30px; line-height: 1; margin: 0; color: #cfc8ba;
+      text-shadow: 1px 1px 0 rgba(0,0,0,.45);            /* ombra nera */
+      transition: transform .18s ease, color .18s ease, text-shadow .18s ease;
+    }
+    /* hover: animazione + colore giallo */
+    .star-rating label:hover {
+      transform: scale(1.25) rotate(-6deg);
+      color: #f5c518;
+      text-shadow: 2px 3px 5px rgba(0,0,0,.5);
+    }
+    /* stelle selezionate (gialle con ombra nera) */
+    .star-rating label.checked {
+      color: #d9a419;
+      text-shadow: 1px 2px 3px rgba(0,0,0,.5);
+    }
+    .star-rating label.checked:hover { color: #f5c518; }
+    .star-rating .star-value { font-size: 12.5px; color: var(--grigio); margin-left: 8px; font-weight: 600; }
+
+    /* ---------- CERCA (stile Uiverse — garerim) ---------- */
+    .container-input { position: relative; display: inline-flex; align-items: center; }
+    .container-input > svg {
+      position: absolute; top: 50%; left: 10px;
+      transform: translate(0, -50%); pointer-events: none;
+    }
+    .container-input .input {
+      width: 150px; padding: 10px 14px 10px 40px; border-radius: 9999px;
+      border: solid 1px #333; background: #fff; transition: all .2s ease-in-out;
+      outline: none; opacity: .8; font-size: 14px;
+    }
+    .container-input .input:focus { opacity: 1; width: 250px; box-shadow: none; border-color: #333; }
 
     table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
     th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--grigio); padding: 10px 12px; border-bottom: 2px solid #e7e0d2; }
@@ -259,14 +305,23 @@
                 <input type="text" id="rev-initial" required maxlength="1" placeholder="Es. B." pattern="[A-Za-zÀ-ù]" style="text-transform: uppercase;" />
               </div>
               <div>
-                <label for="rev-stars">Stelle *</label>
-                <select id="rev-stars" required>
-                  <option value="5">★★★★★ — 5</option>
-                  <option value="4">★★★★ — 4</option>
-                  <option value="3">★★★ — 3</option>
-                  <option value="2">★★ — 2</option>
-                  <option value="1">★ — 1</option>
-                </select>
+                <label id="rev-stars-label">Stelle *</label>
+                <!-- Rating a stelle animato (hover giallo + ombra nera). Il valore viene letto da admin.js -->
+                <div class="star-rating" id="rev-star-rating" role="radiogroup" aria-labelledby="rev-stars-label">
+                  <input type="radio" name="rev-stars-radio" id="rev-star-5" value="5" checked />
+                  <label for="rev-star-5" data-value="5" title="5 stelle" aria-label="5 stelle">&#9733;</label>
+                  <input type="radio" name="rev-stars-radio" id="rev-star-4" value="4" />
+                  <label for="rev-star-4" data-value="4" title="4 stelle" aria-label="4 stelle">&#9733;</label>
+                  <input type="radio" name="rev-stars-radio" id="rev-star-3" value="3" />
+                  <label for="rev-star-3" data-value="3" title="3 stelle" aria-label="3 stelle">&#9733;</label>
+                  <input type="radio" name="rev-stars-radio" id="rev-star-2" value="2" />
+                  <label for="rev-star-2" data-value="2" title="2 stelle" aria-label="2 stelle">&#9733;</label>
+                  <input type="radio" name="rev-stars-radio" id="rev-star-1" value="1" />
+                  <label for="rev-star-1" data-value="1" title="1 stella" aria-label="1 stella">&#9733;</label>
+                  <span class="star-value" id="rev-star-value">5 / 5</span>
+                </div>
+                <!-- Campo nascosto retro-compatibile con admin.js (value sincronizzata) -->
+                <input type="hidden" id="rev-stars" value="5" />
               </div>
               <div>
                 <label for="rev-date">Data *</label>
@@ -289,7 +344,13 @@
           <div class="row" style="margin-bottom:14px;">
             <div>
               <label for="rev-search">Cerca per nome o iniziale del cognome</label>
-              <input type="text" id="rev-search" placeholder="Es. Laura oppure L…" />
+              <!-- From Uiverse.io by garerim -->
+              <div class="container-input">
+                <input type="text" placeholder="Es. Laura oppure L…" name="text" id="rev-search" class="input" />
+                <svg fill="#000000" width="20px" height="20px" viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M790.588 1468.235c-373.722 0-677.647-303.924-677.647-677.647 0-373.722 303.925-677.647 677.647-677.647 373.723 0 677.647 303.925 677.647 677.647 0 373.723-303.924 677.647-677.647 677.647Zm596.781-160.715c120.396-138.692 193.807-319.285 193.807-516.932C1581.176 354.748 1226.428 0 790.588 0S0 354.748 0 790.588s354.748 790.588 790.588 790.588c197.647 0 378.24-73.411 516.932-193.807l516.028 516.142 79.963-79.963-516.142-516.028Z" fill-rule="evenodd"></path>
+                </svg>
+              </div>
             </div>
           </div>
           <div class="tbl-wrap">
