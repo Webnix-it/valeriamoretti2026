@@ -493,23 +493,23 @@ button { font-family: inherit; cursor: pointer; }
   from { transform: translateX(0); }
   to   { transform: translateX(calc(-50% - 0.75rem)); }
 }
-/* Card compatte, dimensioni da biglietto da visita (~260x150) */
+/* Card leggermente più grandi del formato biglietto da visita (~300x170) */
 .testimonial-item {
   flex-shrink: 0;
-  width: 260px;
+  width: 300px;
   display: flex;
 }
 @media (min-width: 768px) {
-  .testimonial-item { width: 280px; }
+  .testimonial-item { width: 320px; }
 }
 .testimonial-card-inner {
   background: var(--avorio);
-  padding: 0.9rem 1.1rem;
+  padding: 1.1rem 1.3rem;
   border-radius: 1rem;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
   border: 1px solid rgba(248, 245, 239, 0.3);
-  min-height: 150px;
-  max-height: 170px;
+  min-height: 170px;
+  max-height: 195px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1529,7 +1529,7 @@ button { font-family: inherit; cursor: pointer; }
     font-size: 0.95rem;
   }
   .testimonial-item {
-    width: 280px;
+    width: 320px;
   }
 }
 
