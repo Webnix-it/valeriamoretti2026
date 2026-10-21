@@ -111,7 +111,10 @@
     general: { quizTitle: 'Scopri il tuo schema relazionale', pixelId: '', maintenanceMode: false },
     media: { carousel: ['https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/1-fatto.png', 'https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/3-fatto.png', 'https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/2-fatto.png'], studioImage: 'https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/3-fatto.png', problemVideoUrl: 'https://www.youtube.com/embed/Kdo6DryANfU' },
     social: { instagram: 'https://www.instagram.com/mentalcoachvaleria95', tiktok: 'https://www.tiktok.com/@mentalcoachvaleria95', youtube: 'https://www.youtube.com/@mentalcoachvaleria95', telegram: 'https://t.me/mentalcoachvaleria95', whatsapp: 'https://wa.me/393458407102', email: 'mentalcoachvaleria@gmail.com', phone: '+39 345 840 7102', address: 'Valle Lomellina, Pavia (PV), Italia' },
-    reviews: { list: [{ name: 'Webnix It', rating: 5, date: '4 mesi fa', text: 'Un percorso trasformativo. Valeria ha una capacità unica di guidare con empatia e precisione.' }, { name: 'Marika Tasca', rating: 4, date: '2 mesi fa', text: 'Finalmente ho capito i miei schemi relazionali. Consiglio vivamente!' }] },
+    // Elenco recensioni VUOTO di proposito: le recensioni provengono SOLO dal
+    // database (Firestore, progetto mental-coach-2026) gestito dalla dashboard admin.
+    // Non devono mai comparire dati statici/vecchi in attesa del caricamento del DB.
+    reviews: { list: [] },
     quiz: { title: 'Test del Pattern Relazionale', questions: [], profiles: {} },
     contact: { sidebarTitle: 'Il cambiamento inizia con una parola.', sidebarList: 'Ascolto attivo\nRiservatezza\nApproccio personalizzato\nSpazio non giudicante', fields: [], successMessage: 'Grazie! La tua richiesta è stata inviata. Ti risponderemo entro 24h. Nel frattempo, respira. 🌿' }
   };
@@ -167,22 +170,57 @@
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
+  // Piccola utilità: attende che firebase-config.js (modulo ES asincrono) abbia
+  // esposto le funzioni globali, così la Home non parte prima che Firebase sia pronto.
+  function waitForFirebase(timeoutMs = 6000) {
+    return new Promise((resolve) => {
+      if (window.firebaseDB && window.firebaseCollection) return resolve(true);
+      const start = Date.now();
+      const iv = setInterval(() => {
+        if (window.firebaseDB && window.firebaseCollection) { clearInterval(iv); resolve(true); }
+        else if (Date.now() - start > timeoutMs) { clearInterval(iv); resolve(false); }
+      }, 100);
+    });
+  }
+
+  function mapReviewRows(rows) {
+    return rows
+      .slice()
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
+      .map(r => ({ name: r.name + (r.initial ? ' ' + String(r.initial).toUpperCase() + '.' : ''), rating: Number(r.stars) || 5, date: fmtReviewDate(r.date), text: r.description || '' }));
+  }
+
   async function loadDynamicReviews() {
+    await waitForFirebase();
+    // 1) Primo caricamento classico (una tantum)
+    let loaded = false;
     try {
       const rows = await fsGetAll('reviews');
-      if (!rows.length) return false;
-      const list = rows
-        .slice()
-        .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
-        .map(r => ({ name: r.name + (r.initial ? ' ' + String(r.initial).toUpperCase() + '.' : ''), rating: Number(r.stars) || 5, date: fmtReviewDate(r.date), text: r.description || '' }));
-      renderReviews(list);
-      window.__testimonials = list.map(r => ({ name: r.name, text: r.text, time: r.date }));
-      console.log('✅ Recensioni dinamiche caricate dal database:', list.length);
-      return true;
+      if (rows.length) {
+        const list = mapReviewRows(rows);
+        renderReviews(list);
+        window.__testimonials = list.map(r => ({ name: r.name, text: r.text, time: r.date }));
+        console.log('✅ Recensioni dinamiche caricate dal database:', list.length);
+        loaded = true;
+      }
     } catch (error) {
-      console.warn('⚠️ Recensioni dinamiche non disponibili, uso elenco statico', error);
-      return false;
+      console.warn('⚠️ Recensioni dinamiche non disponibili', error);
     }
+    // 2) ASCOLTO LIVE: onSnapshot riaggiorna la Home automaticamente appena
+    //    l'admin aggiunge/modifica/elimina una recensione. Niente refresh manuale.
+    try {
+      if (window.firebaseOnSnapshot && window.firebaseDB && window.firebaseCollection) {
+        window.firebaseOnSnapshot(window.firebaseCollection(window.firebaseDB, 'reviews'), (snap) => {
+          const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          if (!rows.length) return; // DB vuoto: lascia invariato ciò che è mostrato
+          const list = mapReviewRows(rows);
+          renderReviews(list);
+          window.__testimonials = list.map(r => ({ name: r.name, text: r.text, time: r.date }));
+          console.log('🔄 Recensioni aggiornate in tempo reale dal database:', list.length);
+        }, (err) => console.warn('Ascolto recensioni non attivo:', err && err.message));
+      }
+    } catch (e) { console.warn('Ascolto recensioni non attivo:', e && e.message); }
+    return loaded;
   }
 
   function fmtReviewDate(iso) {
@@ -535,12 +573,12 @@
   }
 
   function renderReviews(reviews) {
-    const track = document.getElementById('testimonials-track');
-    const dotsContainer = document.getElementById('testimonials-dots');
-    if (!track) return;
-    const cards = reviews.map(review => `<div class="testimonial-item"><div class="testimonial-card-inner"><div class="testimonial-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div><p class="testimonial-text">"${escapeHtml(review.text)}"</p><div class="testimonial-footer"><div class="testimonial-author"><h4 class="testimonial-name">${escapeHtml(review.name)}</h4><p class="testimonial-time">${escapeHtml(review.date)}</p></div><div class="testimonial-icon"><i class="fa-brands fa-google"></i></div></div></div></div>`).join('');
-    track.innerHTML = cards + cards;
-    applyMarqueeDuration(track, reviews.length);
+    // Usa lo stesso renderer delle card della Home (con "Leggi di più" e stelle FA),
+    // così l'aspetto è identico sia al primo caricamento che negli aggiornamenti live.
+    window.__dynamicReviewsPending = reviews;
+    if (typeof window.__renderTestimonialCards === 'function') {
+      window.__renderTestimonialCards(reviews);
+    }
   }
 
   // Velocità del marquee: costante (~28 px/s), così lo scorrimento è "normale"
@@ -726,25 +764,25 @@
   function initTestimonials() {
     const track = document.getElementById('testimonials-track');
     if (!track) return;
-    const testimonials = [
-      { name: "Webnix It", text: "Valeria mi ha aiutato in alcune situazioni.. Di cui non posso specificare per motivi di privacy. Mi ha aiutato guidandomi a vedere le cose da prospettive diverse e a ragionare in modo nuovo.", time: "4 mesi fa" },
-      { name: "crispa faus", text: "Ho avuto la fortuna di essere aiutato da Valeria, parlando con lei si capisce subito la sua competenza e la sua disponibilità. È una ragazza speciale la consiglio.", time: "4 mesi fa" },
-      { name: "Marika Tasca", text: "Ero in un periodo molto buio della mia vita e lei mi ha aiutato a superare i mie momenti di difficoltà. É molto empatica, gentile e soprattutto sa di cosa hai bisogno.", time: "4 mesi fa" },
-      { name: "Davide Semino", text: "Ottima coach, gentile, disponibile e comprensiva. Oltre a questo è una bellissima persona che ha a cuore il bene degli altri. Consigliata!", time: "4 mesi fa" },
-      { name: "Noemi Giardina", text: "Se cerchi aiuto nel fare ordine con le tue problematiche o hai problemi da risolvere, Valeria è la persona giusta. Empatica, capace di metterti da subito a tuo agio, competente.", time: "4 mesi fa" },
-      { name: "paola rizzato", text: "Bravissima, molto calma, ascolta e consiglia bene, viene naturale parlare con lei…ottima persona", time: "4 mesi fa" }
-    ];
-    window.__testimonials = testimonials;
+    // Le recensioni NON sono più hardcodate qui: provengono esclusivamente dal
+    // database Firestore (collection 'reviews') gestito dalla dashboard admin.
+    // Se il DB è vuoto, la sezione resta senza card finché l'admin non pubblica.
+    window.__testimonials = [];
     function createCard(data, index) {
       const isLong = data.text.length > 150;
       const truncated = isLong ? data.text.substring(0, 150) + '...' : data.text;
-      return `<div class="testimonial-item"><div class="testimonial-card-inner"><div class="testimonial-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div><div class="testimonial-text-wrapper"><p class="testimonial-text" id="testimonial-text-${index}">"${truncated}"</p>${isLong ? `<button class="testimonial-read-more" onclick="window.toggleReviewText(${index})" id="review-btn-${index}">Leggi di più <i class="fa-solid fa-chevron-down"></i></button>` : ''}</div><div class="testimonial-footer"><div class="testimonial-author"><h4 class="testimonial-name">${data.name}</h4><p class="testimonial-time">${data.time}</p></div><div class="testimonial-icon"><i class="fa-brands fa-google"></i></div></div></div></div>`;
+      return `<div class="testimonial-item"><div class="testimonial-card-inner"><div class="testimonial-stars">${'<i class="fa-solid fa-star"></i>'.repeat(Math.max(0, Math.min(5, Number(data.rating) || 5)))}</div><div class="testimonial-text-wrapper"><p class="testimonial-text" id="testimonial-text-${index}">"${escapeHtml(data.text)}"</p>${isLong ? `<button class="testimonial-read-more" onclick="window.toggleReviewText(${index})" id="review-btn-${index}">Leggi di più <i class="fa-solid fa-chevron-down"></i></button>` : ''}</div><div class="testimonial-footer"><div class="testimonial-author"><h4 class="testimonial-name">${escapeHtml(data.name)}</h4><p class="testimonial-time">${escapeHtml(data.time || '')}</p></div><div class="testimonial-icon"><i class="fa-brands fa-google"></i></div></div></div></div>`;
     }
-    // Marquee infinito: duplica le card per lo scorrimento continuo da destra a sinistra
-    const all = [...testimonials, ...testimonials];
-    track.innerHTML = all.map(createCard).join('');
-    // Velocità costante (~28 px/s): normale, non troppo veloce
-    applyMarqueeDuration(track, testimonials.length);
+    window.__renderTestimonialCards = (list) => {
+      if (!track) return;
+      // Marquee infinito: duplica le card per lo scorrimento continuo da destra a sinistra
+      const all = [...list, ...list];
+      track.innerHTML = all.map(createCard).join('');
+      applyMarqueeDuration(track, list.length);
+    };
+    if (window.__dynamicReviewsPending && window.__dynamicReviewsPending.length) {
+      window.__renderTestimonialCards(window.__dynamicReviewsPending);
+    }
   }
 
   function initMobileHoverEffects() {

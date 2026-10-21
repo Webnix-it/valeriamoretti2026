@@ -21,7 +21,8 @@ import {
   deleteDoc,
   collection,
   addDoc,
-  getDocs 
+  getDocs,
+  onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // 🔥 Configurazione del progetto Firebase
@@ -66,7 +67,8 @@ export {
   deleteDoc,
   collection,
   addDoc,
-  getDocs 
+  getDocs,
+  onSnapshot 
 };
 
 // ============================================
@@ -89,6 +91,7 @@ if (typeof window !== 'undefined') {
   window.firebaseCollection = collection;
   window.firebaseAddDoc = addDoc;
   window.firebaseGetDocs = getDocs;
+  window.firebaseOnSnapshot = onSnapshot;
   
   // Esponi funzioni Auth
   window.firebaseSignInWithPopup = signInWithPopup;
