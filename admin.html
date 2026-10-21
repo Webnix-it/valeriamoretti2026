@@ -136,7 +136,51 @@
     .pv-q.off { opacity: .45; text-decoration: line-through; }
     /* Bozza in corso di digitazione (anteprima live mentre scrivi nei form) */
     .pv-draft { outline: 2px dashed var(--salvia-dark, #7d9c7d); outline-offset: 3px; border-radius: 10px; position: relative; }
-    .pv-draft::after { content: "bozza"; position: absolute; top: -9px; right: 6px; background: var(--salvia-dark, #7d9c7d); color: #fff; font-size: 9.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+    .pv-draft::after { content: "bozza"; position: absolute; top: -9px; right: 6px; background: var(--salvia-dark, #7d9c7d); color: #fff; font-size: 9.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; z-index: 3; }
+    /* ---------- CARD PACCHETTO IN ANTEPRIMA: stile identico alla Home ----------
+       Repliche fedeli di .service-card / .featured / .btn--uiverse di style.css,
+       con i colori pilotati dalle variabili --pv-* impostate da admin.js.      */
+    .pv-service-card {
+      box-sizing: border-box; position: relative; display: flex; flex-direction: column; gap: 8px;
+      background: var(--pv-card-bg, #ffffff); border: 1px solid #e6e0d2; border-radius: 17px;
+      padding: 14px 14px 14px; margin-bottom: 12px; box-shadow: 0 6px 18px rgba(40,50,40,.06);
+    }
+    .pv-service-card:last-child { margin-bottom: 0; }
+    .pv-service-card h3 { font-family: sans-serif; font-weight: 700; font-size: 0.95rem; line-height: 1.3; margin: 0; display: flex; align-items: center; gap: 8px; color: var(--pv-card-txt, #2e3734); }
+    .pv-title-icon { flex: 0 0 auto; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; color: var(--pv-btn1-bg, #315B55); background: var(--pv-sage-bg, #C6D6CA); border-radius: 8px; }
+    .pv-service-price { font-family: 'Playfair Display', serif; font-size: 1.25rem; color: var(--pv-btn1-bg, #315B55); font-weight: 700; line-height: 1.1; }
+    .pv-service-card ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .pv-service-card li { font-size: 0.74rem; color: var(--pv-card-txt, #2e3734); padding: 0 0 0 20px; position: relative; line-height: 1.4; }
+    .pv-service-card li::before { content: "✓"; position: absolute; left: 0; top: 1px; width: 14px; height: 14px; border-radius: 50%; background: var(--pv-sage-bg, #C6D6CA); color: var(--pv-btn1-bg, #315B55); font-size: 0.55rem; font-weight: 700; display: grid; place-items: center; }
+    .pv-service-card p.pv-pdesc { font-size: 0.74rem; color: var(--pv-card-txt, #2e3734); opacity: .85; line-height: 1.5; margin: 0; }
+    .pv-service-tag { position: absolute; top: -9px; left: 14px; background: var(--pv-sage-bg, #C6D6CA); color: var(--pv-btn1-bg, #315B55); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; padding: 3px 9px; border-radius: 999px; z-index: 2; }
+    .pv-hbtn { display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; margin-top: auto; padding: 8px 12px; font-size: 0.74rem; font-weight: 600; border-radius: 17px; border: 1px solid rgba(255,255,255,.9); box-shadow: 4px 8px 19px -3px rgba(0,0,0,.27); }
+    .pv-hbtn--forest { background: var(--pv-btn1-bg, #315B55); color: var(--pv-btn1-txt, #F8F5EF); }
+    .pv-hbtn--sage   { background: var(--pv-sage-bg, #C6D6CA);  color: var(--pv-sage-txt, #212121); }
+    .pv-hbtn--light  { background: var(--pv-btn2-bg, #F8F5EF);  color: var(--pv-btn2-txt, #212121); }
+    .pv-hbtn--nav    { background: var(--pv-nav-bg, #315B55);   color: var(--pv-nav-txt, #F8F5EF); }
+    .pv-service-card.featured { background: var(--pv-feat-bg, #315B55); border-color: var(--pv-feat-bg, #315B55); }
+    .pv-service-card.featured h3, .pv-service-card.featured .pv-service-price, .pv-service-card.featured li, .pv-service-card.featured p.pv-pdesc { color: var(--pv-feat-txt, #F8F5EF); }
+    .pv-service-card.featured .pv-title-icon { background: rgba(248,245,239,.15); color: var(--pv-feat-txt, #F8F5EF); border: 1px solid rgba(248,245,239,.25); }
+    .pv-service-card.featured li::before { background: rgba(248,245,239,.2); color: var(--pv-feat-txt, #F8F5EF); border: 1px solid rgba(248,245,239,.3); }
+    /* ---------- MINIATURA HOME (anteprima sezioni + bottoni) ---------- */
+    .pv-mini-section { border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,.05); }
+    .pv-mini-section:last-child { margin-bottom: 0; }
+    .pv-mini-kicker { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; opacity: .7; }
+    .pv-mini-section h4 { font-family: 'Heavitas', system-ui, sans-serif !important; font-size: 13px; margin: 4px 0 6px; color: inherit !important; }
+    .pv-mini-lead { font-size: 11px; opacity: .8; margin: 0 0 10px; }
+    .pv-mini-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pv-mini-btns .pv-hbtn { width: auto; }
+    .pv-mini-hero { background: var(--pv-hero-bg, #F8F5EF); color: var(--pv-hero-txt, #2e3734); }
+    .pv-mini-services { background: var(--pv-services-bg, #F8F5EF); color: var(--pv-services-txt, #2e3734); }
+    .pv-mini-method { background: var(--pv-method-bg, #E3EBE5); color: var(--pv-method-txt, #2e3734); }
+    .pv-mini-testi { background: var(--pv-testi-bg, #E3EBE5); color: var(--pv-testi-txt, #2e3734); }
+    .pv-mini-faq { background: var(--pv-faq-bg, #F8F5EF); color: var(--pv-faq-txt, #2e3734); }
+    .pv-mini-grid { display: flex; flex-direction: column; gap: 10px; }
+    .pv-mini-grid .pv-service-card { margin-bottom: 0; }
+    .pv-mini-tcard { background: var(--pv-card-bg, #fff); border: 1px solid #e6e0d2; border-radius: 10px; padding: 10px; font-size: 11.5px; color: var(--pv-card-txt, #2e3734); }
+    .pv-mini-tcard p { margin: 4px 0 0; line-height: 1.5; }
+    .pv-mini-footer { background: var(--pv-footer-bg, #22272b); color: var(--pv-footer-txt, #dfe4dd); border-radius: 10px; padding: 10px 12px; font-size: 10.5px; text-align: center; }
     @media (max-width: 1199px) {
       .preview-pane { position: static; width: auto; border-left: none; border-top: 1px solid #ddd6c8; margin-left: var(--sidebar-w); }
       .preview-scroll { max-height: 520px; }
@@ -517,6 +561,16 @@
               <label for="pkg-features">Punti elenco del pacchetto (uno per riga)</label>
               <textarea id="pkg-features" rows="3" placeholder="Incontro di 90 minuti&#10;Esercizi personalizzati&#10;Follow-up via email"></textarea>
             </div>
+            <div class="grid-2" style="margin-top:14px;">
+              <div>
+                <label for="pkg-tag">Etichetta card (es. "Il più completo")</label>
+                <input type="text" id="pkg-tag" placeholder="Es. Il più completo — vuoto = nessuna etichetta" />
+              </div>
+              <div>
+                <label for="pkg-btn-label">Testo del pulsante (es. "Prenota in studio")</label>
+                <input type="text" id="pkg-btn-label" placeholder="Vuoto = testo automatico in base al servizio" />
+              </div>
+            </div>
             <div class="row" style="margin-top:16px;">
               <div style="display:flex;gap:22px;align-items:center;">
                 <label style="display:flex;gap:8px;align-items:center;margin:0;font-weight:500;">
@@ -616,6 +670,10 @@
       </div>
       <p class="preview-note">Si aggiorna mentre scrivi: mostra in tempo reale la recensione, il pacchetto o la domanda che stai componendo (evidenziata come «bozza»), insieme ai dati già salvati nel database.</p>
       <div class="preview-scroll">
+        <section class="pv-block pv-mini-home-block">
+          <h4><i class="fa-solid fa-desktop"></i> Home — anteprima sezioni e bottoni</h4>
+          <div id="pv-mini-home" class="pv-body"></div>
+        </section>
         <section class="pv-block">
           <h4><i class="fa-solid fa-star"></i> Recensioni</h4>
           <div id="pv-draft-review" class="pv-body"></div>

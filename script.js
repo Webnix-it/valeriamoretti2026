@@ -1602,8 +1602,12 @@
      Se il documento non esiste o Firestore non è raggiungibile, il sito resta
      con i colori originali di style.css.                                      */
   const THEME_CSS_MAP = {
+    pageBg: ['body', '--theme-page-bg', 'background'],
+    pageText: ['body', '--theme-page-txt', 'color'],
     heroBg: ['#home', '--theme-hero-bg', 'background'],
     heroText: ['#home', '--theme-hero-txt', 'color'],
+    problemsBg: ['#problemi', '--theme-problems-bg', 'background'],
+    problemsText: ['#problemi', '--theme-problems-txt', 'color'],
     methodBg: ['#metodo', '--theme-method-bg', 'background'],
     methodText: ['#metodo', '--theme-method-txt', 'color'],
     servicesBg: ['#servizi', '--theme-services-bg', 'background'],
@@ -1612,22 +1616,28 @@
     testimonialsText: ['#testimonials', '--theme-testi-txt', 'color'],
     faqBg: ['#faq-vm', '--theme-faq-bg', 'background'],
     faqText: ['#faq-vm', '--theme-faq-txt', 'color'],
-    cardBg: ['.service-card,.pain-card,.testimonial-card', '--theme-card-bg', 'background'],
-    cardText: ['.service-card,.pain-card,.testimonial-card', '--theme-card-txt', 'color']
+    studioBg: ['#studio', '--theme-studio-bg', 'background'],
+    studioText: ['#studio', '--theme-studio-txt', 'color'],
+    footerBg: ['footer', '--theme-footer-bg', 'background'],
+    footerText: ['footer', '--theme-footer-txt', 'color'],
+    cardBg: ['.service-card:not(.featured),.testimonial-card-inner', '--theme-card-bg', 'background'],
+    cardText: ['.service-card:not(.featured),.testimonial-card-inner', '--theme-card-txt', 'color'],
+    featCardBg: ['.service-card.featured', '--theme-featcard-bg', 'background'],
+    featCardText: ['.service-card.featured', '--theme-featcard-txt', 'color']
   };
   const THEME_BTN_MAP = {
-    // Bottoni principali (CTA verdi "Prenota una sessione", "Acquista il piano"…)
+    // Bottoni verdi scuri (CTA "Prenota una sessione", "Acquista il piano", invio moduli…)
     btnPrimaryBg: ['.btn--forest', '--theme-btn1-bg'],
     btnPrimaryText: ['.btn--forest', '--theme-btn1-txt'],
-    // Bottoni chiari ("Fai il test gratuito")
+    // Bottoni chiari ("Fai il test gratuito", "Inizia il test")
     btnSecondaryBg: ['.btn--light', '--theme-btn2-bg'],
     btnSecondaryText: ['.btn--light', '--theme-btn2-txt'],
+    // Bottoni salvia sulle card ("Prenota in studio", "Prenota online", "Lista d'interesse")
+    btnSageBg: ['.btn--sage', '--theme-btnsage-bg'],
+    btnSageText: ['.btn--sage', '--theme-btnsage-txt'],
     // Bottone "Prenota" nella navbar + CTA menu mobile
     btnNavBg: ['#bntprenota', '#quiz-open-mm'],
-    btnNavText: ['#bntprenota', '#quiz-open-mm'],
-    // Bottoni salvia sulle card dei pacchetti ("Prenota in studio/online", ecc.)
-    btnBookBg: ['.service-card .btn--sage, .pain-card .btn--sage', '--theme-btnbook-bg'],
-    btnBookText: ['.service-card .btn--sage, .pain-card .btn--sage', '--theme-btnbook-txt']
+    btnNavText: ['#bntprenota', '#quiz-open-mm']
   };
 
   function isHex(v) { return /^#[0-9a-fA-F]{3,8}$/.test(String(v || '')); }
@@ -1648,6 +1658,8 @@
       if (isHex(t[key])) {
         const part = key.endsWith('Bg') ? 'background' : 'color';
         css += `\n${sels.join(',')}{ ${part}: ${t[key]} !important; }`;
+        // colore testo: anche le icone dentro il bottone lo seguono
+        if (!key.endsWith('Bg')) css += `\n${sels.map(s => s + ' i').join(',')}{ color: ${t[key]} !important; }`;
       }
     });
     if (css) {

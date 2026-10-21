@@ -664,8 +664,8 @@
     $('#pkg-price').value = p.price || '';
     $('#pkg-desc').value = p.desc || '';
     $('#pkg-features').value = (p.features || []).join('\n');
-    $('#pkg-button-label').value = p.buttonLabel || '';
-    $('#pkg-action-url').value = p.actionUrl || '';
+    $('#pkg-tag').value = p.tag || '';
+    $('#pkg-btn-label').value = p.buttonLabel || '';
     $('#pkg-active').checked = p.active !== false;
     $('#pkg-visible').checked = p.showInHome !== false;
     $('#pkg-form-title').textContent = asNew ? 'Duplica pacchetto: ' + p.name : (p.id ? 'Modifica pacchetto: ' + p.name : 'Aggiungi un nuovo pacchetto');
@@ -688,8 +688,9 @@
       price: $('#pkg-price').value.trim(),
       desc: $('#pkg-desc').value.trim(),
       features: $('#pkg-features').value.split('\n').map(s => s.trim()).filter(Boolean),
-      buttonLabel: $('#pkg-button-label').value.trim(),
-      actionUrl: $('#pkg-action-url').value.trim(),
+      tag: $('#pkg-tag').value.trim(),
+      buttonLabel: $('#pkg-btn-label').value.trim(),
+      actionUrl: existing ? (existing.actionUrl || '') : '',
       active: $('#pkg-active').checked,
       showInHome: $('#pkg-visible').checked,
       questionKeys: existing ? (existing.questionKeys || []) : [],
@@ -892,19 +893,12 @@
           </div>`).join('')
         : '<p class="pv-empty">Nessuna recensione nel database.</p>';
     }
-    // --- Pacchetti attivi e visibili nella Home ---
+    // --- Pacchetti attivi e visibili nella Home (stile identico alla Home) ---
     const pkgBox = $('#pv-packages');
     if (pkgBox) {
       const visible = pkgSorted().filter(p => p.active !== false && p.showInHome !== false);
       pkgBox.innerHTML = visible.length
-        ? visible.map(p => `
-          <div class="pv-pkg">
-            <div class="pv-pname">${esc(p.name)}</div>
-            ${p.type ? `<div class="pv-pdesc" style="margin-top:0;">${esc(p.type)}</div>` : ''}
-            ${p.price ? `<div class="pv-pprice">${esc(p.price)}</div>` : ''}
-            <div class="pv-pdesc">${esc(p.description && p.description.length > 90 ? p.description.slice(0, 90) + '…' : p.description)}</div>
-            <span class="pv-pbtn">Prenota</span>
-          </div>`).join('')
+        ? visible.map((p, i) => pvServiceCardHtml(p, p.featured || p.key === 'piano-autonomo')).join('')
         : '<p class="pv-empty">Nessun pacchetto attivo e visibile nella Home.</p>';
     }
     // --- Domande attive del test, in ordine ---
@@ -974,14 +968,16 @@
     const desc  = ($('#pkg-desc').value || '').trim();
     const feats = ($('#pkg-features').value || '').split('\n').map(s => s.trim()).filter(Boolean);
     if (!name && !type && !price && !desc) return '';
+    // Stile identico alla card servizio della Home (vedi pvServiceCardHtml)
+    const featured = /piano|completo/i.test(name + ' ' + type);
+    const btnLabel = featured ? 'Acquista il piano' : (/online/i.test(type + ' ' + name) ? 'Prenota online' : /gruppo/i.test(type + ' ' + name) ? "Lista d'interesse" : 'Prenota in studio');
     return `
-      <div class="pv-pkg pv-draft">
-        <div class="pv-pname">${esc(name) || '<em style="opacity:.6;">Nome pacchetto…</em>'}</div>
-        ${type ? `<div class="pv-pdesc" style="margin-top:0;">${esc(type)}</div>` : ''}
-        ${price ? `<div class="pv-pprice">${esc(price)}</div>` : ''}
-        <div class="pv-pdesc">${esc(desc) || '<em style="opacity:.6;">Descrizione…</em>'}</div>
-        ${feats.length ? `<ul style="margin:6px 0 0 16px;font-size:11px;color:var(--pv-text,#55534b);">${feats.slice(0, 6).map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
-        <span class="pv-pbtn">Prenota</span>
+      <div class="pv-service-card pv-draft${featured ? ' featured' : ''}">
+        ${featured ? '<span class="pv-service-tag">Il più completo</span>' : ''}
+        <h3><span class="pv-title-icon"><i class="fa-solid fa-briefcase"></i></span> ${esc(name) || '<em style="opacity:.6;">Nome pacchetto…</em>'}</h3>
+        ${price ? `<div class="pv-service-price">${esc(price)}</div>` : ''}
+        ${feats.length ? `<ul>${feats.slice(0, 5).map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : `<p class="pv-pdesc" style="margin-top:6px;">${esc(desc) || '<em style="opacity:.6;">Descrizione…</em>'}</p>`}
+        <span class="pv-hbtn ${featured ? 'pv-hbtn--forest' : 'pv-hbtn--sage'}">${btnLabel}</span>
       </div>`;
   }
 
@@ -1010,6 +1006,8 @@
     const d2 = $('#pv-draft-question'); if (d2) d2.innerHTML = draftQuestionHtml();
     const d3 = $('#pv-draft-package');  if (d3) d3.innerHTML = draftPackageHtml();
     const d4 = $('#pv-draft-cq');       if (d4) d4.innerHTML = draftCustomQuestionHtml();
+    // La miniatura della Home segue la bozza del pacchetto mentre si scrive
+    renderMiniHome();
   }
 
   // Svuota gli slot "bozza" (usato dopo un salvataggio: il dato reale entra nelle liste).
@@ -1050,53 +1048,75 @@
   const THEME_COL = 'site_settings';
   const THEME_DOC = 'theme';
 
+  /* Default = colori reali di style.css della Home, così l'anteprima live
+     a destra parte identica al sito pubblico. */
   const THEME_DEFAULTS = {
+    pageBg: '#F8F5EF', pageText: '#2e3734',
     heroBg: '#F8F5EF', heroText: '#2e3734',
+    problemsBg: '#F8F5EF', problemsText: '#2e3734',
     methodBg: '#E3EBE5', methodText: '#2e3734',
     servicesBg: '#F8F5EF', servicesText: '#2e3734',
+    cardBg: '#ffffff', cardText: '#2e3734',
+    featCardBg: '#315B55', featCardText: '#F8F5EF',
     testimonialsBg: '#E3EBE5', testimonialsText: '#2e3734',
     faqBg: '#F8F5EF', faqText: '#2e3734',
-    cardBg: '#ffffff', cardText: '#2e3734',
-    btnPrimaryBg: '#315B55', btnPrimaryText: '#ffffff',
-    btnSecondaryBg: '#C6D6CA', btnSecondaryText: '#24443f',
-    btnNavBg: '#315B55', btnNavText: '#ffffff',
-    btnBookBg: '#FF0072', btnBookText: '#ffffff'
+    studioBg: '#F8F5EF', studioText: '#2e3734',
+    footerBg: '#22272b', footerText: '#dfe4dd',
+    btnPrimaryBg: '#315B55', btnPrimaryText: '#F8F5EF',
+    btnSecondaryBg: '#F8F5EF', btnSecondaryText: '#212121',
+    btnSageBg: '#C6D6CA', btnSageText: '#212121',
+    btnNavBg: '#315B55', btnNavText: '#F8F5EF'
   };
 
   const THEME_SECTIONS = [
-    { group: 'Sezione Hero / Test gratuito' },
+    { group: 'Sfondo e testo generale del sito' },
+    { key: 'pageBg', label: 'Sfondo generale (base del sito)' },
+    { key: 'pageText', label: 'Testo generale (base del sito)' },
+    { group: 'Sezione Hero (inizio Home)' },
     { key: 'heroBg', label: 'Sfondo sezione Hero' },
     { key: 'heroText', label: 'Testo sezione Hero' },
+    { group: 'Sezione "I blocchi più comuni"' },
+    { key: 'problemsBg', label: 'Sfondo sezione Blocchi' },
+    { key: 'problemsText', label: 'Testo sezione Blocchi' },
     { group: 'Sezione Metodo P.E.R.S.M.A.R.T.' },
     { key: 'methodBg', label: 'Sfondo sezione Metodo' },
     { key: 'methodText', label: 'Testo sezione Metodo' },
     { group: 'Sezione Servizi' },
     { key: 'servicesBg', label: 'Sfondo sezione Servizi' },
     { key: 'servicesText', label: 'Testo sezione Servizi' },
-    { group: 'Card dei servizi' },
-    { key: 'cardBg', label: 'Sfondo card servizio' },
-    { key: 'cardText', label: 'Testo card servizio' },
+    { group: 'Card pacchetto normale (bianca)' },
+    { key: 'cardBg', label: 'Sfondo card pacchetto' },
+    { key: 'cardText', label: 'Testo card pacchetto' },
+    { group: 'Card pacchetto in evidenza ("Il più completo")' },
+    { key: 'featCardBg', label: 'Sfondo card in evidenza' },
+    { key: 'featCardText', label: 'Testo card in evidenza' },
     { group: 'Sezione Recensioni' },
     { key: 'testimonialsBg', label: 'Sfondo sezione Recensioni' },
     { key: 'testimonialsText', label: 'Testo sezione Recensioni' },
     { group: 'Sezione FAQ' },
     { key: 'faqBg', label: 'Sfondo sezione FAQ' },
-    { key: 'faqText', label: 'Testo sezione FAQ' }
+    { key: 'faqText', label: 'Testo sezione FAQ' },
+    { group: 'Sezione "Il mio Studio"' },
+    { key: 'studioBg', label: 'Sfondo sezione Studio' },
+    { key: 'studioText', label: 'Testo sezione Studio' },
+    { group: 'Footer' },
+    { key: 'footerBg', label: 'Sfondo footer' },
+    { key: 'footerText', label: 'Testo footer' }
   ];
 
   const THEME_BUTTONS = [
-    { group: 'Bottoni principali (CTA)' },
+    { group: 'Bottoni verdi scuri (CTA "Prenota una sessione", "Acquista il piano", invio moduli…)' },
     { key: 'btnPrimaryBg', label: 'Background — bottoni primari' },
     { key: 'btnPrimaryText', label: 'Testo — bottoni primari' },
-    { group: 'Bottoni secondari' },
-    { key: 'btnSecondaryBg', label: 'Background — bottoni secondari' },
-    { key: 'btnSecondaryText', label: 'Testo — bottoni secondari' },
-    { group: 'Bottone navbar "Prenota"' },
+    { group: 'Bottoni chiari ("Fai il test gratuito", "Inizia il test")' },
+    { key: 'btnSecondaryBg', label: 'Background — bottoni chiari' },
+    { key: 'btnSecondaryText', label: 'Testo — bottoni chiari' },
+    { group: 'Bottoni salvia sulle card ("Prenota in studio", "Prenota online", "Lista d\'interesse")' },
+    { key: 'btnSageBg', label: 'Background — bottoni salvia' },
+    { key: 'btnSageText', label: 'Testo — bottoni salvia' },
+    { group: 'Bottone "Prenota" nella navbar + CTA menu mobile' },
     { key: 'btnNavBg', label: 'Background — bottone navbar' },
-    { key: 'btnNavText', label: 'Testo — bottone navbar' },
-    { group: 'Bottone "Prenota ora" sui pacchetti' },
-    { key: 'btnBookBg', label: 'Background — prenota ora' },
-    { key: 'btnBookText', label: 'Testo — prenota ora' }
+    { key: 'btnNavText', label: 'Testo — bottone navbar' }
   ];
 
   let currentTheme = { ...THEME_DEFAULTS };
@@ -1117,15 +1137,111 @@
          </div>`).join('');
   }
 
+  /* L'anteprima live replica esattamente le regole CSS della Home
+     (.service-card / .featured / .btn--uiverse di style.css), traslandole
+     su .pv-* e rendendo i colori pilotati dalle variabili --pv-*. */
   function applyPreviewTheme(t) {
     const pane = $('#preview-pane');
     if (!pane) return;
-    pane.style.setProperty('--pv-card-bg', hexToCss(t.cardBg, THEME_DEFAULTS.cardBg));
-    pane.style.setProperty('--pv-text', hexToCss(t.cardText, THEME_DEFAULTS.cardText));
-    pane.style.setProperty('--pv-heading', hexToCss(t.cardText, THEME_DEFAULTS.cardText));
-    pane.style.setProperty('--pv-btn-bg', hexToCss(t.btnBookBg, THEME_DEFAULTS.btnBookBg));
-    pane.style.setProperty('--pv-btn-txt', hexToCss(t.btnBookText, THEME_DEFAULTS.btnBookText));
-    pane.style.setProperty('--pv-border', hexToCss(t.servicesBg, THEME_DEFAULTS.servicesBg));
+    const v = (k, fb) => hexToCss(t[k], fb || THEME_DEFAULTS[k]);
+    // Variabili per card normali / in evidenza / recensioni / sezioni anteprima
+    pane.style.setProperty('--pv-page-bg', v('pageBg'));
+    pane.style.setProperty('--pv-page-txt', v('pageText'));
+    pane.style.setProperty('--pv-hero-bg', v('heroBg'));
+    pane.style.setProperty('--pv-hero-txt', v('heroText'));
+    pane.style.setProperty('--pv-method-bg', v('methodBg'));
+    pane.style.setProperty('--pv-method-txt', v('methodText'));
+    pane.style.setProperty('--pv-services-bg', v('servicesBg'));
+    pane.style.setProperty('--pv-services-txt', v('servicesText'));
+    pane.style.setProperty('--pv-testi-bg', v('testimonialsBg'));
+    pane.style.setProperty('--pv-testi-txt', v('testimonialsText'));
+    pane.style.setProperty('--pv-faq-bg', v('faqBg'));
+    pane.style.setProperty('--pv-faq-txt', v('faqText'));
+    pane.style.setProperty('--pv-studio-bg', v('studioBg'));
+    pane.style.setProperty('--pv-studio-txt', v('studioText'));
+    pane.style.setProperty('--pv-footer-bg', v('footerBg'));
+    pane.style.setProperty('--pv-footer-txt', v('footerText'));
+    pane.style.setProperty('--pv-card-bg', v('cardBg'));
+    pane.style.setProperty('--pv-card-txt', v('cardText'));
+    pane.style.setProperty('--pv-feat-bg', v('featCardBg'));
+    pane.style.setProperty('--pv-feat-txt', v('featCardText'));
+    pane.style.setProperty('--pv-btn1-bg', v('btnPrimaryBg'));
+    pane.style.setProperty('--pv-btn1-txt', v('btnPrimaryText'));
+    pane.style.setProperty('--pv-btn2-bg', v('btnSecondaryBg'));
+    pane.style.setProperty('--pv-btn2-txt', v('btnSecondaryText'));
+    pane.style.setProperty('--pv-sage-bg', v('btnSageBg'));
+    pane.style.setProperty('--pv-sage-txt', v('btnSageText'));
+    pane.style.setProperty('--pv-nav-bg', v('btnNavBg'));
+    pane.style.setProperty('--pv-nav-txt', v('btnNavText'));
+    renderMiniHome();
+  }
+
+  /* ---- Miniatura fedele della Home: hero + card pacchetto reale ---- */
+  function pvServiceCardHtml(p, featured) {
+    const icons = { 'sessione': 'fa-user', 'online': 'fa-laptop', 'gruppo': 'fa-users', 'piano': 'fa-book-open' };
+    const icon = (p.type && icons[p.type]) || (p.key === 'sessione-online' ? 'fa-laptop' : p.key === 'percorso-gruppo' ? 'fa-users' : p.key === 'piano-autonomo' ? 'fa-book-open' : 'fa-briefcase');
+    const feats = (p.features || []).slice(0, 5);
+    const btnClass = featured ? 'pv-hbtn pv-hbtn--forest' : 'pv-hbtn pv-hbtn--sage';
+    const rawLabel = p.buttonLabel || '';
+    let defaultLabel = 'Richiedi il servizio';
+    if (/prenota/i.test(rawLabel) || p.key === 'sessione-studio') defaultLabel = 'Prenota in studio';
+    else if (p.key === 'sessione-online') defaultLabel = 'Prenota online';
+    else if (p.key === 'percorso-gruppo') defaultLabel = "Lista d'interesse";
+    else if (p.key === 'piano-autonomo') defaultLabel = 'Acquista il piano';
+    const label = esc(rawLabel || defaultLabel);
+    return `
+      <div class="pv-service-card${featured ? ' featured' : ''}">
+        ${p.tag || featured ? `<span class="pv-service-tag">${esc(p.tag || 'Il più completo')}</span>` : ''}
+        <h3><span class="pv-title-icon"><i class="fa-solid ${icon}"></i></span> ${esc(p.name)}</h3>
+        ${p.price ? `<div class="pv-service-price">${esc(p.price)}</div>` : ''}
+        ${feats.length ? `<ul>${feats.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : (p.description ? `<p class="pv-pdesc" style="margin-top:6px;">${esc(p.description)}</p>` : '')}
+        <span class="${btnClass}">${label}</span>
+      </div>`;
+  }
+
+  function renderMiniHome() {
+    const box = $('#pv-mini-home');
+    if (!box) return;
+    const visible = pkgSorted().filter(p => p.active !== false && p.showInHome !== false);
+    const cards = visible.length
+      ? visible.map((p) => pvServiceCardHtml(p, p.featured || p.key === 'piano-autonomo')).join('')
+      : '<p class="pv-empty">Nessun pacchetto attivo e visibile nella Home.</p>';
+    box.innerHTML = `
+      <div class="pv-mini-section pv-mini-hero">
+        <span class="pv-mini-kicker">Mental Coach</span>
+        <h4>Trasforma i tuoi obiettivi in azioni concrete.</h4>
+        <p class="pv-mini-lead">Anteprima dello stile reale della sezione Hero della Home.</p>
+        <div class="pv-mini-btns">
+          <span class="pv-hbtn pv-hbtn--nav">Prenota una sessione</span>
+          <span class="pv-hbtn pv-hbtn--light">Fai il test gratuito</span>
+        </div>
+      </div>
+      <div class="pv-mini-section pv-mini-services">
+        <span class="pv-mini-kicker">Servizi</span>
+        <h4>Scegli come vuoi lavorare insieme.</h4>
+        <div class="pv-mini-grid">${cards}</div>
+      </div>
+      <div class="pv-mini-section pv-mini-method">
+        <span class="pv-mini-kicker">Metodo</span>
+        <h4>P.E.R.S.M.A.R.T.: sei fasi per arrivare dove vuoi.</h4>
+      </div>
+      <div class="pv-mini-section pv-mini-testi">
+        <span class="pv-mini-kicker">Recensioni</span>
+        <h4>Cosa dicono di me.</h4>
+        ${(() => {
+          const sorted = [...allReviews].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+          const r = sorted[0];
+          return r ? `<div class="pv-mini-tcard"><strong>${esc(reviewDisplayName(r))}</strong> <span class="pv-rstars">${'★'.repeat(Number(r.stars) || 0)}${'☆'.repeat(5 - (Number(r.stars) || 0))}</span><p>${esc((r.description || '').slice(0, 90))}${(r.description || '').length > 90 ? '…' : ''}</p></div>`
+                   : '<p class="pv-empty">Nessuna recensione nel database.</p>';
+        })()}
+      </div>
+      <div class="pv-mini-section pv-mini-faq">
+        <span class="pv-mini-kicker">FAQ</span>
+        <h4>Le risposte che cercavi.</h4>
+      </div>
+      <div class="pv-mini-footer">
+        <strong>Valeria Moretti</strong> · Mental Coach — sito realizzato da webnix
+      </div>`;
   }
 
   function onThemePickerChange(e) {
