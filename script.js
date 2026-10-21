@@ -1327,6 +1327,32 @@
     if (contactModal) contactModal.addEventListener('click', function(e) { if (e.target === contactModal) closeContactModal(); });
   }
 
+  // --- POPUP "SCEGLI LA MODALITÀ" (Parliamone insieme) ---
+  function openModeModal() {
+    const m = document.getElementById('contact-mode-modal');
+    if (!m) return;
+    m.hidden = false;
+    requestAnimationFrame(() => m.classList.add('open'));
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModeModal() {
+    const m = document.getElementById('contact-mode-modal');
+    if (!m) return;
+    m.classList.remove('open');
+    setTimeout(() => { m.hidden = true; }, 280);
+    document.body.style.overflow = '';
+  }
+  function initModeModal() {
+    const openBtn = document.getElementById('contact-mode-open');
+    if (openBtn) openBtn.addEventListener('click', function(e) { e.preventDefault(); openModeModal(); });
+    document.querySelectorAll('[data-close-mode]').forEach(btn => btn.addEventListener('click', closeModeModal));
+    const m = document.getElementById('contact-mode-modal');
+    if (m) m.addEventListener('click', function(e) { if (e.target === m) closeModeModal(); });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && m && !m.hidden) closeModeModal();
+    });
+  }
+
   // --- QUIZ MODAL LOGIC ---
   function renderQuizQuestion() {
     const questions = getQuizQuestions();
@@ -1715,6 +1741,7 @@
     // caricamento dei pacchetti dal database, nella riga sopra.
     initCertModal();
     initContactModal();
+    initModeModal();
     initQuizModal();
     initCopyIban();
 

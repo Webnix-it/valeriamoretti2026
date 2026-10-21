@@ -725,8 +725,8 @@
         Se hai bisogno di maggiori informazioni, puoi contattarmi.
       </p>
 
-      <!-- Sostituisci #contatti con l'ID reale della tua sezione contatti -->
-      <a href="#contatti" class="faq-vm-cta-button">
+      <!-- Apre il popup "Scegli la modalità" -->
+      <button type="button" class="faq-vm-cta-button" id="contact-mode-open">
         Parliamone insieme
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M5 12H19M12 5L19 12L12 19"
@@ -735,7 +735,7 @@
             stroke-linecap="round"
             stroke-linejoin="round"/>
         </svg>
-      </a>
+      </button>
     </div>
 
   </div>
@@ -1181,6 +1181,34 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ POPUP: SCEGLI LA MODALITÀ (contatti) ============ -->
+  <div id="contact-mode-modal" class="mode-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mode-modal-title" hidden>
+    <div class="mode-modal-box">
+      <button type="button" class="mode-modal-close" data-close-mode aria-label="Chiudi finestra">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+      <h3 class="mode-modal-title" id="mode-modal-title">Scegli la modalità</h3>
+      <div class="mode-buttons">
+        <a href="mailto:mentalcoachvaleria@gmail.com" class="mode-btn mode-btn--email" aria-label="Scrivimi una email">
+          <span class="mode-btn-icon"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>
+          <span class="mode-btn-label">Email</span>
+        </a>
+        <a href="https://www.instagram.com/mentalcoachvaleria95" target="_blank" rel="noopener noreferrer" class="mode-btn mode-btn--instagram" aria-label="Scrivimi su Instagram">
+          <span class="mode-btn-icon"><i class="fa-brands fa-instagram" aria-hidden="true"></i></span>
+          <span class="mode-btn-label">Instagram</span>
+        </a>
+        <a href="tel:+393458407102" class="mode-btn mode-btn--phone" aria-label="Chiamami al cellulare">
+          <span class="mode-btn-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span>
+          <span class="mode-btn-label">Cellulare</span>
+        </a>
+        <a href="https://wa.me/393458407102" target="_blank" rel="noopener noreferrer" class="mode-btn mode-btn--whatsapp" aria-label="Scrivimi su WhatsApp">
+          <span class="mode-btn-icon"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></span>
+          <span class="mode-btn-label">WhatsApp</span>
+        </a>
       </div>
     </div>
   </div>
