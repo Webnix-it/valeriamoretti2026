@@ -1684,8 +1684,10 @@
     studioText: ['#studio', '--theme-studio-txt', 'color'],
     footerBg: ['footer', '--theme-footer-bg', 'background'],
     footerText: ['footer', '--theme-footer-txt', 'color'],
-    cardBg: ['.service-card:not(.featured),.testimonial-card-inner', '--theme-card-bg', 'background'],
-    cardText: ['.service-card:not(.featured),.testimonial-card-inner', '--theme-card-txt', 'color'],
+    // Il tema "card" si applica SOLO alle card dei servizi: le card delle
+    // recensioni della Home hanno stile fisso (marquee verde-bosco/avorio).
+    cardBg: ['.service-card:not(.featured)', '--theme-card-bg', 'background'],
+    cardText: ['.service-card:not(.featured)', '--theme-card-txt', 'color'],
     featCardBg: ['.service-card.featured', '--theme-featcard-bg', 'background'],
     featCardText: ['.service-card.featured', '--theme-featcard-txt', 'color']
   };

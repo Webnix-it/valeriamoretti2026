@@ -11,7 +11,67 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
   
   <!-- Fogli di stile -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20261022a" />
+
+  <style>
+    /* ============================================================
+       STILE FISSO RECENSIONI HOME (marquee in loop) — ultima parola
+       Ripete il blocco "TESTIMONIALS" di style.css con !important,
+       così NESSUN override (tema colori dashboard, vecchie regole,
+       cache) può cambiare l'aspetto delle card.
+       ============================================================ */
+    #testimonials {
+      padding: 5rem 0 !important;
+      background: linear-gradient(160deg, var(--verde-bosco) 0%, var(--verde-bosco-scuro) 60%, #1f3d38 100%) !important;
+      overflow: hidden !important;
+      position: relative !important;
+    }
+    #section-titolo h2 { color: var(--avorio) !important; }
+    #section-titolo .stars { color: #fbbf24 !important; }
+    #rvg { color: rgba(248, 245, 239, 0.75) !important; }
+    .testimonials-wrapper { width: 100% !important; }
+    .testimonial-card-inner {
+      background: var(--avorio) !important;
+      color: var(--testo) !important;
+      padding: 1.8rem !important;
+      border-radius: 1.25rem !important;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2) !important;
+      border: 1px solid rgba(248, 245, 239, 0.3) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      height: 100% !important;
+    }
+    .testimonial-stars { color: #fbbf24 !important; }
+    .testimonial-text {
+      color: var(--testo) !important;
+      font-style: italic !important;
+      text-align: center !important;
+    }
+    .testimonial-name { color: var(--verde-bosco) !important; font-weight: 700 !important; }
+    .testimonial-time {
+      color: var(--testo-soft) !important;
+      font-size: 0.75rem !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.05em !important;
+    }
+    .testimonial-footer {
+      border-top: 1px solid var(--salvia-chiaro) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+    }
+    .testimonial-icon {
+      background: var(--salvia-chiaro) !important;
+      color: var(--verde-bosco) !important;
+      border-radius: 50% !important;
+    }
+    .testimonial-read-more {
+      border: 1px solid var(--verde-bosco) !important;
+      color: var(--verde-bosco) !important;
+      background: transparent !important;
+    }
+  </style>
 </head>
 <body class="page-home">
 
