@@ -335,12 +335,9 @@
     if (typeof initMobileHoverEffects === 'function') initMobileHoverEffects();
   }
 
-  // Riallunga i pulsanti «Leggi di più» dopo una ridefinizione dinamica delle recensioni
-  function initTestimonialsExpand() {
-    document.querySelectorAll('.testimonial-read-more').forEach((btn, idx) => {
-      btn.onclick = () => window.toggleReviewText(idx);
-    });
-  }
+  // (Non serve più riallacciare listener: gli onclick inline usano già
+  // l'indice corretto della lista originale, vedi createCard/renderCards.)
+  function initTestimonialsExpand() { /* no-op, mantenuto per compatibilità */ }
   // ============================================
   // 2c. PAGINA PUBBLICA test.html — domande, risposte e risultato dal database.
   // Le modifiche salvate nella dashboard (sezione Test gratuito) compaiono qui,
@@ -778,15 +775,19 @@
     // Se il DB è vuoto, la sezione resta senza card finché l'admin non pubblica.
     window.__testimonials = [];
     function createCard(data, index) {
+      // "index" qui è l'indice nella lista originale (le card duplicate del
+      // marquee ricevono un data-idx che punta comunque alla stessa recensione).
       const isLong = data.text.length > 150;
-      const truncated = isLong ? data.text.substring(0, 150) + '...' : data.text;
-      return `<div class="testimonial-item"><div class="testimonial-card-inner"><div class="testimonial-stars">${'<i class="fa-solid fa-star"></i>'.repeat(Math.max(0, Math.min(5, Number(data.rating) || 5)))}</div><div class="testimonial-text-wrapper"><p class="testimonial-text" id="testimonial-text-${index}">"${escapeHtml(data.text)}"</p>${isLong ? `<button class="testimonial-read-more" onclick="window.toggleReviewText(${index})" id="review-btn-${index}">Leggi di più <i class="fa-solid fa-chevron-down"></i></button>` : ''}</div><div class="testimonial-footer"><div class="testimonial-author"><h4 class="testimonial-name">${escapeHtml(data.name)}</h4><p class="testimonial-time">${escapeHtml(data.time || '')}</p></div><div class="testimonial-icon"><i class="fa-brands fa-google"></i></div></div></div></div>`;
+      const stars = '<i class="fa-solid fa-star"></i>'.repeat(Math.max(0, Math.min(5, Number(data.rating) || 5)));
+      return `<div class="testimonial-item"><div class="testimonial-card-inner"><div class="testimonial-stars">${stars}</div><div class="testimonial-text-wrapper"><p class="testimonial-text" id="testimonial-text-${index}" data-full="${escapeHtml(data.text)}">"${escapeHtml(data.text)}"</p>${isLong ? `<button class="testimonial-read-more" onclick="window.toggleReviewText(${index})" id="review-btn-${index}">Leggi di più <i class="fa-solid fa-chevron-down"></i></button>` : ''}</div><div class="testimonial-footer"><div class="testimonial-author"><h4 class="testimonial-name">${escapeHtml(data.name)}</h4><p class="testimonial-time">${escapeHtml(data.time || '')}</p></div><div class="testimonial-icon"><i class="fa-brands fa-google"></i></div></div></div></div>`;
     }
     window.__renderTestimonialCards = (list) => {
       if (!track) return;
-      // Marquee infinito: duplica le card per lo scorrimento continuo da destra a sinistra
+      // Marquee infinito: duplica le card per lo scorrimento continuo da destra a sinistra.
+      // Le copie usano gli stessi id (onclick -> toggleReviewText(index)) così il testo
+      // completo si aggiorna in tutte le istanze della stessa recensione.
       const all = [...list, ...list];
-      track.innerHTML = all.map(createCard).join('');
+      track.innerHTML = all.map((data, i) => createCard(data, i % list.length)).join('');
       applyMarqueeDuration(track, list.length);
     };
     if (window.__dynamicReviewsPending && window.__dynamicReviewsPending.length) {
@@ -1634,20 +1635,26 @@
   // ============================================
   // 5. GLOBAL EXPOSURES (for HTML onclick attributes)
   // ============================================
+  // "Leggi di più" delle recensioni: espande il testo COMPLETO in tutte le
+  // istanze della stessa recensione (marquee duplica le card con stessi id),
+  // senza toccare l'array window.__testimonials.
   window.toggleReviewText = function(index) {
-    const textEl = document.getElementById(`testimonial-text-${index}`);
-    const btnEl = document.getElementById(`review-btn-${index}`);
-    if (!textEl || !btnEl) return;
-    textEl.classList.toggle('expanded');
-    if (textEl.classList.contains('expanded')) {
-      const fullText = window.__testimonials?.[index]?.text || '';
-      textEl.textContent = `"${fullText}"`;
-      btnEl.innerHTML = 'Leggi meno <i class="fa-solid fa-chevron-up"></i>';
-    } else {
-      const truncated = window.__testimonials?.[index]?.text?.substring(0, 150) + '...' || '';
-      textEl.textContent = `"${truncated}"`;
-      btnEl.innerHTML = 'Leggi di più <i class="fa-solid fa-chevron-down"></i>';
-    }
+    const textEls = document.querySelectorAll(`#testimonial-text-${index}, [id="testimonial-text-${index}"]`);
+    const btnEls  = document.querySelectorAll(`#review-btn-${index}, [id="review-btn-${index}"]`);
+    if (!textEls.length || !btnEls.length) return;
+    const first = textEls[0];
+    const expanded = !first.classList.contains('expanded');
+    // Testo preso dall'attributo data-full (o dall'array, se presente): sempre quello completo.
+    const fullText = first.getAttribute('data-full') || (window.__testimonials?.[index]?.text) || first.textContent.replace(/^"|"$/g, '');
+    textEls.forEach((el) => {
+      el.classList.toggle('expanded', expanded);
+      el.innerHTML = expanded ? `"${escapeHtml(fullText)}"` : `"${escapeHtml(fullText.substring(0, 150))}${fullText.length > 150 ? '...' : ''}"`;
+    });
+    btnEls.forEach((btn) => {
+      btn.innerHTML = expanded
+        ? 'Leggi meno <i class="fa-solid fa-chevron-up"></i>'
+        : 'Leggi di più <i class="fa-solid fa-chevron-down"></i>';
+    });
   };
 
   // NOTA: __defaultQuizTitle viene esposto QUI (e non prima), perché la

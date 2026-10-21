@@ -544,6 +544,12 @@ button { font-family: inherit; cursor: pointer; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* "Leggi di più": stato espanso -> testo completo visibile, card che cresce */
+.testimonial-text.expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
 /* Versione minimal: testo piccolo, senza cornice né sfondo */
 .testimonial-read-more {
   display: block;
