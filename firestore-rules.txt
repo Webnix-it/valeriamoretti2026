@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Letture pubbliche: Home e anteprime leggono tutto
+    match /{document=**} {
+      allow read: if true;
+    }
+
+    // Recensioni: solo admin autenticato può scrivere
+    match /reviews/{id} {
+      allow write: if request.auth != null
+        && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
+    }
+
+    // Test gratuito (domande del quiz)
+    match /quiz_questions/{id} {
+      allow write: if request.auth != null
+        && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
+    }
+
+    // Pacchetti servizi e domande dei moduli
+    match /service_packages/{id} {
+      allow write: if request.auth != null
+        && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
+    }
+    match /service_form_questions/{id} {
+      allow write: if request.auth != null
+        && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
+    }
+
+    // Richieste inviate dai visitatori dal popup: chiunque può creare,
+    // solo l'admin può modificare/leggere in scrittura
+    match /service_requests/{id} {
+      allow create: if true;
+      allow update, delete: if request.auth != null
+        && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
+    }
+
+    // Tema "Colori & stile" salvato dalla dashboard
+    match /site_settings/{doc} {
+      allow write: if request.auth != null
+        && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
+    }
+
+    // Config vecchio progetto (solo lettura, non più usato)
+    match /config/{doc} {
+      allow write: if false;
+    }
+  }
+}
