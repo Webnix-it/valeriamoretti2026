@@ -493,21 +493,23 @@ button { font-family: inherit; cursor: pointer; }
   from { transform: translateX(0); }
   to   { transform: translateX(calc(-50% - 0.75rem)); }
 }
+/* Card compatte, dimensioni da biglietto da visita (~260x150) */
 .testimonial-item {
   flex-shrink: 0;
-  width: 320px;
+  width: 260px;
   display: flex;
 }
 @media (min-width: 768px) {
-  .testimonial-item { width: 360px; }
+  .testimonial-item { width: 280px; }
 }
 .testimonial-card-inner {
   background: var(--avorio);
-  padding: 1.8rem;
-  border-radius: 1.25rem;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  padding: 0.9rem 1.1rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
   border: 1px solid rgba(248, 245, 239, 0.3);
-  height: 100%;
+  min-height: 150px;
+  max-height: 170px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -517,30 +519,31 @@ button { font-family: inherit; cursor: pointer; }
 }
 .testimonial-card-inner:hover {
   transform: translateY(-6px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.26);
 }
 .testimonial-stars {
   display: flex;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
   color: #fbbf24;
-  margin-bottom: 1rem;
-  font-size: 1.05rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.8rem;
 }
 .testimonial-text-wrapper {
   position: relative;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.55rem;
   flex-grow: 1;
+  min-height: 0;
 }
 .testimonial-text {
   color: var(--testo);
   font-style: italic;
-  font-size: 0.95rem;
-  line-height: 1.65;
+  font-size: 0.8rem;
+  line-height: 1.45;
   text-align: center;
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -577,7 +580,7 @@ button { font-family: inherit; cursor: pointer; }
   align-items: center;
   justify-content: space-between;
   margin-top: auto;
-  padding-top: 1rem;
+  padding-top: 0.5rem;
   border-top: 1px solid var(--salvia-chiaro);
   width: 100%;
 }
@@ -590,19 +593,19 @@ button { font-family: inherit; cursor: pointer; }
 .testimonial-name {
   font-weight: 700;
   color: var(--verde-bosco);
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   margin: 0;
 }
 .testimonial-time {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--testo-soft);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0;
 }
 .testimonial-icon {
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 1.7rem;
+  height: 1.7rem;
   background: var(--salvia-chiaro);
   border-radius: 50%;
   display: flex;

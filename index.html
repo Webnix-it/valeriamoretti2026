@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
   
   <!-- Fogli di stile -->
-  <link rel="stylesheet" href="style.css?v=20261022d" />
+  <link rel="stylesheet" href="style.css?v=20261022e" />
 
   <style>
     /* ============================================================
@@ -32,18 +32,20 @@
     .testimonials-wrapper { width: 100% !important; }
     /* Card in flex (non height:100%) così la card che si espande con
        "Leggi di più" può crescere senza tagliare il testo. */
-    .testimonial-item { display: flex !important; align-items: stretch !important; }
+    .testimonial-item { display: flex !important; align-items: stretch !important; width: 260px !important; }
+    @media (min-width: 768px) { .testimonial-item { width: 280px !important; } }
     .testimonial-card-inner {
       background: var(--avorio) !important;
       color: var(--testo) !important;
-      padding: 1.8rem !important;
-      border-radius: 1.25rem !important;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2) !important;
+      padding: 0.9rem 1.1rem !important;
+      border-radius: 1rem !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18) !important;
       border: 1px solid rgba(248, 245, 239, 0.3) !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
-      min-height: 100% !important;
+      min-height: 150px !important;
+      max-height: none !important;
       height: auto !important;
     }
     .testimonial-stars { color: #fbbf24 !important; }
@@ -61,7 +63,7 @@
     .testimonial-name { color: var(--verde-bosco) !important; font-weight: 700 !important; }
     .testimonial-time {
       color: var(--testo-soft) !important;
-      font-size: 0.75rem !important;
+      font-size: 0.68rem !important;
       text-transform: uppercase !important;
       letter-spacing: 0.05em !important;
     }
@@ -1326,7 +1328,7 @@
       });
     }, 6000);
   </script>
-  <script src="script.js?v=20261022d"></script>
+  <script src="script.js?v=20261022e"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script type="text/javascript">
     (function() { emailjs.init("zTOU9dbAR0XbmjhoR"); })();
