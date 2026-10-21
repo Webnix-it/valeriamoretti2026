@@ -187,7 +187,7 @@
     return rows
       .slice()
       .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
-      .map(r => ({ name: r.name + (r.initial ? ' ' + String(r.initial).toUpperCase() + '.' : ''), rating: Number(r.stars) || 5, date: fmtReviewDate(r.date), text: r.description || '' }));
+      .map(r => ({ name: r.name + (r.initial ? ' ' + String(r.initial).toUpperCase() + '.' : ''), rating: Number(r.stars) || 5, date: fmtReviewDate(r.date), time: fmtReviewDate(r.date), text: r.description || '' }));
   }
 
   async function loadDynamicReviews() {
@@ -573,11 +573,20 @@
   }
 
   function renderReviews(reviews) {
+    // Normalizza i campi: le recensioni possono arrivare come {name, rating, date/time, text}
+    // dal DB o dalla config dinamica. Garantiamo SEMPRE la presenza di `time` (la data
+    // mostrata sotto il nome nella card), altrimenti il footer resterebbe vuoto.
+    const normalized = (reviews || []).map(r => ({
+      name: r.name || '',
+      rating: Number(r.rating != null ? r.rating : (r.stars != null ? r.stars : 5)) || 5,
+      text: r.text || r.description || '',
+      time: r.time || r.date || fmtReviewDate(r.date) || ''
+    }));
     // Usa lo stesso renderer delle card della Home (con "Leggi di più" e stelle FA),
     // così l'aspetto è identico sia al primo caricamento che negli aggiornamenti live.
-    window.__dynamicReviewsPending = reviews;
+    window.__dynamicReviewsPending = normalized;
     if (typeof window.__renderTestimonialCards === 'function') {
-      window.__renderTestimonialCards(reviews);
+      window.__renderTestimonialCards(normalized);
     }
   }
 
