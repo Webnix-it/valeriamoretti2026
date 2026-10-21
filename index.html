@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
   
   <!-- Fogli di stile -->
-  <link rel="stylesheet" href="style.css?v=20261022b" />
+  <link rel="stylesheet" href="style.css?v=20261022c" />
 
   <style>
     /* ============================================================
@@ -66,8 +66,16 @@
       color: var(--verde-bosco) !important;
       border-radius: 50% !important;
     }
+    /* Minimal: link di testo, niente cornice/sfondo */
     .testimonial-read-more {
-      border: 1px solid var(--verde-bosco) !important;
+      border: none !important;
+      background: transparent !important;
+      color: var(--testo-soft) !important;
+      width: auto !important;
+      font-size: 0.75rem !important;
+      font-weight: 500 !important;
+    }
+    .testimonial-read-more:hover {
       color: var(--verde-bosco) !important;
       background: transparent !important;
     }
@@ -1308,7 +1316,7 @@
       });
     }, 6000);
   </script>
-  <script src="script.js?v=20261022b"></script>
+  <script src="script.js?v=20261022c"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script type="text/javascript">
     (function() { emailjs.init("zTOU9dbAR0XbmjhoR"); })();

@@ -544,26 +544,27 @@ button { font-family: inherit; cursor: pointer; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* Versione minimal: testo piccolo, senza cornice né sfondo */
 .testimonial-read-more {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  margin-top: 0.75rem;
-  padding: 0.5rem;
+  display: block;
+  width: auto;
+  margin: 0.6rem auto 0;
+  padding: 0.15rem 0.25rem;
   background: transparent;
-  border: 1px solid var(--verde-bosco);
-  color: var(--verde-bosco);
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  border: none;
+  color: var(--testo-soft);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: color 0.25s ease;
 }
 .testimonial-read-more:hover {
-  background: var(--verde-bosco);
-  color: var(--avorio);
+  background: transparent;
+  color: var(--verde-bosco);
+}
+.testimonial-read-more i {
+  font-size: 0.65rem;
 }
 .testimonial-footer {
   display: flex;
