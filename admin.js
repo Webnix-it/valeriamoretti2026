@@ -875,23 +875,34 @@
      Ricrea in miniatura ciò che la Home pubblica mostra: recensioni,
      pacchetti attivi/visibili e domande attive del test. I colori dei
      pacchetti seguono il tema corrente (applyPreviewTheme).            */
+  /* Card recensione fedele alla Home (.testimonial-card-inner di style.css):
+     sfondo avorio/tema, stelle ambra centrate in alto, testo corsivo centrato,
+     nome e data in basso. Usata sia nella sezione "Recensioni" dell'anteprima
+     sia nella miniatura della Home. */
+  function pvReviewCardHtml(r) {
+    const stars = Math.min(5, Math.max(0, Number(r.stars) || 0));
+    return `
+      <div class="pv-tcard">
+        <div class="pv-tstars">${'<i class="fa-solid fa-star"></i>'.repeat(stars)}${'<i class="fa-regular fa-star"></i>'.repeat(5 - stars)}</div>
+        <p class="pv-ttext">${esc(r.description || '')}</p>
+        <div class="pv-tfoot">
+          <strong>${esc(reviewDisplayName(r))}</strong>
+          <span>${esc(fmtDateIT(r.date))}</span>
+        </div>
+      </div>`;
+  }
+
   function renderLivePreview() {
     // Dopo un salvataggio o un refresh, la "bozza" non serve più: il contenuto
     // reale compare già nella lista sottostante.
     renderDraftsCleared();
-    // --- Recensioni (ordinate per data, come nella Home) ---
+    // --- Recensioni (card identiche alla Home, ordinate per data) ---
     const revBox = $('#pv-reviews');
     if (revBox) {
       const sorted = [...allReviews].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
       revBox.innerHTML = sorted.length
-        ? sorted.map(r => `
-          <div class="pv-review">
-            <span class="pv-rname">${esc(reviewDisplayName(r))}</span>
-            <span class="pv-rstars">${'★'.repeat(Number(r.stars) || 0)}${'☆'.repeat(5 - (Number(r.stars) || 0))}</span>
-            <span class="pv-rdate">· ${esc(fmtDateIT(r.date))}</span>
-            <p>${esc(r.description && r.description.length > 140 ? r.description.slice(0, 140) + '…' : r.description)}</p>
-          </div>`).join('')
-        : '<p class="pv-empty">Nessuna recensione nel database.</p>';
+        ? `<div class="pv-tcards">${sorted.map(pvReviewCardHtml).join('')}</div>`
+        : '<p class="pv-empty">Nessuna recensione nel database. Aggiungine una dalla sezione Recensioni: comparirà qui e nella Home.</p>';
     }
     // --- Pacchetti attivi e visibili nella Home (stile identico alla Home) ---
     const pkgBox = $('#pv-packages');
@@ -938,14 +949,12 @@
     const desc = ($('#rev-text').value || '').trim();
     const date = ($('#rev-date').value || '').trim();
     if (!name && !ini && !desc) return '';
-    const stars = currentStarRating();
-    return `
-      <div class="pv-review pv-draft">
-        <span class="pv-rname">${esc(name + (ini ? ' ' + ini + '.' : '')) || '<em style="color:#98917f;">Nome…</em>'}</span>
-        <span class="pv-rstars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</span>
-        <span class="pv-rdate">· ${esc(fmtDateIT(date))}</span>
-        <p>${esc(desc) || '<em style="color:#98917f;">La recensione comparirà qui mentre scrivi…</em>'}</p>
-      </div>`;
+    // Card identica alla Home, marcata come "bozza"
+    return `<div class="pv-tcards"><div class="pv-draft-wrap">${pvReviewCardHtml({
+      name: name || 'Nome', initial: ini, stars: currentStarRating(),
+      description: desc || 'La recensione comparirà qui mentre scrivi…',
+      date: date || new Date().toISOString().slice(0, 10)
+    })}</div></div>`;
   }
 
   function draftQuestionHtml() {
@@ -1194,15 +1203,34 @@
         ${p.tag || featured ? `<span class="pv-service-tag">${esc(p.tag || 'Il più completo')}</span>` : ''}
         <h3><span class="pv-title-icon"><i class="fa-solid ${icon}"></i></span> ${esc(p.name)}</h3>
         ${p.price ? `<div class="pv-service-price">${esc(p.price)}</div>` : ''}
-        ${feats.length ? `<ul>${feats.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : (p.description ? `<p class="pv-pdesc" style="margin-top:6px;">${esc(p.description)}</p>` : '')}
+        ${feats.length ? `<ul>${feats.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ((p.description || p.desc) ? `<p class="pv-pdesc" style="margin-top:6px;">${esc(p.description || p.desc)}</p>` : '')}
         <span class="${btnClass}">${label}</span>
       </div>`;
   }
 
+  /* Default identici alla Home (window.__defaultServicePackages di script.js,
+     che però non è caricato nella pagina admin): usati come fallback per la
+     miniatura della Home finché i pacchetti non arrivano dal database. */
+  const DEFAULT_PKG_DEFS = [
+    { key: 'piano-autonomo', type: 'piano', title: 'Piano autonomo P.E.R.S.M.A.R.T.', price: '50 € una tantum', desc: 'Il questionario approfondito e il piano personale scritto da Valeria.', features: ['Questionario approfondito (14 domande)', 'Piano personale scritto da Valeria', 'Consegna tramite email protetta'] },
+    { key: 'sessione-studio', type: 'sessione', title: 'Sessione in studio', price: '50 €/ora', desc: 'Incontro di 60 minuti nel mio studio a Valle Lomellina (PV).', features: ['Incontro individuale di 60 minuti', 'Studio a Valle Lomellina (PV)', "Piano d'azione concordato"] },
+    { key: 'sessione-online', type: 'online', title: 'Sessione online', price: '50 €/ora', desc: 'Incontro di 60 minuti tramite videochiamata.', features: ['Videochiamata di 60 minuti', 'Da qualsiasi luogo', 'Stesso metodo, più flessibilità'] },
+    { key: 'percorso-gruppo', type: 'gruppo', title: 'Percorsi di gruppo', price: 'Prossimo avvio', desc: "Lascia i tuoi dati per essere avvisato all'apertura delle iscrizioni.", features: ['Incontri guidati a numero chiuso', 'Obiettivi condivisi e supporto reciproco'] }
+  ];
+
   function renderMiniHome() {
     const box = $('#pv-mini-home');
     if (!box) return;
-    const visible = pkgSorted().filter(p => p.active !== false && p.showInHome !== false);
+    // Se i pacchetti non sono ancora caricati dal database, mostra subito la
+    // miniatura con i default del sito (l'anteprima non resta mai vuota).
+    let visible = pkgSorted().filter(p => p.active !== false && p.showInHome !== false);
+    if (!packages.length) {
+      const defs = Array.isArray(window.__defaultServicePackages) ? window.__defaultServicePackages : DEFAULT_PKG_DEFS;
+      visible = (defs || []).map((d, i) => ({
+        key: d.key, name: d.title, type: d.type, price: d.price, features: d.features,
+        desc: d.desc, order: i + 1, featured: d.key === 'piano-autonomo', tag: d.tag
+      }));
+    }
     const cards = visible.length
       ? visible.map((p) => pvServiceCardHtml(p, p.featured || p.key === 'piano-autonomo')).join('')
       : '<p class="pv-empty">Nessun pacchetto attivo e visibile nella Home.</p>';
@@ -1231,7 +1259,7 @@
         ${(() => {
           const sorted = [...allReviews].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
           const r = sorted[0];
-          return r ? `<div class="pv-mini-tcard"><strong>${esc(reviewDisplayName(r))}</strong> <span class="pv-rstars">${'★'.repeat(Number(r.stars) || 0)}${'☆'.repeat(5 - (Number(r.stars) || 0))}</span><p>${esc((r.description || '').slice(0, 90))}${(r.description || '').length > 90 ? '…' : ''}</p></div>`
+          return r ? `<div class="pv-tcards mini">${pvReviewCardHtml({ ...r, description: (r.description || '').slice(0, 160) + ((r.description || '').length > 160 ? '…' : '') })}</div>`
                    : '<p class="pv-empty">Nessuna recensione nel database.</p>';
         })()}
       </div>

@@ -20,12 +20,12 @@
        ADMIN DASHBOARD — Valeria Moretti (stile coordinato al sito)
        ========================================================== */
     :root {
-      --verde-bosco: #2f4f3e;
+      --verde-bosco: #cfe0d6;
       --salvia: #8fac8f;
-      --crema: #faf6ee;
-      --avorio: #fffdf8;
-      --antracite: #2d2d2d;
-      --grigio: #6b7280;
+      --crema: #101215;            /* sfondo dashboard: nero opaco */
+      --avorio: #1a1d21;           /* card su fondo scuro */
+      --antracite: #e8e6e1;        /* testo principale chiaro */
+      --grigio: #9aa3ab;
       --bordo: #591c2f;
       --danger: #b3382f;
       --warn: #c07f2a;
@@ -115,13 +115,41 @@
     .pv-block { background: #fff; border: 1px solid #e3ddcf; border-radius: 12px; padding: 14px 14px 16px; box-shadow: 0 2px 8px rgba(40,50,40,.05); }
     .pv-block h4 { font-family: 'Heavitas', system-ui, sans-serif; font-size: 13.5px; color: var(--verde-bosco); margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
     .pv-empty { font-size: 12.5px; color: #98917f; font-style: italic; margin: 0; }
-    /* card anteprima recensioni */
+    /* card anteprima recensioni — REPLICA FEDELE di .testimonial-card-inner
+       della Home (style.css): sfondo avorio/tema, stelle ambra centrate,
+       testo corsato centrato, nome + data in basso. */
     .pv-review { border-bottom: 1px dashed #e6e0d2; padding: 9px 2px; }
     .pv-review:last-child { border-bottom: none; }
     .pv-review .pv-rname { font-weight: 600; font-size: 13px; color: var(--antracite); }
     .pv-review .pv-rstars { color: #d9a419; font-size: 13px; letter-spacing: 1px; }
     .pv-review .pv-rdate { font-size: 11px; color: var(--grigio); }
     .pv-review p { font-size: 12.5px; line-height: 1.5; margin: 4px 0 0; color: #4c4a42; }
+    .pv-tcards { display: flex; flex-direction: column; gap: 12px; }
+    .pv-draft-wrap { position: relative; }
+    .pv-tcard {
+      background: var(--pv-card-bg, #F8F5EF);
+      border: 1px solid rgba(248, 245, 239, 0.3);
+      border-radius: 1rem;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+      padding: 1rem 1rem 0.9rem;
+      display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
+      transition: transform .3s ease, box-shadow .3s ease;
+    }
+    .pv-tcard:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(0,0,0,.2); }
+    .pv-tstars { display: flex; justify-content: center; gap: 3px; color: #fbbf24; font-size: 0.9rem; }
+    .pv-tstars .fa-regular { color: rgba(0,0,0,.15); }
+    .pv-ttext {
+      color: var(--pv-card-txt, #2e3734); font-style: italic; font-size: 0.82rem;
+      line-height: 1.55; text-align: center; margin: 0;
+      display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .pv-tfoot { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-top: 1px solid rgba(0,0,0,.07); padding-top: 8px; }
+    .pv-tfoot strong { font-size: 0.8rem; color: var(--pv-btn1-bg, #315B55); font-weight: 700; }
+    .pv-tfoot span { font-size: 0.66rem; color: var(--pv-card-txt, #2e3734); opacity: .6; white-space: nowrap; }
+    .pv-tcards.mini .pv-tcard { padding: 0.8rem; border-radius: 0.8rem; }
+    .pv-tcards.mini .pv-ttext { font-size: 0.72rem; -webkit-line-clamp: 3; }
+    .pv-tcards.mini .pv-tstars { font-size: 0.75rem; }
+    .pv-tcards.mini .pv-tfoot strong { font-size: 0.7rem; }
     /* card anteprima pacchetti (ricrea lo stile della Home con i temi correnti) */
     .pv-pkg { border: 1.5px solid var(--pv-border, #dcd6c6); border-radius: 12px; padding: 12px; margin-bottom: 10px; background: var(--pv-card-bg, #fff); }
     .pv-pkg:last-child { margin-bottom: 0; }
@@ -328,6 +356,48 @@
       .main { margin-left: 0; padding: 20px 16px 60px; }
       .loading-bar { left: 0; }
     }
+
+    /* ---------- TEMA SCURO DASHBOARD (nero opaco) — rifiniture ---------- */
+    body { background: #101215; }
+    .card { background: var(--avorio); border-color: #2a2e33; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+    input, textarea, select { background: #23272c; border-color: #3a3f45; color: var(--antracite); }
+    input:focus, textarea:focus, select:focus { border-color: var(--verde-bosco); box-shadow: 0 0 0 3px rgba(207,224,214,.15); }
+    label { color: var(--verde-bosco); }
+    .btn--primary { background: var(--verde-bosco); color: #14251c; }
+    .btn--primary:hover { background: #e2efe7; }
+    .btn--danger { border-color: #7c4340; color: #e8938c; }
+    .btn--danger:hover { background: rgba(179,56,47,.18); }
+    th { color: var(--grigio); border-bottom-color: #34383e; }
+    td { border-bottom-color: #2b2f34; }
+    tr:hover td { background: rgba(143,172,143,.08); }
+    .badge--on { background: rgba(46,125,79,.25); color: #7fd6a4; }
+    .badge--off { background: rgba(179,56,47,.22); color: #ef9a92; }
+    .badge--info { background: rgba(59,91,140,.3); color: #a9c4e8; }
+    .q-item, .req-card { background: #23272c; border-color: #34383e; }
+    .icon-btn:hover { background: #2e3338; }
+    .slider-sw { background: #4a5057; }
+    .container-input .input { background: #23272c; border-color: #5a6067; color: var(--antracite); }
+    .container-input > svg path { fill: #9aa3ab; }
+    .color-row { background: #23272c; border-color: #34383e; }
+    .color-row input[type="color"] { background: #23272c; border-color: #4a5057; }
+    .star-rating label { color: #4a5057; }
+    #toast { background: #1f2937; color: #e8e6e1; }
+    .login-card { background: #17191d; }
+    .login-card h1 { color: var(--verde-bosco); }
+    .login-badge { background: rgba(207,224,214,.12); color: var(--verde-bosco); }
+    .btn-google { background: #23272c; border-color: #3a3f45; color: var(--antracite); }
+    .btn-google:hover { border-color: var(--verde-bosco); }
+    .confirm-box p { color: var(--antracite); }
+    .empty-note, .pv-empty { color: var(--grigio); }
+    /* L'anteprima live a destra RESTA CHIARA: deve replicare esattamente lo stile della Home */
+    .preview-pane { background: #f4f1ea; }
+    .preview-head h3 { color: #2f4f3e; }
+    .preview-note { color: #6b7280; }
+    .pv-block { background: #fff; }
+    .pv-block h4 { color: #2f4f3e; }
+    .pv-review .pv-rname { color: #2d2d2d; }
+    .pv-review p { color: #4c4a42; }
+    .pv-review { border-bottom-color: #e6e0d2; }
   </style>
 </head>
 <body>
