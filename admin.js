@@ -1332,6 +1332,123 @@
     loadTheme();
   }
 
+  /* ==================== AIUTO: ISTRUZIONI + TOUR GUIDATA ==================== */
+  function openHelp() { const o = $('#help-overlay'); if (o) o.hidden = false; }
+  function closeHelp() { const o = $('#help-overlay'); if (o) o.hidden = true; }
+
+  const TOUR_STEPS = [
+    { sel: '.side-brand', title: 'Benvenuto!', text: 'Questa è la dashboard privata di Valeria Moretti. Si accede solo con l\'account Google autorizzato e tutto ciò che salvi qui si riflette subito sul sito pubblico.' },
+    { sel: '[data-panel="recensioni"]', title: '1 · Recensioni', text: 'Prima sezione: aggiungi, modifica, cerca ed elimina le recensioni pubblicate nella Home («Cosa dicono di me»). Cliccala per aprire il pannello.' },
+    { sel: '#rev-name', title: 'Compila la recensione', text: 'Inserisci Nome e iniziale del cognome (una sola lettera). Man mano che scrivi, l\'anteprima live a destra ti mostra la recensione già composta.' },
+    { sel: '#rev-star-rating', title: 'Le stelle', text: 'Passa il mouse sulle stelle: si animano in giallo con ombra. Clicca il numero desiderato da 1 a 5 — la selezione parte sempre da sinistra verso destra.' },
+    { sel: '#review-form .btn--primary', title: 'Salva recensione', text: 'Con questo pulsante la recensione va nel database e appare automaticamente nella Home, senza toccare il codice.' },
+    { sel: '#rev-search', title: 'Cerca', text: 'Digita un nome o anche solo un\'iniziale: la tabella sotto si filtra istantaneamente mentre scrivi.' },
+    { sel: '[data-panel="test"]', title: '2 · Test gratuito', text: 'Qui gestisci il questionario online: crea domande, modifica le risposte, riordina con ↑ ↓, attiva o disattiva ogni domanda. Tutto compare nel popup del test in Home.' },
+    { sel: '[data-panel="servizi"]', title: '3 · Servizi e pacchetti', text: 'Aggiungi o rimuovi pacchetti, imposti prezzo e descrizione, decidi quali mostrare nella Home, crea le domande personalizzate del modulo di richiesta e consulta le richieste dei visitatori.' },
+    { sel: '[data-panel="colori"]', title: '4 · Colori & stile', text: 'Cambia sfondi, testi e bottoni del sito pubblico, sezione per sezione. L\'anteprima a destra replica esattamente lo stile della Home mentre modifichi.' },
+    { sel: '#preview-pane', title: 'Anteprima live', text: 'Questa colonna mostra in tempo reale cosa vedranno i visitatori: recensioni, pacchetti, domande e mini-Home. Il pulsante Aggiorna rilegge il database.' },
+    { sel: '.side-user', title: 'Sei pronta!', text: 'Da qui puoi uscire con "Esci". Riprendi questo tutorial quando vuoi dal pulsante Tutorial, e leggi tutte le spiegazioni dettagliate nel pulsante Istruzioni. Buon lavoro! ✨' },
+  ];
+  let tourIdx = -1;
+  const tourEls = {};
+
+  function tourVisible(sel) {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    if (r.width < 2 && r.height < 2) return null;
+    // se l'elemento appartiene a un pannello non attivo, scrolla/attiva prima
+    return el;
+  }
+
+  function tourEnsurePanel(sel) {
+    // se il target è dentro un pannello nascosto, attiva quel pannello
+    const el = document.querySelector(sel);
+    if (!el) return;
+    const panel = el.closest('.panel');
+    if (panel && !panel.classList.contains('active')) {
+      const btn = document.querySelector(`.side-btn[data-panel="${panel.id.replace('panel-', '')}"]`);
+      if (btn) switchPanel(btn.dataset.panel);
+    }
+  }
+
+  function tourPlace(i) {
+    const step = TOUR_STEPS[i];
+    tourEnsurePanel(step.sel);
+    requestAnimationFrame(() => {
+      let el = tourVisible(step.sel);
+      if (!el) { // fallback: evidenzia la sidebar / centro schermo
+        el = document.querySelector('.sidebar') || document.body;
+      }
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        const r = el.getBoundingClientRect();
+        const pad = 6;
+        const hole = tourEls.hole;
+        hole.setAttribute('x', Math.max(0, r.left - pad));
+        hole.setAttribute('y', Math.max(0, r.top - pad));
+        hole.setAttribute('width', Math.min(window.innerWidth, r.width + pad * 2));
+        hole.setAttribute('height', Math.min(window.innerHeight, r.height + pad * 2));
+        // posizione card: sotto l'elemento se c'è spazio, altrimenti sopra/destra
+        const card = tourEls.card;
+        const cw = card.offsetWidth, ch = card.offsetHeight;
+        let left = r.left, top = r.bottom + 14;
+        if (top + ch > window.innerHeight - 12) top = Math.max(12, r.top - ch - 14);
+        if (top < 12) { left = r.right + 14; top = Math.max(12, Math.min(r.top, window.innerHeight - ch - 12)); }
+        if (left + cw > window.innerWidth - 12) left = window.innerWidth - cw - 12;
+        if (left < 12) left = 12;
+        card.style.left = left + 'px';
+        card.style.top = top + 'px';
+      }, 260);
+      tourEls.counter.textContent = `Passaggio ${i + 1} / ${TOUR_STEPS.length}`;
+      tourEls.title.textContent = step.title;
+      tourEls.text.textContent = step.text;
+      tourEls.prev.hidden = i === 0;
+      tourEls.next.innerHTML = i === TOUR_STEPS.length - 1
+        ? 'Fine <i class="fa-solid fa-check"></i>'
+        : 'Avanti <i class="fa-solid fa-arrow-right"></i>';
+    });
+  }
+
+  function startTour() {
+    closeHelp();
+    tourEls.overlay = $('#tour-overlay');
+    tourEls.hole = $('#tour-hole');
+    tourEls.card = $('#tour-card');
+    tourEls.counter = $('#tour-counter');
+    tourEls.title = $('#tour-title');
+    tourEls.text = $('#tour-text');
+    tourEls.prev = $('#tour-prev');
+    tourEls.next = $('#tour-next');
+    tourEls.overlay.hidden = false;
+    tourIdx = 0;
+    tourPlace(tourIdx);
+  }
+
+  function stopTour() {
+    if (tourEls.overlay) tourEls.overlay.hidden = true;
+    tourIdx = -1;
+  }
+
+  function initHelpSection() {
+    $('#btn-istruzioni').addEventListener('click', openHelp);
+    $('#btn-tutorial').addEventListener('click', startTour);
+    $('#help-close').addEventListener('click', closeHelp);
+    $('#help-close-2').addEventListener('click', closeHelp);
+    $('#help-start-tour').addEventListener('click', startTour);
+    $('#help-overlay').addEventListener('click', (e) => { if (e.target.id === 'help-overlay') closeHelp(); });
+    $('#tour-next').addEventListener('click', () => {
+      if (tourIdx >= TOUR_STEPS.length - 1) { stopTour(); toast('Tutorial completata! 🎉'); return; }
+      tourIdx++; tourPlace(tourIdx);
+    });
+    $('#tour-prev').addEventListener('click', () => { if (tourIdx > 0) { tourIdx--; tourPlace(tourIdx); } });
+    $('#tour-skip').addEventListener('click', stopTour);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { closeHelp(); if (tourIdx >= 0) stopTour(); }
+    });
+    window.addEventListener('resize', () => { if (tourIdx >= 0) tourPlace(tourIdx); });
+  }
+
   /* =========================== BOOTSTRAP ======================== */
   let dashInited = false;
   function initDashboard() {
@@ -1342,6 +1459,7 @@
     initQuizSection();
     initServicesSection();
     initThemeSection();
+    initHelpSection(); // bottoni Istruzioni + Tutorial con tour interattivo spotlight
     initDraftLivePreview(); // anteprima live si aggiorna mentre scrivi nei form
     // Anteprima live: aggiorna anche manualmente
     const rb = $('#btn-preview-refresh');
