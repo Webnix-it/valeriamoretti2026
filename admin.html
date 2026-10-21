@@ -20,12 +20,12 @@
        ADMIN DASHBOARD — Valeria Moretti (stile coordinato al sito)
        ========================================================== */
     :root {
-      --verde-bosco: #cfe0d6;
+      --verde-bosco: #2f4f3e;
       --salvia: #8fac8f;
-      --crema: #101215;            /* sfondo dashboard: nero opaco */
-      --avorio: #1a1d21;           /* card su fondo scuro */
-      --antracite: #e8e6e1;        /* testo principale chiaro */
-      --grigio: #9aa3ab;
+      --crema: #fbf8f2;            /* sfondo dashboard: crema chiaro (come prima) */
+      --avorio: #ffffff;           /* card chiare */
+      --antracite: #1b2a24;        /* testo principale scuro */
+      --grigio: #6b7280;
       --bordo: #591c2f;
       --danger: #b3382f;
       --warn: #c07f2a;
@@ -80,7 +80,7 @@
     }
     .side-brand { padding: 4px 10px 18px; border-bottom: 1px solid rgba(255,255,255,.14); margin-bottom: 16px; }
     .side-brand strong { display: block; font-family: 'Heavitas', system-ui, sans-serif; font-size: 19px; color: #fff; }
-    .side-brand span { font-size: 12px; opacity: .75; }
+    .side-brand span { font-size: 12px; color: #dce7dc; opacity: 1; }
     .side-brand .tag-private { display: inline-block; margin-top: 8px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.14); padding: 3px 10px; border-radius: 999px; }
     .side-nav { display: flex; flex-direction: column; gap: 6px; flex: 1; }
     .side-btn {
@@ -89,7 +89,7 @@
       border-radius: 10px; font-size: 14px; font-weight: 500; transition: all .15s;
     }
     .side-btn i { width: 20px; text-align: center; }
-    .side-btn small { display: block; font-size: 11px; opacity: .6; font-weight: 400; }
+    .side-btn small { display: block; font-size: 11px; color: #c3d2c4; font-weight: 400; opacity: 1; }
     .side-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
     .side-btn.active { background: var(--salvia); color: var(--verde-bosco); font-weight: 600; }
     .side-btn.active small { opacity: .75; }
@@ -357,35 +357,35 @@
       .loading-bar { left: 0; }
     }
 
-    /* ---------- TEMA SCURO DASHBOARD (nero opaco) — rifiniture ---------- */
-    body { background: #101215; }
-    .card { background: var(--avorio); border-color: #2a2e33; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
-    input, textarea, select { background: #23272c; border-color: #3a3f45; color: var(--antracite); }
-    input:focus, textarea:focus, select:focus { border-color: var(--verde-bosco); box-shadow: 0 0 0 3px rgba(207,224,214,.15); }
+    /* ---------- TEMA CHIARO DASHBOARD (come l'originale) — rifiniture ---------- */
+    body { background: var(--crema); }
+    .card { background: var(--avorio); border-color: #e6e0d2; box-shadow: var(--shadow); }
+    input, textarea, select { background: #fff; border-color: #d9d3c6; color: var(--antracite); }
+    input:focus, textarea:focus, select:focus { border-color: var(--verde-bosco); box-shadow: 0 0 0 3px rgba(47,79,62,.12); }
     label { color: var(--verde-bosco); }
-    .btn--primary { background: var(--verde-bosco); color: #14251c; }
-    .btn--primary:hover { background: #e2efe7; }
-    .btn--danger { border-color: #7c4340; color: #e8938c; }
-    .btn--danger:hover { background: rgba(179,56,47,.18); }
-    th { color: var(--grigio); border-bottom-color: #34383e; }
-    td { border-bottom-color: #2b2f34; }
+    .btn--primary { background: var(--verde-bosco); color: #fff; }
+    .btn--primary:hover { background: #24402f; }
+    .btn--danger { border-color: #d8b4ae; color: var(--danger); }
+    .btn--danger:hover { background: rgba(179,56,47,.08); }
+    th { color: var(--grigio); border-bottom-color: #e2dccd; }
+    td { border-bottom-color: #ece6d9; }
     tr:hover td { background: rgba(143,172,143,.08); }
-    .badge--on { background: rgba(46,125,79,.25); color: #7fd6a4; }
-    .badge--off { background: rgba(179,56,47,.22); color: #ef9a92; }
-    .badge--info { background: rgba(59,91,140,.3); color: #a9c4e8; }
-    .q-item, .req-card { background: #23272c; border-color: #34383e; }
-    .icon-btn:hover { background: #2e3338; }
-    .slider-sw { background: #4a5057; }
-    .container-input .input { background: #23272c; border-color: #5a6067; color: var(--antracite); }
-    .container-input > svg path { fill: #9aa3ab; }
-    .color-row { background: #23272c; border-color: #34383e; }
-    .color-row input[type="color"] { background: #23272c; border-color: #4a5057; }
-    .star-rating label { color: #4a5057; }
-    #toast { background: #1f2937; color: #e8e6e1; }
-    .login-card { background: #17191d; }
+    .badge--on { background: rgba(46,125,79,.14); color: #2e7d4f; }
+    .badge--off { background: rgba(179,56,47,.12); color: #b3382f; }
+    .badge--info { background: rgba(59,91,140,.12); color: #3b5b8c; }
+    .q-item, .req-card { background: #fbf8f2; border-color: #e6e0d2; }
+    .icon-btn:hover { background: #efe9db; }
+    .slider-sw { background: #cfc8b8; }
+    .container-input .input { background: #fff; border-color: #c9c2b2; color: var(--antracite); }
+    .container-input > svg path { fill: #6b7280; }
+    .color-row { background: #fbf8f2; border-color: #e6e0d2; }
+    .color-row input[type="color"] { background: #fff; border-color: #d9d3c6; }
+    .star-rating label { color: #cfc8b8; }
+    #toast { background: #1f2937; color: #f8f6f1; }
+    .login-card { background: #fffdf8; }
     .login-card h1 { color: var(--verde-bosco); }
-    .login-badge { background: rgba(207,224,214,.12); color: var(--verde-bosco); }
-    .btn-google { background: #23272c; border-color: #3a3f45; color: var(--antracite); }
+    .login-badge { background: rgba(47,79,62,.08); color: var(--verde-bosco); }
+    .btn-google { background: #fff; border-color: #d9d3c6; color: var(--antracite); }
     .btn-google:hover { border-color: var(--verde-bosco); }
     .confirm-box p { color: var(--antracite); }
     .empty-note, .pv-empty { color: var(--grigio); }
