@@ -49,6 +49,12 @@ service cloud.firestore {
         && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
     }
 
+    // Link social aggiornati dalla dashboard
+    match /site_social/{doc} {
+      allow write: if request.auth != null
+        && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
+    }
+
     // Config vecchio progetto (solo lettura, non più usato)
     match /config/{doc} {
       allow write: if false;

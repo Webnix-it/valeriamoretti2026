@@ -437,6 +437,12 @@
     .tour-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .tour-nav-right { display: flex; gap: 8px; }
     @media (max-width: 760px) { .help-box { max-height: 92vh; } .tour-card { width: calc(100vw - 28px); } }
+
+    .social-field { display:flex; align-items:center; gap:12px; background:#fff; border:1px solid #ddd6c6; border-radius:14px; padding:9px 14px; }
+    .social-field b { width:150px; flex-shrink:0; font-size:13px; color:#2f4f3e; font-weight:700; }
+    .social-field-icon { width:34px; height:34px; border-radius:50%; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+    .social-field .input { flex:1; min-width:0; }
+    @media (max-width:640px){ .social-field{flex-wrap:wrap;} .social-field b{width:auto;} }
   </style>
 </head>
 <body>
@@ -486,6 +492,10 @@
         <button type="button" class="side-btn" data-panel="foto">
           <i class="fa-solid fa-images"></i>
           <span>Aggiornamenti foto<small>Le immagini di Home, Chi sono e dello Studio.</small></span>
+        </button>
+        <button type="button" class="side-btn" data-panel="social">
+          <i class="fa-solid fa-link"></i>
+          <span>Aggiornamento social<small>I link di WhatsApp, Instagram, TikTok, email e telefono.</small></span>
         </button>
         <div class="side-help">
           <button type="button" class="btn btn--help" id="btn-istruzioni"><i class="fa-solid fa-book-open"></i> Istruzioni</button>
@@ -834,6 +844,33 @@
         </div>
       </section>
 
+      <!-- ============ PANNELLO: AGGIORNAMENTO SOCIAL ============ -->
+      <section class="panel" id="panel-social">
+        <div class="page-head">
+          <h2>Aggiornamento social</h2>
+          <p>Cambia i link dei tuoi canali social e dei contatti. Quello che salvi qui aggiorna automaticamente il footer della Home, il popup «Scegli la modalità» (pulsante Parliamone insieme) e i pulsanti social del sito pubblico. Lascia un campo vuoto per mantenere il link attuale.</p>
+        </div>
+
+        <div class="card" id="social-card">
+          <h3><i class="fa-solid fa-share-nodes"></i> Link social e contatti</h3>
+          <div id="social-fields" style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+            <label class="social-field"><span class="social-field-icon" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);"><i class="fa-brands fa-instagram"></i></span><b>Instagram</b><input type="url" class="input social-url-input" data-key="instagram" placeholder="https://www.instagram.com/mentalcoachvaleria95" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#010101;"><i class="fa-brands fa-tiktok"></i></span><b>TikTok</b><input type="url" class="input social-url-input" data-key="tiktok" placeholder="https://www.tiktok.com/@mentalcoachvaleria95" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#ff0000;"><i class="fa-brands fa-youtube"></i></span><b>YouTube</b><input type="url" class="input social-url-input" data-key="youtube" placeholder="https://www.youtube.com/@mentalcoachvaleria95" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#229ED9;"><i class="fa-brands fa-telegram"></i></span><b>Telegram</b><input type="url" class="input social-url-input" data-key="telegram" placeholder="https://t.me/mentalcoachvaleria95" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#25D366;"><i class="fa-brands fa-whatsapp"></i></span><b>WhatsApp</b><input type="url" class="input social-url-input" data-key="whatsapp" placeholder="https://wa.me/393458407102" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#2f4f3e;"><i class="fa-solid fa-phone"></i></span><b>Numero di telefono</b><input type="tel" class="input social-url-input" data-key="phone" placeholder="+39 345 840 7102" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#ea4335;"><i class="fa-solid fa-envelope"></i></span><b>Email</b><input type="email" class="input social-url-input" data-key="email" placeholder="mentalcoachvaleria@gmail.com" /></label>
+          </div>
+          <div class="row" style="margin-top:16px;display:flex;gap:10px;align-items:center;">
+            <button type="button" class="btn btn--primary" id="btn-social-save"><i class="fa-solid fa-floppy-disk"></i> Salva social</button>
+            <button type="button" class="btn btn--soft" id="btn-social-reset"><i class="fa-solid fa-rotate-left"></i> Ripristina default</button>
+          </div>
+          <p id="social-status" style="font-size:12.5px;margin-top:10px;color:#98917f;"></p>
+          <p style="font-size:11.5px;color:#98917f;margin-top:8px;">💡 WhatsApp: usa il formato https://wa.me/39NUMERO · Telegram: https://t.me/TUOUSERNAME · Telefono: solo cifre con prefisso (es. +39…).</p>
+        </div>
+      </section>
+
     </main>
 
     <!-- ============ ANTEPRIMA LIVE (a destra) ============ -->
@@ -870,6 +907,10 @@
         <section class="pv-block">
           <h4><i class="fa-solid fa-images"></i> Foto in Home — Hero / Chi sono / Studio</h4>
           <div id="pv-photos" class="pv-body"></div>
+        </section>
+        <section class="pv-block">
+          <h4><i class="fa-solid fa-link"></i> Social — anteprima Footer e popup «Scegli la modalità»</h4>
+          <div id="pv-social" class="pv-body"></div>
         </section>
       </div>
     </aside>
@@ -985,6 +1026,6 @@
 
   <!-- Firebase (config globale) + logica admin -->
   <script type="module" src="firebase-config.js"></script>
-  <script type="module" src="admin.js?v=20261022c"></script>
+  <script type="module" src="admin.js?v=20261022e"></script>
 </body>
 </html>

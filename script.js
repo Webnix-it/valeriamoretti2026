@@ -2014,3 +2014,83 @@
     boot();
   }
 })();
+
+/* ============================================================
+   LINK SOCIAL AGGIORNABILI DALLA DASHBOARD
+   Sezione "Aggiornamento social" di admin.html: i link sono
+   salvati in Firestore (collection 'site_social', doc 'links').
+   La Home li legge e aggiorna automaticamente:
+   - icone social nel footer (data-social / mailto)
+   - pulsanti del popup "Scegli la modalità" (Email, Instagram,
+     Cellulare, WhatsApp)
+   Le modifiche si riflettono in tempo reale anche a pagina aperta.
+   ============================================================ */
+(function initSocialLinks() {
+  function valid(key, v) {
+    v = String(v || '').trim();
+    if (!v) return '';
+    if (key === 'email') return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) ? v : '';
+    if (key === 'phone') { const d = v.replace(/[^\d+]/g, ''); return /^(\+?\d{6,15})$/.test(d) ? d : ''; }
+    return /^https?:\/\/.+\..+/i.test(v) ? v : '';
+  }
+
+  function applySocial(s) {
+    // s = { instagram, tiktok, youtube, telegram, whatsapp, phone, email } (solo valori validi)
+    var changed = 0;
+    // Footer: icone con data-social + email senza data-social
+    document.querySelectorAll('.socialContainer[data-social]').forEach(function (a) {
+      var key = a.getAttribute('data-social');
+      if (s[key]) { a.href = s[key]; changed++; }
+    });
+    var footMail = document.querySelector('.socialContainer[href^="mailto:"]');
+    if (footMail && s.email) { footMail.href = 'mailto:' + s.email; changed++; }
+    // Popup "Scegli la modalità"
+    var mEmail = document.querySelector('.mode-btn--email');
+    if (mEmail && s.email) { mEmail.href = 'mailto:' + s.email; changed++; }
+    var mIg = document.querySelector('.mode-btn--instagram');
+    if (mIg && s.instagram) { mIg.href = s.instagram; changed++; }
+    var mPhone = document.querySelector('.mode-btn--phone');
+    if (mPhone && s.phone) { mPhone.href = 'tel:' + s.phone; changed++; }
+    var mWa = document.querySelector('.mode-btn--whatsapp');
+    if (mWa && s.whatsapp) { mWa.href = s.whatsapp; changed++; }
+    if (changed) console.log('✅ Link social aggiornati dalla dashboard (' + changed + ')');
+  }
+
+  async function loadSocialFromDb() {
+    if (!window.firebaseDB || !window.firebaseDoc || !window.firebaseGetDoc) return;
+    try {
+      const snap = await window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB, 'site_social', 'links'));
+      if (!snap.exists()) return;
+      const d = snap.data() || {};
+      const clean = {};
+      ['instagram', 'tiktok', 'youtube', 'telegram', 'whatsapp', 'phone', 'email'].forEach(k => {
+        const v = valid(k, d[k]);
+        if (v) clean[k] = v;
+      });
+      if (Object.keys(clean).length) applySocial(clean);
+    } catch (err) {
+      console.warn('⚠️ Social da database non disponibili:', err && err.message);
+    }
+    try {
+      if (window.firebaseOnSnapshot) {
+        window.firebaseOnSnapshot(window.firebaseDoc(window.firebaseDB, 'site_social', 'links'), (snap) => {
+          if (!snap.exists()) return;
+          const d = snap.data() || {};
+          const clean = {};
+          ['instagram', 'tiktok', 'youtube', 'telegram', 'whatsapp', 'phone', 'email'].forEach(k => {
+            const v = valid(k, d[k]);
+            if (v) clean[k] = v;
+          });
+          if (Object.keys(clean).length) applySocial(clean);
+        }, (err) => console.warn('Ascolto social non attivo:', err && err.message));
+      }
+    } catch (e) { console.warn('Ascolto social non attivo:', e && e.message); }
+  }
+
+  function boot() { loadSocialFromDb(); }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();

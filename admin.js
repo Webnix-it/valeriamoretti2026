@@ -1237,6 +1237,168 @@
     } catch (e) { console.warn('onSnapshot foto non attivo:', e); }
   }
 
+  /* ============ SEZIONE: AGGIORNAMENTO SOCIAL ==============
+     I link di Instagram, TikTok, YouTube, Telegram, WhatsApp, telefono ed
+     email sono salvati in Firestore (collection 'site_social', doc 'links').
+     script.js della Home li legge e aggiorna footer, popup «Scegli la
+     modalità» e pulsanti social del sito pubblico. */
+  const SOCIAL_COL = 'site_social';
+  const SOCIAL_DOC = 'links';
+
+  const SOCIAL_DEFAULTS = {
+    instagram: 'https://www.instagram.com/mentalcoachvaleria95',
+    tiktok:    'https://www.tiktok.com/@mentalcoachvaleria95',
+    youtube:   'https://www.youtube.com/@mentalcoachvaleria95',
+    telegram:  'https://t.me/mentalcoachvaleria95',
+    whatsapp:  'https://wa.me/393458407102',
+    phone:     '+393458407102',
+    email:     'mentalcoachvaleria@gmail.com'
+  };
+
+  const SOCIAL_META = [
+    { key: 'instagram', label: 'Instagram', icon: 'fa-brands fa-instagram', bg: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)' },
+    { key: 'tiktok',    label: 'TikTok',    icon: 'fa-brands fa-tiktok',    bg: '#010101' },
+    { key: 'youtube',   label: 'YouTube',   icon: 'fa-brands fa-youtube',   bg: '#ff0000' },
+    { key: 'telegram',  label: 'Telegram',  icon: 'fa-brands fa-telegram',  bg: '#229ED9' },
+    { key: 'whatsapp',  label: 'WhatsApp',  icon: 'fa-brands fa-whatsapp',  bg: '#25D366' },
+    { key: 'phone',     label: 'Telefono',  icon: 'fa-solid fa-phone',      bg: '#2f4f3e' },
+    { key: 'email',     label: 'Email',     icon: 'fa-solid fa-envelope',   bg: '#ea4335' }
+  ];
+
+  let currentSocial = Object.assign({}, SOCIAL_DEFAULTS);
+
+  function validSocialValue(key, v) {
+    v = String(v || '').trim();
+    if (!v) return '';
+    if (key === 'email') return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) ? v : '';
+    if (key === 'phone') {
+      const digits = v.replace(/[^\d+]/g, '');
+      return /^(\+?\d{6,15})$/.test(digits) ? digits : '';
+    }
+    return /^https?:\/\/.+\..+/i.test(v) ? v : '';
+  }
+
+  function socialHrefFor(key, val) {
+    if (!val) return '#';
+    if (key === 'email') return 'mailto:' + val;
+    if (key === 'phone') return 'tel:' + val;
+    return val;
+  }
+
+  function renderSocialFields() {
+    SOCIAL_META.forEach(m => {
+      const inp = $(`.social-url-input[data-key="${m.key}"]`);
+      if (inp && document.activeElement !== inp) inp.value = currentSocial[m.key] || '';
+    });
+    renderSocialPreview();
+  }
+
+  async function loadSocial() {
+    try {
+      const snap = await FB.getDoc(FB.doc(FB.db, SOCIAL_COL, SOCIAL_DOC));
+      if (snap.exists()) {
+        const d = snap.data() || {};
+        SOCIAL_META.forEach(m => {
+          const v = validSocialValue(m.key, d[m.key]);
+          if (v) currentSocial[m.key] = v;
+        });
+      }
+    } catch (err) {
+      console.warn('Social non caricati (uso default):', err);
+    }
+    renderSocialFields();
+  }
+
+  async function saveSocial() {
+    const next = {};
+    let anyValid = false;
+    SOCIAL_META.forEach(m => {
+      const inp = $(`.social-url-input[data-key="${m.key}"]`);
+      const v = validSocialValue(m.key, inp ? inp.value : '');
+      if (v) { next[m.key] = v; anyValid = true; }
+    });
+    if (!anyValid) { toast('Inserisci almeno un link valido prima di salvare.', true); return; }
+    setBusy(true);
+    try {
+      await FB.setDoc(FB.doc(FB.db, SOCIAL_COL, SOCIAL_DOC), Object.assign(next, { updatedAt: new Date().toISOString() }), { merge: true });
+      Object.assign(currentSocial, next);
+      renderSocialFields();
+      const st = $('#social-status');
+      if (st) { st.textContent = '✔ Social salvati: footer, popup e contatti della Home si aggiornano subito.'; st.style.color = '#2e7d5b'; }
+      toast('Link social salvati.');
+    } catch (err) {
+      console.error(err);
+      const st = $('#social-status');
+      if (st) { st.textContent = '✖ Errore salvataggio: ' + err.message; st.style.color = '#c0392b'; }
+      toast('Errore salvataggio social: ' + err.message, true);
+    } finally { setBusy(false); }
+  }
+
+  function resetSocial() {
+    confirmAction('Ripristinare i link social originali?', 'I link personalizzati verranno eliminati dal database e il sito tornerà ai canali predefiniti.')
+      .then(async (yes) => {
+        if (!yes) return;
+        setBusy(true);
+        try {
+          await FB.deleteDoc(FB.doc(FB.db, SOCIAL_COL, SOCIAL_DOC)).catch(() => {});
+          currentSocial = Object.assign({}, SOCIAL_DEFAULTS);
+          renderSocialFields();
+          const st = $('#social-status');
+          if (st) { st.textContent = 'Link originali ripristinati.'; st.style.color = '#2e7d5b'; }
+          toast('Social ripristinati.');
+        } catch (err) { console.error(err); toast('Errore: ' + err.message, true); }
+        finally { setBusy(false); }
+      });
+  }
+
+  function renderSocialPreview() {
+    const box = $('#pv-social');
+    if (!box) return;
+    // Segue la digitazione in diretta
+    const live = {};
+    SOCIAL_META.forEach(m => {
+      const inp = $(`.social-url-input[data-key="${m.key}"]`);
+      live[m.key] = validSocialValue(m.key, inp ? inp.value : '') || currentSocial[m.key] || '';
+    });
+    box.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${SOCIAL_META.map(m => `
+          <a href="${esc(socialHrefFor(m.key, live[m.key]))}" target="_blank" rel="noopener noreferrer" title="${esc(live[m.key] || 'Non impostato')}"
+             style="display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid #ddd6c6;border-radius:999px;padding:6px 12px 6px 6px;text-decoration:none;color:#2f4f3e;font-size:11.5px;font-weight:600;transition:transform .2s ease;"
+             onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform=''">
+            <span style="width:24px;height:24px;border-radius:50%;background:${m.bg};color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;"><i class="${m.icon}"></i></span>
+            ${m.label}
+          </a>`).join('')}
+      </div>
+      <p style="font-size:10.5px;color:#98917f;margin-top:8px;">Anteprima dei collegamenti reali: cliccabili come nella Home.</p>`;
+  }
+
+  function initSocialSection() {
+    const wrap = $('#social-fields');
+    if (wrap) {
+      wrap.addEventListener('input', (e) => {
+        if (e.target.classList.contains('social-url-input')) renderSocialPreview();
+      });
+    }
+    const bs = $('#btn-social-save'); if (bs) bs.addEventListener('click', saveSocial);
+    const br = $('#btn-social-reset'); if (br) br.addEventListener('click', resetSocial);
+    loadSocial();
+    try {
+      if (FB.onSnapshot) {
+        FB.onSnapshot(FB.doc(FB.db, SOCIAL_COL, SOCIAL_DOC), (snap) => {
+          if (!snap.exists()) return;
+          if (document.activeElement && document.activeElement.classList.contains('social-url-input')) return;
+          const d = snap.data() || {};
+          SOCIAL_META.forEach(m => {
+            const v = validSocialValue(m.key, d[m.key]);
+            if (v) currentSocial[m.key] = v;
+          });
+          renderSocialFields();
+        });
+      }
+    } catch (e) { console.warn('onSnapshot social non attivo:', e); }
+  }
+
 
   // Wrapper: ogni rendering locale aggiorna automaticamente anche l'anteprima live a destra.
   function renderReviewsTableAndPreview() { renderReviewsTable(); renderLivePreview(); }
@@ -1658,6 +1820,7 @@
     { sel: '[data-panel="servizi"]', title: '3 · Servizi e pacchetti', text: 'Aggiungi o rimuovi pacchetti, imposti prezzo e descrizione, decidi quali mostrare nella Home, crea le domande personalizzate del modulo di richiesta e consulta le richieste dei visitatori.' },
     { sel: '[data-panel="colori"]', title: '4 · Colori & stile', text: 'Cambia sfondi, testi e bottoni del sito pubblico, sezione per sezione. L\'anteprima a destra replica esattamente lo stile della Home mentre modifichi.' },
     { sel: '[data-panel="foto"]', title: '5 · Aggiornamenti foto', text: 'Incolla il link (URL) di una foto per cambiare le immagini della Home: Hero (dietro alla targhetta «Valeria Moretti · Mental Coach»), Chi sono («Ciao, sono Valeria») e Il mio Studio. L\'anteprima live a destra ti mostra quale sezione della Home stai aggiornando.' },
+    { sel: '[data-panel="social"]', title: '6 · Aggiornamento social', text: 'Cambia i link di Instagram, TikTok, YouTube, Telegram, WhatsApp, telefono ed email: il footer, il popup «Scegli la modalità» e i contatti della Home si aggiornano automaticamente.' },
     { sel: '#preview-pane', title: 'Anteprima live', text: 'Questa colonna mostra in tempo reale cosa vedranno i visitatori: recensioni, pacchetti, domande e mini-Home. Il pulsante Aggiorna rilegge il database.' },
     { sel: '.side-user', title: 'Sei pronta!', text: 'Da qui puoi uscire con "Esci". Riprendi questo tutorial quando vuoi dal pulsante Tutorial, e leggi tutte le spiegazioni dettagliate nel pulsante Istruzioni. Buon lavoro! ✨' },
   ];
@@ -1775,6 +1938,7 @@
     initServicesSection();
     initThemeSection();
     initPhotosSection(); // sezione "Aggiornamenti foto" + anteprima live hero/chisono/studio
+    initSocialSection(); // sezione "Aggiornamento social" + anteprima live footer/popup
     initHelpSection(); // bottoni Istruzioni + Tutorial con tour interattivo spotlight
     initDraftLivePreview(); // anteprima live si aggiorna mentre scrivi nei form
     // Anteprima live: aggiorna anche manualmente
