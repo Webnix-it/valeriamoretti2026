@@ -274,8 +274,9 @@ button { font-family: inherit; cursor: pointer; }
 }
 .slideshow img.active { opacity: 1; }
 .hero-badge {
-  position: absolute; bottom: 22px; left: 22px; right: 22px;
-  background: rgba(248, 245, 239, 0.94); border-radius: 14px; padding: 16px 20px; font-size: 0.85rem; color: var(--testo);
+  position: absolute; bottom: 22px; left: 22px; right: 22px; z-index: 3;
+  background: rgba(248, 245, 239, 0.94); backdrop-filter: blur(4px); border-radius: 14px; padding: 16px 20px; font-size: 0.85rem; color: var(--testo);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
 }
 .hero-badge strong { color: var(--verde-bosco); }
 
