@@ -231,6 +231,81 @@
     } catch (e) { return iso; }
   }
 
+  // ============================================================
+  //  FAQ DINAMICHE — collection 'faq' (gestita dalla dashboard)
+  //  La sezione "Hai qualche domanda? / Le risposte che cercavi"
+  //  viene ricostruita dal database: le domande salvate dall'admin
+  //  compaiono in Home senza toccare il codice. Se il DB è vuoto o
+  //  irraggiungibile, restano visibili le FAQ statiche originali.
+  // ============================================================
+  function renderFaqFromDb(rows) {
+    const list = document.querySelector('#faq-vm .faq-vm-list');
+    if (!list) return;
+    const items = rows
+      .filter((f) => f.active !== false)
+      .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+    if (!items.length) return; // DB vuoto: lascia le FAQ statiche di index.html
+
+    list.innerHTML = items.map((f, i) => {
+      const q = escapeHtml(f.question || f.q || '');
+      const a = escapeHtml(f.answer || f.a || '').replace(/\n/g, '<br>');
+      const n = String(i + 1).padStart(2, '0');
+      return `<article class="faq-vm-item">
+        <h3 class="faq-vm-question">
+          <button class="faq-vm-trigger" id="faq-vm-question-${i + 1}" aria-expanded="false" aria-controls="faq-vm-answer-${i + 1}">
+            <span class="faq-vm-number">${n}</span>
+            <span class="faq-vm-question-text">${q}</span>
+            <span class="faq-vm-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+          </button>
+        </h3>
+        <div class="faq-vm-answer" id="faq-vm-answer-${i + 1}" role="region" aria-labelledby="faq-vm-question-${i + 1}" hidden>
+          <div class="faq-vm-answer-inner">${a}</div>
+        </div>
+      </article>`;
+    }).join('');
+
+    // Ricollega il comportamento accordion (una domanda aperta alla volta),
+    // sostituendo i listener delle vecchie card statiche.
+    const section = document.getElementById('faq-vm');
+    if (section) delete section.dataset.faqInitialized;
+    const newItems = list.querySelectorAll('.faq-vm-item');
+    newItems.forEach((item) => {
+      const button = item.querySelector('.faq-vm-trigger');
+      const answer = item.querySelector('.faq-vm-answer');
+      button.addEventListener('click', () => {
+        const isOpen = button.getAttribute('aria-expanded') === 'true';
+        newItems.forEach((other) => {
+          other.classList.remove('is-open');
+          other.querySelector('.faq-vm-trigger').setAttribute('aria-expanded', 'false');
+          other.querySelector('.faq-vm-answer').hidden = true;
+        });
+        if (!isOpen) {
+          item.classList.add('is-open');
+          button.setAttribute('aria-expanded', 'true');
+          answer.hidden = false;
+        }
+      });
+    });
+    console.log('✅ FAQ aggiornate dal database:', items.length);
+  }
+
+  async function loadDynamicFaq() {
+    try {
+      const rows = await fsGetAll('faq');
+      renderFaqFromDb(rows);
+    } catch (error) {
+      console.warn('⚠️ FAQ dinamiche non disponibili', error);
+    }
+    // Ascolto live: appena l'admin salva una FAQ, la Home si aggiorna da sola.
+    try {
+      if (window.firebaseOnSnapshot && window.firebaseDB && window.firebaseCollection) {
+        window.firebaseOnSnapshot(window.firebaseCollection(window.firebaseDB, 'faq'), (snap) => {
+          renderFaqFromDb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        }, (err) => console.warn('Ascolto FAQ non attivo:', err && err.message));
+      }
+    } catch (e) { console.warn('Ascolto FAQ non attivo:', e && e.message); }
+  }
+
   async function loadDynamicQuizForHome() {
     try {
       const rows = await fsGetAll('quiz_questions');
@@ -1782,6 +1857,7 @@
     loadDynamicReviews().then((hasDbReviews) => {
       if (hasDbReviews) initTestimonialsExpand();
     });
+    loadDynamicFaq();
     loadDynamicQuizForHome();
     loadDynamicTestPage();
     loadDynamicServices().then(() => { initServiceModal(); });
