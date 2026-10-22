@@ -787,18 +787,38 @@
         <div class="card" id="foto-card-hero">
           <h3><i class="fa-solid fa-image"></i> 1 · Foto Hero — Home «Trasforma i tuoi obiettivi…»</h3>
           <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Queste foto compaiono nel riquadro grande a destra del titolo principale della Home, dietro alla targhetta «Valeria Moretti · Mental Coach». La prima appare subito, poi cambiano automaticamente ogni 4 secondi.</p>
-          <div id="hero-slots"><!-- slot generati da admin.js --></div>
-          <div class="row" style="margin-top:10px;">
+          <div id="hero-slots"><!-- slot generati da admin.js -->
+            <div class="photo-slot" style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
+              <div class="photo-thumb" style="width:74px;flex-shrink:0;border-radius:12px;overflow:hidden;border:1px solid #ddd6c6;background:#efe9dd;aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#b3ab97;font-size:18px;"></i></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <input type="url" class="input photo-url-input" data-group="hero" data-idx="0" placeholder="Incolla qui il link (https://…) della foto 1" value="" />
+                <span style="font-size:10.5px;color:#98917f;">Foto 1 · ruota ogni 4 secondi nella Home.</span>
+              </div>
+              <button type="button" class="btn btn--soft btn--sm photo-remove-btn" data-group="hero" data-idx="0" title="Rimuovi questa foto" disabled><i class="fa-solid fa-xmark"></i></button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;display:flex;gap:10px;align-items:center;">
             <button type="button" class="btn btn--soft btn--sm" id="btn-hero-add"><i class="fa-solid fa-plus"></i> Aggiungi foto</button>
+            <button type="button" class="btn btn--primary btn--sm" id="btn-hero-save"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
           </div>
         </div>
 
         <div class="card" id="foto-card-about">
           <h3><i class="fa-solid fa-user"></i> 2 · Foto «Chi sono — Ciao, sono Valeria»</h3>
           <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Queste foto compaiono nel riquadro verticale accanto al testo «Ciao, sono Valeria» nella sezione Chi sono della Home. Si alternano ogni 4 secondi.</p>
-          <div id="about-slots"><!-- slot generati da admin.js --></div>
-          <div class="row" style="margin-top:10px;">
+          <div id="about-slots"><!-- slot generati da admin.js -->
+            <div class="photo-slot" style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
+              <div class="photo-thumb" style="width:74px;flex-shrink:0;border-radius:12px;overflow:hidden;border:1px solid #ddd6c6;background:#efe9dd;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#b3ab97;font-size:18px;"></i></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <input type="url" class="input photo-url-input" data-group="about" data-idx="0" placeholder="Incolla qui il link (https://…) della foto 1" value="" />
+                <span style="font-size:10.5px;color:#98917f;">Foto 1 · ruota ogni 4 secondi nella Home.</span>
+              </div>
+              <button type="button" class="btn btn--soft btn--sm photo-remove-btn" data-group="about" data-idx="0" title="Rimuovi questa foto" disabled><i class="fa-solid fa-xmark"></i></button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;display:flex;gap:10px;align-items:center;">
             <button type="button" class="btn btn--soft btn--sm" id="btn-about-add"><i class="fa-solid fa-plus"></i> Aggiungi foto</button>
+            <button type="button" class="btn btn--primary btn--sm" id="btn-about-save"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
           </div>
         </div>
 
@@ -965,6 +985,6 @@
 
   <!-- Firebase (config globale) + logica admin -->
   <script type="module" src="firebase-config.js"></script>
-  <script type="module" src="admin.js?v=20261022b"></script>
+  <script type="module" src="admin.js?v=20261022c"></script>
 </body>
 </html>

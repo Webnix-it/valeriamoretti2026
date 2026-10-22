@@ -1116,12 +1116,13 @@
     renderPhotoSlots();
   }
 
-  async function savePhotos() {
+  async function savePhotos(keys) {
     collectPhotoInputs();
+    const targets = Array.isArray(keys) && keys.length ? keys : ['hero', 'about', 'studio'];
     // Rimuove URL vuoti intermedi
-    ['hero', 'about', 'studio'].forEach(k => { currentPhotos[k] = (currentPhotos[k] || []).filter(Boolean); });
-    if (!currentPhotos.hero.length) currentPhotos.hero = [...PHOTOS_DEFAULTS.hero];
-    if (!currentPhotos.about.length) currentPhotos.about = [...PHOTOS_DEFAULTS.about];
+    targets.forEach(k => { currentPhotos[k] = (currentPhotos[k] || []).filter(Boolean); });
+    if (targets.includes('hero') && !currentPhotos.hero.length) currentPhotos.hero = [...PHOTOS_DEFAULTS.hero];
+    if (targets.includes('about') && !currentPhotos.about.length) currentPhotos.about = [...PHOTOS_DEFAULTS.about];
     setBusy(true);
     try {
       await FB.setDoc(FB.doc(FB.db, PHOTOS_COL, PHOTOS_DOC), {
@@ -1131,7 +1132,9 @@
         updatedAt: new Date().toISOString()
       });
       renderPhotoSlots();
-      toast('Foto salvate: la Home le mostra al prossimo caricamento.');
+      toast(targets.length === 1
+        ? `Foto "${PHOTO_GROUPS.find(g => g.key === targets[0]).label.split('—')[0].trim()}" salvate: la Home si aggiorna subito.`
+        : 'Foto salvate: la Home le mostra al prossimo caricamento.');
     } catch (err) {
       console.error(err);
       toast('Errore salvataggio foto: ' + err.message, true);
@@ -1213,7 +1216,9 @@
     });
     const bh = $('#btn-hero-add'); if (bh) bh.addEventListener('click', () => addPhotoSlot('hero'));
     const ba = $('#btn-about-add'); if (ba) ba.addEventListener('click', () => addPhotoSlot('about'));
-    const bs = $('#btn-photos-save'); if (bs) bs.addEventListener('click', savePhotos);
+    const bhs = $('#btn-hero-save'); if (bhs) bhs.addEventListener('click', () => savePhotos(['hero']));
+    const bas = $('#btn-about-save'); if (bas) bas.addEventListener('click', () => savePhotos(['about']));
+    const bs = $('#btn-photos-save'); if (bs) bs.addEventListener('click', () => savePhotos());
     const br = $('#btn-photos-reset'); if (br) br.addEventListener('click', resetPhotos);
     loadPhotos();
     // Live-sync: se l'admin ha due tab aperte, le foto si aggiornano da sole
