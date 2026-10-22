@@ -54,6 +54,17 @@
     toastTimer = setTimeout(() => t.classList.remove('show'), 3400);
   }
 
+  // Messaggio chiaro quando Firestore blocca il salvataggio per le Regole:
+  // l'errore grezzo "Missing or insufficient permissions" non dice all'utente
+  // cosa fare. Qui lo traduciamo in una istruzione pratica.
+  function permHint(err, what) {
+    const m = String((err && (err.message || err.code)) || '');
+    if (/permission|insufficient|denied/i.test(m)) {
+      return '⛔ Salvataggio ' + what + ' bloccato dalle REGOLE di Firebase: apri Console Firebase → Firestore Database → Regole e incolla il contenuto del file firestore-rules.txt del repository, poi premi "Pubblica". (Dettagli: ' + m + ')';
+    }
+    return 'Errore salvataggio ' + what + ': ' + m;
+  }
+
   function confirmAction(title, text) {
     return new Promise((resolve) => {
       const overlay = $('#confirm-overlay');
@@ -320,7 +331,7 @@
       resetReviewForm();
       await loadReviews();
     } catch (err) {
-      console.error(err); toast('Errore salvataggio: ' + err.message, true);
+      console.error(err); toast(permHint(err, 'dati'), true);
     } finally { setBusy(false); }
   }
 
@@ -335,7 +346,7 @@
       toast('Recensione eliminata dalla Home.');
       await loadReviews();
     } catch (err) {
-      console.error(err); toast('Errore eliminazione: ' + err.message, true);
+      console.error(err); toast(permHint(err, 'eliminazione'), true);
     } finally { setBusy(false); }
   }
 
@@ -518,7 +529,7 @@
       resetQuestionForm();
       quizQuestions = await fsGetAll(QUIZ_COL);
       renderQuestionsListAndPreview();
-    } catch (err) { console.error(err); toast('Errore salvataggio: ' + err.message, true); }
+    } catch (err) { console.error(err); toast(permHint(err, 'dati'), true); }
     finally { setBusy(false); }
   }
 
@@ -533,7 +544,7 @@
       toast('Domanda eliminata dal test.');
       quizQuestions = await fsGetAll(QUIZ_COL);
       renderQuestionsListAndPreview();
-    } catch (err) { console.error(err); toast('Errore eliminazione: ' + err.message, true); }
+    } catch (err) { console.error(err); toast(permHint(err, 'eliminazione'), true); }
     finally { setBusy(false); }
   }
 
@@ -555,7 +566,7 @@
       quizQuestions = await fsGetAll(QUIZ_COL);
       renderQuestionsListAndPreview();
       toast('Ordine aggiornato: il test pubblico segue il nuovo ordine.');
-    } catch (err) { console.error(err); toast('Errore riordino: ' + err.message, true); }
+    } catch (err) { console.error(err); toast(permHint(err, 'riordino'), true); }
     finally { setBusy(false); }
   }
 
@@ -581,7 +592,7 @@
         { general: { quizTitle: title } }, { merge: true });
       quizTitle = title;
       toast('Titolo del test salvato: aggiornato sul sito.');
-    } catch (err) { console.error(err); toast('Errore salvataggio: ' + err.message, true); }
+    } catch (err) { console.error(err); toast(permHint(err, 'dati'), true); }
     finally { setBusy(false); }
   }
 
@@ -780,7 +791,7 @@
       resetPackageForm();
       packages = await fsGetAll(PKG_COL);
       renderPackagesAndPreview();
-    } catch (err) { console.error(err); toast('Errore salvataggio: ' + err.message, true); }
+    } catch (err) { console.error(err); toast(permHint(err, 'dati'), true); }
     finally { setBusy(false); }
   }
 
@@ -795,7 +806,7 @@
       toast('Pacchetto eliminato.');
       packages = await fsGetAll(PKG_COL);
       renderPackagesAndPreview();
-    } catch (err) { console.error(err); toast('Errore eliminazione: ' + err.message, true); }
+    } catch (err) { console.error(err); toast(permHint(err, 'eliminazione'), true); }
     finally { setBusy(false); }
   }
 
@@ -854,7 +865,7 @@
       toast('Domanda aggiunta al modulo di richiesta.');
       $('#custom-question-form').reset();
       $('#cq-options-wrap').hidden = true;
-    } catch (err) { console.error(err); toast('Errore salvataggio: ' + err.message, true); }
+    } catch (err) { console.error(err); toast(permHint(err, 'dati'), true); }
     finally { setBusy(false); }
   }
 
@@ -871,7 +882,7 @@
       customQuestions = remaining;
       renderCustomQuestions();
       toast('Domanda eliminata dal modulo.');
-    } catch (err) { console.error(err); toast('Errore eliminazione: ' + err.message, true); }
+    } catch (err) { console.error(err); toast(permHint(err, 'eliminazione'), true); }
     finally { setBusy(false); }
   }
 
@@ -934,7 +945,7 @@
         pkg.questionKeys = Array.from(keys);
         renderPackagesAndPreview();
         toast(cb.checked ? 'Domanda collegata al pacchetto.' : 'Domanda scollegata dal pacchetto.');
-      } catch (err) { console.error(err); toast('Errore collegamento: ' + err.message, true); }
+      } catch (err) { console.error(err); toast(permHint(err, 'collegamento'), true); }
       finally { setBusy(false); }
     });
     loadServices();
@@ -1137,7 +1148,7 @@
         : 'Foto salvate: la Home le mostra al prossimo caricamento.');
     } catch (err) {
       console.error(err);
-      toast('Errore salvataggio foto: ' + err.message, true);
+      toast(permHint(err, 'foto'), true);
     } finally { setBusy(false); }
   }
 
@@ -1329,8 +1340,8 @@
     } catch (err) {
       console.error(err);
       const st = $('#social-status');
-      if (st) { st.textContent = '✖ Errore salvataggio: ' + err.message; st.style.color = '#c0392b'; }
-      toast('Errore salvataggio social: ' + err.message, true);
+      if (st) { st.textContent = '✖ ' + permHint(err, 'social'); st.style.color = '#c0392b'; }
+      toast(permHint(err, 'social'), true);
     } finally { setBusy(false); }
   }
 
@@ -1776,7 +1787,7 @@
       toast('Colori salvati: la Home li applica al prossimo caricamento.');
     } catch (err) {
       console.error(err);
-      toast('Errore salvataggio colori: ' + err.message, true);
+      toast(permHint(err, 'colori'), true);
     } finally { setBusy(false); }
   }
 
