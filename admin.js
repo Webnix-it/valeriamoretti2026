@@ -955,6 +955,17 @@
   function switchPanel(name) {
     $$('.side-btn').forEach(b => b.classList.toggle('active', b.dataset.panel === name));
     $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+    // La sidebar è scrollabile: se la voce attiva è fuori vista (es. FAQ in fondo),
+    // portala in vista così l'utente capisce sempre dove si trova.
+    const active = document.querySelector('.side-btn.active');
+    const sb = document.querySelector('.sidebar');
+    if (active && sb && sb.scrollHeight > sb.clientHeight) {
+      sb.classList.add('scrolled-to-active');
+      const ar = active.getBoundingClientRect(), sr = sb.getBoundingClientRect();
+      if (ar.top < sr.top + 8 || ar.bottom > sr.bottom - 8) {
+        sb.scrollTo({ top: sb.scrollTop + (ar.top - sr.top) - sb.clientHeight / 2 + ar.height / 2, behavior: 'smooth' });
+      }
+    }
   }
 
   /* ===================== ANTEPRIMA LIVE (destra) ==================
@@ -1010,8 +1021,192 @@
           </div>`).join('')
         : '<p class="pv-empty">Nessuna domanda nel database.</p>';
     }
+    // --- FAQ attive, in ordine (sezione «Le risposte che cercavi») ---
+    const faqBox = $('#pv-faq');
+    if (faqBox) {
+      const fs = sortedFaqs().filter(f => f.active !== false);
+      faqBox.innerHTML = fs.length
+        ? fs.map((f, i) => `
+          <div class="pv-q">
+            <span class="pv-num">${String(i + 1).padStart(2, '0')}</span>
+            <span>${esc(f.question)}</span>
+          </div>`).join('')
+        : '<p class="pv-empty">Nessuna domanda FAQ attiva nel database.</p>';
+    }
     // --- Foto in Home: hero / chi sono / studio (stile fedele al sito) ---
     renderPhotosPreview();
+  }
+
+  /* =============== SEZIONE: FAQ (Home «Le risposte che cercavi») =========
+     Le domande frequenti sono salvate nella collection Firestore 'faq'.
+     La Home le legge e sostituisce l'accordion statico; qui si aggiungono,
+     modificano, eliminano, riordinano e attivano/disattivano.            */
+  const FAQ_COL = 'faq';
+  let allFaqs = [];
+  let faqEditId = null;
+
+  function sortedFaqs() {
+    return [...allFaqs].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+  }
+
+  async function loadFaq() {
+    try {
+      allFaqs = await fsGetAll(FAQ_COL);
+    } catch (e) {
+      console.warn('faq:', e);
+      allFaqs = []; // collezione non ancora creata: si parte vuoti, nessun errore bloccante
+    }
+    renderFaqList();
+    renderLivePreview();
+  }
+
+  function faqRowHtml(f, i, total) {
+    const off = f.active === false;
+    return `
+      <div class="pkg-row" data-faq-id="${esc(f.id)}" style="border-bottom:1px solid #eee7d9;padding:10px 0;${off ? 'opacity:.55;' : ''}">
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <span style="font-weight:700;color:#2f4f3e;min-width:30px;">${String(i + 1).padStart(2, '0')}</span>
+          <div style="flex:1;min-width:0;">
+            <strong style="display:block;font-size:13.5px;color:var(--antracite);">${esc(f.question)}</strong>
+            <span style="display:block;font-size:12px;color:#98917f;margin-top:2px;white-space:pre-line;max-height:64px;overflow:hidden;">${esc(f.answer || '')}</span>
+            ${off ? '<span style="font-size:11px;color:#b45309;">disattivata (non compare nella Home)</span>' : ''}
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+          <button type="button" class="btn btn--soft btn--sm" data-act="up" ${i === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button>
+          <button type="button" class="btn btn--soft btn--sm" data-act="down" ${i === total - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button>
+          <button type="button" class="btn btn--soft btn--sm" data-act="toggle"><i class="fa-solid ${off ? 'fa-toggle-off' : 'fa-toggle-on'}"></i> ${off ? 'Attiva' : 'Disattiva'}</button>
+          <button type="button" class="btn btn--soft btn--sm" data-act="edit"><i class="fa-solid fa-pen"></i> Modifica</button>
+          <button type="button" class="btn btn--danger btn--sm" data-act="del"><i class="fa-solid fa-trash-can"></i> Elimina</button>
+        </div>
+      </div>`;
+  }
+
+  function renderFaqList() {
+    const box = $('#faq-list');
+    if (!box) return;
+    const list = sortedFaqs();
+    const st = $('#faq-status');
+    if (st) st.textContent = list.length
+      ? `${list.length} domande (${list.filter(f => f.active !== false).length} attive).`
+      : 'Nessuna domanda nel database: aggiungine una qui sopra, comparirà nella Home.';
+    box.innerHTML = list.map((f, i) => faqRowHtml(f, i, list.length)).join('') ||
+      '<p class="pv-empty" style="font-size:12.5px;color:#98917f;">Elenco vuoto.</p>';
+  }
+
+  function resetFaqForm() {
+    faqEditId = null;
+    const q = $('#faq-q'), a = $('#faq-a');
+    if (q) q.value = '';
+    if (a) a.value = '';
+    const badge = $('#faq-editing-badge'), cancel = $('#btn-faq-cancel-edit'), add = $('#btn-faq-add');
+    if (badge) badge.style.display = 'none';
+    if (cancel) cancel.hidden = true;
+    if (add) add.innerHTML = '<i class="fa-solid fa-plus"></i> Salva domanda';
+  }
+
+  async function saveFaq() {
+    const question = ($('#faq-q').value || '').trim();
+    const answer = ($('#faq-a').value || '').trim();
+    if (!question) { toast('Scrivi almeno la domanda.', true); return; }
+    if (!answer) { toast('Scrivi anche la risposta: è il testo che il visitatore leggerà aprendo la domanda.', true); return; }
+    setBusy(true);
+    try {
+      if (faqEditId) {
+        await fsSet(FAQ_COL, faqEditId, { question, answer });
+        toast('Domanda aggiornata: la Home si aggiorna subito.');
+      } else {
+        const maxOrder = sortedFaqs().reduce((m, f) => Math.max(m, Number(f.order) || 0), 0);
+        await fsSet(FAQ_COL, 'faq-' + Date.now().toString(36), { question, answer, order: maxOrder + 1, active: true });
+        toast('Domanda pubblicata nella sezione FAQ della Home.');
+      }
+      resetFaqForm();
+      renderDraftsCleared();
+      await loadFaq();
+    } catch (err) {
+      console.error(err);
+      toast(permHint(err, 'salvataggio FAQ'), true);
+    } finally { setBusy(false); }
+  }
+
+  async function moveFaq(id, dir) {
+    const list = sortedFaqs();
+    const i = list.findIndex(f => f.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    const a = list[i], b = list[j];
+    setBusy(true);
+    try {
+      await Promise.all([
+        fsSet(FAQ_COL, a.id, { order: b.order == null ? j : Number(b.order) }),
+        fsSet(FAQ_COL, b.id, { order: a.order == null ? i : Number(a.order) })
+      ]);
+      await loadFaq();
+    } catch (err) { console.error(err); toast(permHint(err, 'riordino'), true); }
+    finally { setBusy(false); }
+  }
+
+  async function toggleFaq(id) {
+    const f = allFaqs.find(x => x.id === id);
+    if (!f) return;
+    setBusy(true);
+    try {
+      await fsSet(FAQ_COL, id, { active: f.active === false });
+      await loadFaq();
+      toast(f.active === false ? 'Domanda riattivata nella Home.' : 'Domanda disattivata: non comparirà più nella Home.');
+    } catch (err) { console.error(err); toast(permHint(err, 'attivazione'), true); }
+    finally { setBusy(false); }
+  }
+
+  async function deleteFaq(id) {
+    const f = allFaqs.find(x => x.id === id);
+    if (!f) return;
+    const okDel = await confirmAction('Eliminare la domanda?',
+      `«${f.question}» verrà rimossa dalla sezione FAQ della Home. L'azione è definitiva.`);
+    if (!okDel) return;
+    setBusy(true);
+    try {
+      await fsDelete(FAQ_COL, id);
+      if (faqEditId === id) resetFaqForm();
+      await loadFaq();
+      toast('Domanda eliminata.');
+    } catch (err) { console.error(err); toast(permHint(err, 'eliminazione'), true); }
+    finally { setBusy(false); }
+  }
+
+  function initFaqSection() {
+    const addBtn = $('#btn-faq-add');
+    if (addBtn) addBtn.addEventListener('click', saveFaq);
+    const cancelBtn = $('#btn-faq-cancel-edit');
+    if (cancelBtn) cancelBtn.addEventListener('click', resetFaqForm);
+    const list = $('#faq-list');
+    if (list) {
+      list.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-act]');
+        if (!btn) return;
+        const row = btn.closest('[data-faq-id]');
+        if (!row) return;
+        const id = row.dataset.faqId;
+        const act = btn.dataset.act;
+        if (act === 'up') moveFaq(id, -1);
+        else if (act === 'down') moveFaq(id, 1);
+        else if (act === 'toggle') toggleFaq(id);
+        else if (act === 'del') deleteFaq(id);
+        else if (act === 'edit') {
+          const f = allFaqs.find(x => x.id === id);
+          if (!f) return;
+          faqEditId = id;
+          $('#faq-q').value = f.question || '';
+          $('#faq-a').value = f.answer || '';
+          $('#faq-editing-badge').style.display = '';
+          $('#btn-faq-cancel-edit').hidden = false;
+          $('#btn-faq-add').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salva modifiche';
+          $('#faq-card').scrollIntoView({ behavior: 'smooth' });
+          $('#faq-q').focus();
+        }
+      });
+    }
+    loadFaq();
   }
 
   /* ============ SEZIONE: AGGIORNAMENTI FOTO ==============
@@ -1431,6 +1626,7 @@
   const DRAFT_Q_IDS     = ['#q-text'];
   const DRAFT_PKG_IDS   = ['#pkg-name', '#pkg-type', '#pkg-price', '#pkg-desc', '#pkg-features'];
   const DRAFT_CQ_IDS    = ['#cq-text', '#cq-type', '#cq-options', '#cq-required'];
+  const DRAFT_FAQ_IDS   = ['#faq-q', '#faq-a'];
 
   function draftReviewHtml() {
     const name = ($('#rev-name').value || '').trim();
@@ -1499,18 +1695,37 @@
       </div>`;
   }
 
+  function draftFaqHtml() {
+    const q = ($('#faq-q') && $('#faq-q').value || '').trim();
+    const a = ($('#faq-a') && $('#faq-a').value || '').trim();
+    if (!q && !a) return '';
+    const num = faqEditId
+      ? String(sortedFaqs().findIndex(f => f.id === faqEditId) + 1).padStart(2, '0')
+      : String(sortedFaqs().filter(f => f.active !== false).length + 1).padStart(2, '0');
+    return `
+      <div class="pv-draft" style="padding:10px 12px;border-radius:10px;background:#fff;border:1.5px dashed #c6d6ca;">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b45309;">bozza FAQ — sezione «Le risposte che cercavi»</span>
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-top:6px;">
+          <span style="flex-shrink:0;display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#e3ebe5;color:#2f4f3e;font-weight:700;font-size:11px;">${num}</span>
+          <strong style="font-size:12.5px;color:#315b55;">${esc(q) || '<em style="color:#98917f;">La domanda comparirà qui…</em>'}</strong>
+        </div>
+        ${a ? `<p style="font-size:11.5px;color:#5b6a66;margin:6px 0 0;line-height:1.55;white-space:pre-line;">${esc(a)}</p>` : ''}
+      </div>`;
+  }
+
   function renderDrafts() {
     const d1 = $('#pv-draft-review');   if (d1) d1.innerHTML = draftReviewHtml();
     const d2 = $('#pv-draft-question'); if (d2) d2.innerHTML = draftQuestionHtml();
     const d3 = $('#pv-draft-package');  if (d3) d3.innerHTML = draftPackageHtml();
     const d4 = $('#pv-draft-cq');       if (d4) d4.innerHTML = draftCustomQuestionHtml();
+    const d5 = $('#pv-draft-faq');      if (d5) d5.innerHTML = draftFaqHtml();
     // La miniatura della Home segue la bozza del pacchetto mentre si scrive
     renderMiniHome();
   }
 
   // Svuota gli slot "bozza" (usato dopo un salvataggio: il dato reale entra nelle liste).
   function renderDraftsCleared() {
-    ['#pv-draft-review', '#pv-draft-question', '#pv-draft-package', '#pv-draft-cq']
+    ['#pv-draft-review', '#pv-draft-question', '#pv-draft-package', '#pv-draft-cq', '#pv-draft-faq']
       .forEach(sel => { const el = $(sel); if (el) el.innerHTML = ''; });
   }
 
@@ -1521,7 +1736,7 @@
   }
 
   function initDraftLivePreview() {
-    [...DRAFT_REV_IDS, ...DRAFT_Q_IDS, ...DRAFT_PKG_IDS, ...DRAFT_CQ_IDS].forEach(sel => {
+    [...DRAFT_REV_IDS, ...DRAFT_Q_IDS, ...DRAFT_PKG_IDS, ...DRAFT_CQ_IDS, ...DRAFT_FAQ_IDS].forEach(sel => {
       const el = $(sel);
       if (!el) return;
       el.addEventListener('input', scheduleDraftRender);
@@ -1837,6 +2052,7 @@
     { sel: '[data-panel="colori"]', title: '4 · Colori & stile', text: 'Cambia sfondi, testi e bottoni del sito pubblico, sezione per sezione. L\'anteprima a destra replica esattamente lo stile della Home mentre modifichi.' },
     { sel: '[data-panel="foto"]', title: '5 · Aggiornamenti foto', text: 'Incolla il link (URL) di una foto per cambiare le immagini della Home: Hero (dietro alla targhetta «Valeria Moretti · Mental Coach»), Chi sono («Ciao, sono Valeria») e Il mio Studio. L\'anteprima live a destra ti mostra quale sezione della Home stai aggiornando.' },
     { sel: '[data-panel="social"]', title: '6 · Aggiornamento social', text: 'Cambia i link di Instagram, TikTok, YouTube, Telegram, WhatsApp, telefono ed email: il footer, il popup «Scegli la modalità» e i contatti della Home si aggiornano automaticamente.' },
+    { sel: '[data-panel="faq"]', title: '7 · FAQ', text: 'Gestisci le domande frequenti della sezione «Le risposte che cercavi»: aggiungi una domanda con la sua risposta, modificale, eliminale o riordinale con ↑ ↓. Solo le domande attive compaiono nella Home.' },
     { sel: '#preview-pane', title: 'Anteprima live', text: 'Questa colonna mostra in tempo reale cosa vedranno i visitatori: recensioni, pacchetti, domande e mini-Home. Il pulsante Aggiorna rilegge il database.' },
     { sel: '.side-user', title: 'Sei pronta!', text: 'Da qui puoi uscire con "Esci". Riprendi questo tutorial quando vuoi dal pulsante Tutorial, e leggi tutte le spiegazioni dettagliate nel pulsante Istruzioni. Buon lavoro! ✨' },
   ];
@@ -1955,12 +2171,13 @@
     initThemeSection();
     initPhotosSection(); // sezione "Aggiornamenti foto" + anteprima live hero/chisono/studio
     initSocialSection(); // sezione "Aggiornamento social" + anteprima live footer/popup
+    initFaqSection(); // sezione "FAQ" (Home «Le risposte che cercavi») + anteprima live
     initHelpSection(); // bottoni Istruzioni + Tutorial con tour interattivo spotlight
     initDraftLivePreview(); // anteprima live si aggiorna mentre scrivi nei form
     // Anteprima live: aggiorna anche manualmente
     const rb = $('#btn-preview-refresh');
     if (rb) rb.addEventListener('click', () => {
-      loadReviews(); loadQuiz(); loadServices();
+      loadReviews(); loadQuiz(); loadServices(); loadFaq();
       setTimeout(renderLivePreview, 700);
       toast('Anteprima aggiornata.');
     });

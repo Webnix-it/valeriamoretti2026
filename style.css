@@ -1825,8 +1825,8 @@ body.loading { overflow: hidden; }
    ========================================================== */
 
 #faq-vm {
-  --faq-avorio: #F8F5EF;
-  --faq-verde: #315B55;
+  --faq-avorio: var(--theme-faq-bg, #F8F5EF); /* sfondo sezione = colore scelto nella dashboard */
+  --faq-verde: var(--theme-faq-txt, #315B55); /* testo domande = colore scelto nella dashboard */
   --faq-verde-scuro: #24443F;
   --faq-salvia: #C6D6CA;
   --faq-salvia-chiaro: #E3EBE5;
