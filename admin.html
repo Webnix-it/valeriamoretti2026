@@ -90,7 +90,8 @@
     }
     .side-btn i { width: 20px; text-align: center; }
     .side-btn small { display: block; font-size: 11px; color: #c3d2c4; font-weight: 400; opacity: 1; }
-    .side-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+    .side-btn:hover { background: rgba(255,255,255,.08); color: #fff; transform: scale(1.2); }
+    .side-btn { transition: transform .25s ease, background .2s ease, color .2s ease; transform-origin: left center; position: relative; z-index: 2; }
     .side-btn.active { background: var(--salvia); color: var(--verde-bosco); font-weight: 600; }
     .side-btn.active small { opacity: .75; }
     .side-user { padding: 14px 10px 4px; border-top: 1px solid rgba(255,255,255,.14); margin-top: 14px; font-size: 12px; }
@@ -1026,6 +1027,6 @@
 
   <!-- Firebase (config globale) + logica admin -->
   <script type="module" src="firebase-config.js"></script>
-  <script type="module" src="admin.js?v=20261023c"></script>
+  <script type="module" src="admin.js?v=20261023d"></script>
 </body>
 </html>
