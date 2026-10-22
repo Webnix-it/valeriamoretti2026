@@ -55,6 +55,16 @@ service cloud.firestore {
         && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
     }
 
+    // FAQ gestite dalla dashboard (sezione FAQ)
+    match /faq/{id} {
+      allow write: if request.auth != null
+        && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
+    }
+    match /faq_questions/{id} {
+      allow write: if request.auth != null
+        && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
+    }
+
     // Config vecchio progetto (solo lettura, non più usato)
     match /config/{doc} {
       allow write: if false;
