@@ -1892,3 +1892,58 @@
     });
   });
 })();
+/* ============================================================
+   SLIDESHOW FOTO (hero + chi sono)
+   Ogni contenitore con [data-slideshow] mostra le immagini in
+   pila: la prima compare subito, poi una nuova ogni 4 secondi
+   con dissolvenza incrociata.
+   ============================================================ */
+(function initPhotoSlideshows() {
+  function startSlideshow(container) {
+    var urls;
+    try {
+      urls = JSON.parse(container.getAttribute('data-slideshow') || '[]');
+    } catch (e) {
+      return;
+    }
+    if (!Array.isArray(urls) || urls.length === 0) return;
+
+    var slideBox = container.querySelector('.slideshow');
+    if (!slideBox) {
+      slideBox = document.createElement('div');
+      slideBox.className = 'slideshow';
+      slideBox.setAttribute('aria-hidden', 'true');
+      container.appendChild(slideBox);
+    }
+
+    var imgs = urls.map(function (url, i) {
+      var img = document.createElement('img');
+      img.src = url;
+      img.alt = 'Foto di Valeria Moretti — immagine ' + (i + 1);
+      img.loading = i === 0 ? 'eager' : 'lazy';
+      slideBox.appendChild(img);
+      return img;
+    });
+
+    var current = 0;
+    imgs[0].classList.add('active');
+
+    if (urls.length > 1) {
+      setInterval(function () {
+        imgs[current].classList.remove('active');
+        current = (current + 1) % imgs.length;
+        imgs[current].classList.add('active');
+      }, 4000);
+    }
+  }
+
+  function boot() {
+    document.querySelectorAll('[data-slideshow]').forEach(startSlideshow);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();

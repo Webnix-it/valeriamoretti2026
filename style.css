@@ -266,7 +266,13 @@ button { font-family: inherit; cursor: pointer; }
   background: linear-gradient(160deg, var(--salvia), var(--verde-bosco));
   display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: var(--ombra);
 }
-.hero-visual .initials { font-family: 'Playfair Display', serif; font-size: clamp(4rem, 10vw, 7rem); color: rgba(248, 245, 239, 0.85); }
+/* Slideshow foto (hero + chi sono): immagini in pila con dissolvenza ogni 4s */
+.slideshow { position: absolute; inset: 0; }
+.slideshow img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity 0.9s ease;
+}
+.slideshow img.active { opacity: 1; }
 .hero-badge {
   position: absolute; bottom: 22px; left: 22px; right: 22px;
   background: rgba(248, 245, 239, 0.94); border-radius: 14px; padding: 16px 20px; font-size: 0.85rem; color: var(--testo);
@@ -1308,11 +1314,10 @@ button { font-family: inherit; cursor: pointer; }
 
 .about-grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 50px; align-items: center; }
 .about-photo {
-  aspect-ratio: 3 / 4; border-radius: var(--raggio);
+  position: relative; aspect-ratio: 3 / 4; border-radius: var(--raggio);
   background: linear-gradient(160deg, var(--salvia), var(--verde-bosco));
-  display: grid; place-items: center; box-shadow: var(--ombra);
+  display: grid; place-items: center; box-shadow: var(--ombra); overflow: hidden;
 }
-.about-photo .initials { font-family: 'Playfair Display', serif; font-size: 4rem; color: rgba(248,245,239,0.85); }
 .about-text h2 { font-size: clamp(1.7rem, 3vw, 2.3rem); margin-bottom: 18px; }
 .about-text p { color: var(--testo-soft); margin-bottom: 14px; }
 .about-values { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
