@@ -1086,12 +1086,17 @@
   function addPhotoSlot(groupKey) {
     const g = PHOTO_GROUPS.find(x => x.key === groupKey);
     if (!g) return;
+    // Raccoglie prima gli input correnti, così nulla va perso
+    collectPhotoInputs();
     const list = currentPhotos[groupKey] || [];
-    if (list.length >= g.max) { toast(`Massimo ${g.max} foto per questa sezione.`, true); return; }
-    list.push('');
-    currentPhotos[groupKey] = list;
+    // Rimuove slot vuoti in eccesso prima di aggiungerne uno nuovo:
+    // ogni click genera SEMPRE un nuovo campo link (nessun blocco "massimo N foto")
+    const filled = list.filter(Boolean);
+    const hardCap = 12;
+    if (filled.length >= hardCap) { toast(`Massimo ${hardCap} foto per questa sezione.`, true); return; }
+    currentPhotos[groupKey] = [...filled, ''];
     renderPhotoSlots();
-    const inputs = $$(`.photo-url-input[data-group="${groupKey}"]`);
+    const inputs = $$('.photo-url-input[data-group="' + groupKey + '"]');
     if (inputs.length) inputs[inputs.length - 1].focus();
   }
 
