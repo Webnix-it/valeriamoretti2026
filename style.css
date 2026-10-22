@@ -493,23 +493,23 @@ button { font-family: inherit; cursor: pointer; }
   from { transform: translateX(0); }
   to   { transform: translateX(calc(-50% - 0.75rem)); }
 }
-/* Card leggermente più grandi del formato biglietto da visita (~300x170) */
+/* Card un filo più grandi del formato biglietto da visita (~330x185) */
 .testimonial-item {
   flex-shrink: 0;
-  width: 300px;
+  width: 330px;
   display: flex;
 }
 @media (min-width: 768px) {
-  .testimonial-item { width: 320px; }
+  .testimonial-item { width: 350px; }
 }
 .testimonial-card-inner {
   background: var(--avorio);
-  padding: 1.1rem 1.3rem;
+  padding: 1.2rem 1.4rem;
   border-radius: 1rem;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
   border: 1px solid rgba(248, 245, 239, 0.3);
-  min-height: 170px;
-  max-height: 195px;
+  min-height: 185px;
+  max-height: 210px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -524,10 +524,10 @@ button { font-family: inherit; cursor: pointer; }
 .testimonial-stars {
   display: flex;
   justify-content: center;
-  gap: 0.2rem;
+  gap: 0.25rem;
   color: #fbbf24;
-  margin-bottom: 0.45rem;
-  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 .testimonial-text-wrapper {
   position: relative;
@@ -538,8 +538,8 @@ button { font-family: inherit; cursor: pointer; }
 .testimonial-text {
   color: var(--testo);
   font-style: italic;
-  font-size: 0.8rem;
-  line-height: 1.45;
+  font-size: 0.9rem;
+  line-height: 1.5;
   text-align: center;
   margin: 0;
   display: -webkit-box;
@@ -593,11 +593,11 @@ button { font-family: inherit; cursor: pointer; }
 .testimonial-name {
   font-weight: 700;
   color: var(--verde-bosco);
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   margin: 0;
 }
 .testimonial-time {
-  font-size: 0.68rem;
+  font-size: 0.76rem;
   color: var(--testo-soft);
   text-transform: uppercase;
   letter-spacing: 0.05em;

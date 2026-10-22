@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
   
   <!-- Fogli di stile -->
-  <link rel="stylesheet" href="style.css?v=20261022f" />
+  <link rel="stylesheet" href="style.css?v=20261022g" />
 
   <style>
     /* ============================================================
@@ -32,27 +32,29 @@
     .testimonials-wrapper { width: 100% !important; }
     /* Card in flex (non height:100%) così la card che si espande con
        "Leggi di più" può crescere senza tagliare il testo. */
-    .testimonial-item { display: flex !important; align-items: stretch !important; width: 300px !important; }
-    @media (min-width: 768px) { .testimonial-item { width: 320px !important; } }
+    .testimonial-item { display: flex !important; align-items: stretch !important; width: 330px !important; }
+    @media (min-width: 768px) { .testimonial-item { width: 350px !important; } }
     .testimonial-card-inner {
       background: var(--avorio) !important;
       color: var(--testo) !important;
-      padding: 1.1rem 1.3rem !important;
+      padding: 1.2rem 1.4rem !important;
       border-radius: 1rem !important;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18) !important;
       border: 1px solid rgba(248, 245, 239, 0.3) !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
-      min-height: 170px !important;
+      min-height: 185px !important;
       max-height: none !important;
       height: auto !important;
     }
-    .testimonial-stars { color: #fbbf24 !important; }
+    .testimonial-stars { color: #fbbf24 !important; font-size: 0.9rem !important; }
     .testimonial-text {
       color: var(--testo) !important;
       font-style: italic !important;
       text-align: center !important;
+      font-size: 0.9rem !important;
+      line-height: 1.5 !important;
     }
     /* Stato espanso ("Leggi di più"): mostra il testo completo */
     .testimonial-text.expanded {
@@ -63,7 +65,7 @@
     .testimonial-name { color: var(--verde-bosco) !important; font-weight: 700 !important; }
     .testimonial-time {
       color: var(--testo-soft) !important;
-      font-size: 0.68rem !important;
+      font-size: 0.76rem !important;
       text-transform: uppercase !important;
       letter-spacing: 0.05em !important;
     }
@@ -1328,7 +1330,7 @@
       });
     }, 6000);
   </script>
-  <script src="script.js?v=20261022f"></script>
+  <script src="script.js?v=20261022g"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script type="text/javascript">
     (function() { emailjs.init("zTOU9dbAR0XbmjhoR"); })();
