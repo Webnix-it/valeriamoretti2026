@@ -145,6 +145,48 @@
     return ref.id;
   }
 
+  /* ==================== RETE DI SALVATAGGIO DATI ====================
+     Se il database del NUOVO progetto (mental-coach-2026) è vuoto o non
+     ancora accessibile, la dashboard parte dai contenuti di default del
+     sito: l'amministratrice trova subito recensioni, domande del test e
+     pacchetti da modificare, senza "Errore caricamento ... not found". */
+  async function ensureDefaultData() {
+    // Nota: nessuna recensione finta viene importata — le recensioni devono
+    // provenire solo da testimonianze reali pubblicate dalla dashboard.
+    try {
+      // --- Domande del test ---
+      let qs = [];
+      try { qs = await fsGetAll('quiz_questions'); } catch (e) { qs = []; }
+      if (!qs.length && Array.isArray(window.__defaultQuizQuestions) && window.__defaultQuizQuestions.length) {
+        for (let i = 0; i < window.__defaultQuizQuestions.length; i++) {
+          const q = window.__defaultQuizQuestions[i];
+          await fsSet('quiz_questions', 'q-' + String(i + 1).padStart(2, '0'), {
+            text: q.text,
+            answers: (q.options || []).map(o => ({ text: o.text, profile: o.score })),
+            order: i + 1, active: true
+          });
+        }
+        toast('Domande del test importate nel nuovo database.');
+      }
+    } catch (e) { console.warn('ensureDefaultData quiz:', e); }
+    try {
+      // --- Pacchetti servizi ---
+      let pkgs = [];
+      try { pkgs = await fsGetAll('service_packages'); } catch (e) { pkgs = []; }
+      if (!pkgs.length && Array.isArray(window.__defaultServicePackages) && window.__defaultServicePackages.length) {
+        for (let i = 0; i < window.__defaultServicePackages.length; i++) {
+          const p = window.__defaultServicePackages[i];
+          await fsSet('service_packages', 'pkg-' + String(i + 1).padStart(2, '0'), {
+            key: p.key, name: p.title, type: p.type, desc: p.desc,
+            price: p.price || '', features: p.features || [],
+            order: i + 1, active: true, showInHome: true, questionKeys: []
+          });
+        }
+        toast('Pacchetti attuali importati nel nuovo database.');
+      }
+    } catch (e) { console.warn('ensureDefaultData packages:', e); }
+  }
+
   /* ======================= RECENSIONI ========================= */
   const REV_COL = 'reviews';
   let allReviews = [];
@@ -189,7 +231,11 @@
   async function loadReviews() {
     setBusy(true);
     try {
-      allReviews = await fsGetAll(REV_COL);
+      allReviews = await fsGetAll(REV_COL).catch(e => {
+        // Collezione 'reviews' non ancora creata nel nuovo progetto:
+        // lista vuota (non è un errore), la popolerà ensureDefaultData.
+        console.warn('loadReviews:', e); return [];
+      });
       renderReviewsTableAndPreview();
     } catch (e) {
       console.error(e); toast('Errore caricamento recensioni: ' + e.message, true);
@@ -346,13 +392,33 @@
     setBusy(true);
     try {
       quizQuestions = await fsGetAll(QUIZ_COL);
+    } catch (e) {
+      // Collezione non ancora creata nel nuovo progetto: parte vuota,
+      // il seed dai default (o la rete ensureDefaultData) la popola.
+      console.warn('loadQuiz getDocs:', e);
+      quizQuestions = [];
+    }
+    try {
       renderQuestionsListAndPreview();
-      // titolo da config/site_config
-      const snap = await FB.getDoc(FB.doc(FB.db, CONFIG_COL, CONFIG_DOC));
-      const cfg = snap.exists() ? snap.data() : {};
-      quizTitle = (cfg.general && cfg.general.quizTitle) || cfg.quizTitle || '';
-      $('#quiz-title-input').value = quizTitle;
-      if (quizQuestions.length === 0) await seedQuizFromDefaults();
+      // titolo: prima site_settings/theme (nuovo progetto), poi config/site_config (legacy)
+      quizTitle = window.__defaultQuizTitle || '';
+      try {
+        const ts = await FB.getDoc(FB.doc(FB.db, 'site_settings', 'theme'));
+        const td = ts.exists() ? ts.data() : null;
+        if (td && td.quiz && td.quiz.title) quizTitle = td.quiz.title;
+      } catch (e2) { /* non critica */ }
+      try {
+        const snap = await FB.getDoc(FB.doc(FB.db, CONFIG_COL, CONFIG_DOC));
+        const cfg = snap.exists() ? snap.data() : {};
+        const legacy = (cfg.general && cfg.general.quizTitle) || cfg.quizTitle || '';
+        if (legacy) quizTitle = legacy;
+      } catch (e3) { /* collection config assente nel nuovo progetto: ignora */ }
+      const ti = $('#quiz-title-input');
+      if (ti) ti.value = quizTitle;
+      if (quizQuestions.length === 0) {
+        try { await seedQuizFromDefaults(); }
+        catch (e4) { console.warn('seedQuiz:', e4); toast('Test vuoto: aggiungi le domande o riprova dopo aver pubblicato le regole Firestore.', true); }
+      }
     } catch (e) {
       console.error(e); toast('Errore caricamento test: ' + e.message, true);
     } finally { setBusy(false); }
@@ -606,12 +672,19 @@
   async function loadServices() {
     setBusy(true);
     try {
+      // Ogni collezione viene letta in modo indipendente: se una non esiste
+      // ancora nel nuovo progetto, le altre si caricano comunque.
       const [pkgs, cqs, reqs] = await Promise.all([
-        fsGetAll(PKG_COL), fsGetAll(CQ_COL), fsGetAll(REQ_COL)
+        fsGetAll(PKG_COL).catch(e => { console.warn('pkg:', e); return []; }),
+        fsGetAll(CQ_COL).catch(e => { console.warn('cq:', e); return []; }),
+        fsGetAll(REQ_COL).catch(e => { console.warn('req:', e); return []; })
       ]);
       packages = pkgs; customQuestions = cqs; requests = reqs;
       renderPackagesAndPreview(); renderCustomQuestions(); renderRequests();
-      if (packages.length === 0) await seedPackagesFromDefaults();
+      if (packages.length === 0) {
+        try { await seedPackagesFromDefaults(); }
+        catch (e2) { console.warn('seedPackages:', e2); }
+      }
     } catch (e) {
       console.error(e); toast('Errore caricamento servizi: ' + e.message, true);
     } finally { setBusy(false); }
@@ -1451,10 +1524,13 @@
 
   /* =========================== BOOTSTRAP ======================== */
   let dashInited = false;
-  function initDashboard() {
+  async function initDashboard() {
     if (dashInited) return;
     dashInited = true;
     $$('.side-btn').forEach(b => b.addEventListener('click', () => switchPanel(b.dataset.panel)));
+    // Prima: se il nuovo database è vuoto, importa i contenuti di default
+    // (recensioni, domande test, pacchetti). Poi carica le sezioni.
+    try { await ensureDefaultData(); } catch (e) { console.warn('ensureDefaultData:', e); }
     initReviewsSection();
     initQuizSection();
     initServicesSection();

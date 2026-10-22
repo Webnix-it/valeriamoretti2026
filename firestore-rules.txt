@@ -43,6 +43,12 @@ service cloud.firestore {
         && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
     }
 
+    // Foto aggiornate dalla dashboard (Hero, Chi sono, Studio)
+    match /site_photos/{doc} {
+      allow write: if request.auth != null
+        && request.auth.token.email == 'mentalcoachvaleria@gmail.com';
+    }
+
     // Config vecchio progetto (solo lettura, non più usato)
     match /config/{doc} {
       allow write: if false;
