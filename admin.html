@@ -483,6 +483,10 @@
           <i class="fa-solid fa-palette"></i>
           <span>Colori &amp; stile<small>Sfondi, testi e bottoni del sito pubblico.</small></span>
         </button>
+        <button type="button" class="side-btn" data-panel="foto">
+          <i class="fa-solid fa-images"></i>
+          <span>Aggiornamenti foto<small>Le immagini di Home, Chi sono e dello Studio.</small></span>
+        </button>
         <div class="side-help">
           <button type="button" class="btn btn--help" id="btn-istruzioni"><i class="fa-solid fa-book-open"></i> Istruzioni</button>
           <button type="button" class="btn btn--tour" id="btn-tutorial"><i class="fa-solid fa-route"></i> Tutorial</button>
@@ -773,6 +777,43 @@
         </div>
       </section>
 
+      <!-- ============ PANNELLO: AGGIORNAMENTI FOTO ============ -->
+      <section class="panel" id="panel-foto">
+        <div class="page-head">
+          <h2>Aggiornamenti foto</h2>
+          <p>Cambia le immagini del sito pubblico incollando un link (URL) della foto. Ogni sezione qui sotto ti dice esattamente DOVE compare quella foto nella Home. Le modifiche sono salvate nel database e si vedono subito nell'anteprima live a destra e sul sito.</p>
+        </div>
+
+        <div class="card" id="foto-card-hero">
+          <h3><i class="fa-solid fa-image"></i> 1 · Foto Hero — Home «Trasforma i tuoi obiettivi…»</h3>
+          <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Queste foto compaiono nel riquadro grande a destra del titolo principale della Home, dietro alla targhetta «Valeria Moretti · Mental Coach». La prima appare subito, poi cambiano automaticamente ogni 4 secondi.</p>
+          <div id="hero-slots"><!-- slot generati da admin.js --></div>
+          <div class="row" style="margin-top:10px;">
+            <button type="button" class="btn btn--soft btn--sm" id="btn-hero-add"><i class="fa-solid fa-plus"></i> Aggiungi foto</button>
+          </div>
+        </div>
+
+        <div class="card" id="foto-card-about">
+          <h3><i class="fa-solid fa-user"></i> 2 · Foto «Chi sono — Ciao, sono Valeria»</h3>
+          <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Queste foto compaiono nel riquadro verticale accanto al testo «Ciao, sono Valeria» nella sezione Chi sono della Home. Si alternano ogni 4 secondi.</p>
+          <div id="about-slots"><!-- slot generati da admin.js --></div>
+          <div class="row" style="margin-top:10px;">
+            <button type="button" class="btn btn--soft btn--sm" id="btn-about-add"><i class="fa-solid fa-plus"></i> Aggiungi foto</button>
+          </div>
+        </div>
+
+        <div class="card" id="foto-card-studio">
+          <h3><i class="fa-solid fa-building"></i> 3 · Foto «Il mio Studio»</h3>
+          <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Questa foto compare nella sezione «Il mio Studio» della Home (raggiungibile dal menu). Se non imposti nulla, resta la foto attuale.</p>
+          <div id="studio-slots"><!-- slot generati da admin.js --></div>
+        </div>
+
+        <div class="row" style="margin-top:16px;">
+          <button type="button" class="btn btn--primary" id="btn-photos-save"><i class="fa-solid fa-floppy-disk"></i> Salva foto</button>
+          <button type="button" class="btn btn--soft" id="btn-photos-reset"><i class="fa-solid fa-rotate-left"></i> Ripristina foto originali</button>
+        </div>
+      </section>
+
     </main>
 
     <!-- ============ ANTEPRIMA LIVE (a destra) ============ -->
@@ -805,6 +846,10 @@
         <section class="pv-block">
           <h4><i class="fa-solid fa-clipboard-list"></i> Modulo di richiesta</h4>
           <div id="pv-draft-cq" class="pv-body"></div>
+        </section>
+        <section class="pv-block">
+          <h4><i class="fa-solid fa-images"></i> Foto in Home — Hero / Chi sono / Studio</h4>
+          <div id="pv-photos" class="pv-body"></div>
         </section>
       </div>
     </aside>
@@ -920,6 +965,6 @@
 
   <!-- Firebase (config globale) + logica admin -->
   <script type="module" src="firebase-config.js"></script>
-  <script type="module" src="admin.js?v=20261022a"></script>
+  <script type="module" src="admin.js?v=20261022b"></script>
 </body>
 </html>

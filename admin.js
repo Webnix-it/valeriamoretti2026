@@ -27,6 +27,7 @@
     collection: window.firebaseCollection,
     addDoc: window.firebaseAddDoc,
     getDocs: window.firebaseGetDocs,
+    onSnapshot: window.firebaseOnSnapshot,
     ADMIN_EMAILS: window.firebaseADMIN_EMAILS || []
   };
 
@@ -85,6 +86,7 @@
       FB.signOut = window.firebaseSignOut;
       FB.onAuthStateChanged = window.firebaseOnAuthStateChanged;
       FB.provider = window.firebaseGoogleProvider;
+      FB.onSnapshot = window.firebaseOnSnapshot;
     }
     return !!(FB.db && FB.auth && FB.onAuthStateChanged);
   }
@@ -997,6 +999,237 @@
           </div>`).join('')
         : '<p class="pv-empty">Nessuna domanda nel database.</p>';
     }
+    // --- Foto in Home: hero / chi sono / studio (stile fedele al sito) ---
+    renderPhotosPreview();
+  }
+
+  /* ============ SEZIONE: AGGIORNAMENTI FOTO ==============
+     Le foto della Home (Hero, Chi sono, Il mio Studio) sono salvate in
+     Firestore (collection 'site_photos', doc 'home'). Ogni slot è un URL
+     che l'amministratrice incolla; script.js della Home le legge e le usa
+     negli slideshow al posto dei default. */
+  const PHOTOS_COL = 'site_photos';
+  const PHOTOS_DOC = 'home';
+
+  const PHOTOS_DEFAULTS = {
+    hero: [
+      'https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/1-fatto.png',
+      'https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/2-fatto.png',
+      'https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/3-fatto.png'
+    ],
+    about: [
+      'https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/2-fatto.png',
+      'https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/1-fatto.png'
+    ],
+    studio: [
+      'https://raw.githubusercontent.com/mentalcoachvaleria-arch/Galleria-per-sito-web/main/3-fatto.png'
+    ]
+  };
+
+  const PHOTO_GROUPS = [
+    { key: 'hero',   slots: '#hero-slots',   label: 'Foto Hero — Home «Trasforma i tuoi obiettivi…»', max: 6 },
+    { key: 'about',  slots: '#about-slots',  label: 'Foto «Chi sono — Ciao, sono Valeria»', max: 4 },
+    { key: 'studio', slots: '#studio-slots', label: 'Foto «Il mio Studio»', max: 1 }
+  ];
+
+  let currentPhotos = JSON.parse(JSON.stringify(PHOTOS_DEFAULTS));
+
+  function validPhotoUrl(u) {
+    u = String(u || '').trim();
+    return /^https?:\/\/.+/i.test(u) ? u : '';
+  }
+
+  function photoSlotHtml(groupKey, url, idx, total) {
+    const isStudio = groupKey === 'studio';
+    const ratio = groupKey === 'about' ? 'aspect-ratio:3/4;' : 'aspect-ratio:4/5;';
+    return `
+      <div class="photo-slot" data-group="${groupKey}" data-idx="${idx}" style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
+        <div class="photo-thumb" style="width:74px;flex-shrink:0;border-radius:12px;overflow:hidden;border:1px solid #ddd6c6;background:#efe9dd;${ratio}display:flex;align-items:center;justify-content:center;">
+          ${url ? `<img src="${esc(url)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'" />` : '<i class="fa-regular fa-image" style="color:#b3ab97;font-size:18px;"></i>'}
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <input type="url" class="input photo-url-input" data-group="${groupKey}" data-idx="${idx}"
+                 placeholder="Incolla qui il link (https://…) della foto ${idx + 1}" value="${esc(url)}" />
+          <span style="font-size:10.5px;color:#98917f;">${isStudio ? 'Questa foto compare nella sezione «Il mio Studio» della Home.' : `Foto ${idx + 1} di ${total} · ruota ogni 4 secondi nella Home.`}</span>
+        </div>
+        <button type="button" class="btn btn--soft btn--sm photo-remove-btn" data-group="${groupKey}" data-idx="${idx}" title="Rimuovi questa foto" ${total <= 1 && !isStudio ? 'disabled' : ''}><i class="fa-solid fa-xmark"></i></button>
+      </div>`;
+  }
+
+  function renderPhotoSlots() {
+    PHOTO_GROUPS.forEach(g => {
+      const box = $(g.slots);
+      if (!box) return;
+      const urls = (currentPhotos[g.key] || []).filter(Boolean);
+      if (urls.length === 0) {
+        box.innerHTML = g.key === 'studio'
+          ? photoSlotHtml(g.key, '', 0, 1)
+          : photoSlotHtml(g.key, '', 0, 1);
+        return;
+      }
+      box.innerHTML = urls.map((u, i) => photoSlotHtml(g.key, u, i, urls.length)).join('');
+    });
+    renderPhotosPreview();
+  }
+
+  function addPhotoSlot(groupKey) {
+    const g = PHOTO_GROUPS.find(x => x.key === groupKey);
+    if (!g) return;
+    const list = currentPhotos[groupKey] || [];
+    if (list.length >= g.max) { toast(`Massimo ${g.max} foto per questa sezione.`, true); return; }
+    list.push('');
+    currentPhotos[groupKey] = list;
+    renderPhotoSlots();
+    const inputs = $$(`.photo-url-input[data-group="${groupKey}"]`);
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }
+
+  function removePhotoSlot(groupKey, idx) {
+    const list = currentPhotos[groupKey] || [];
+    if (groupKey !== 'studio' && list.filter(Boolean).length <= 1) { toast('Lascia almeno una foto in questa sezione.', true); return; }
+    list.splice(idx, 1);
+    currentPhotos[groupKey] = list;
+    renderPhotoSlots();
+  }
+
+  function collectPhotoInputs() {
+    // Raccoglie gli input correnti nei gruppi (senza ri-renderizzare)
+    PHOTO_GROUPS.forEach(g => {
+      const inputs = $$('.photo-url-input').filter(i => i.dataset.group === g.key);
+      currentPhotos[g.key] = inputs.map(i => validPhotoUrl(i.value));
+    });
+  }
+
+  async function loadPhotos() {
+    setBusy(true);
+    try {
+      const snap = await FB.getDoc(FB.doc(FB.db, PHOTOS_COL, PHOTOS_DOC));
+      if (snap.exists()) {
+        const d = snap.data() || {};
+        ['hero', 'about', 'studio'].forEach(k => {
+          if (Array.isArray(d[k])) currentPhotos[k] = d[k].map(validPhotoUrl).filter(Boolean);
+        });
+      }
+    } catch (err) {
+      console.warn('Foto non caricate (uso default):', err);
+    } finally { setBusy(false); }
+    renderPhotoSlots();
+  }
+
+  async function savePhotos() {
+    collectPhotoInputs();
+    // Rimuove URL vuoti intermedi
+    ['hero', 'about', 'studio'].forEach(k => { currentPhotos[k] = (currentPhotos[k] || []).filter(Boolean); });
+    if (!currentPhotos.hero.length) currentPhotos.hero = [...PHOTOS_DEFAULTS.hero];
+    if (!currentPhotos.about.length) currentPhotos.about = [...PHOTOS_DEFAULTS.about];
+    setBusy(true);
+    try {
+      await FB.setDoc(FB.doc(FB.db, PHOTOS_COL, PHOTOS_DOC), {
+        hero: currentPhotos.hero,
+        about: currentPhotos.about,
+        studio: currentPhotos.studio,
+        updatedAt: new Date().toISOString()
+      });
+      renderPhotoSlots();
+      toast('Foto salvate: la Home le mostra al prossimo caricamento.');
+    } catch (err) {
+      console.error(err);
+      toast('Errore salvataggio foto: ' + err.message, true);
+    } finally { setBusy(false); }
+  }
+
+  function resetPhotos() {
+    confirmAction('Ripristinare le foto originali?', 'Le foto personalizzate verranno eliminate dal database e la Home tornerà alle immagini predefinite.')
+      .then(async (yes) => {
+        if (!yes) return;
+        setBusy(true);
+        try {
+          await FB.deleteDoc(FB.doc(FB.db, PHOTOS_COL, PHOTOS_DOC)).catch(() => {});
+          currentPhotos = JSON.parse(JSON.stringify(PHOTOS_DEFAULTS));
+          renderPhotoSlots();
+          toast('Foto originali ripristinate.');
+        } catch (err) { console.error(err); toast('Errore: ' + err.message, true); }
+        finally { setBusy(false); }
+      });
+  }
+
+  /* ---- Anteprima live delle foto: replica gli riquadri reali della Home ---- */
+  function pvFrameHtml(label, urls, ratioCss, badgeClass) {
+    const first = (urls || []).filter(Boolean)[0] || '';
+    return `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#6b6557;margin-bottom:6px;">${label}</div>
+        <div class="${badgeClass}" style="position:relative;border-radius:16px;overflow:hidden;border:1px solid #ddd6c6;${ratioCss};max-width:190px;background:#efe9dd;">
+          ${first
+            ? `<img src="${esc(first)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()" />`
+            : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#b3ab97;"><i class="fa-regular fa-image" style="font-size:22px;"></i></div>'}
+          ${(urls || []).filter(Boolean).length > 1 ? '<span style="position:absolute;top:8px;right:8px;background:rgba(33,33,33,.65);color:#fff;font-size:10px;padding:2px 7px;border-radius:999px;">ruota ogni 4s</span>' : ''}
+        </div>
+        ${(urls || []).filter(Boolean).length > 1 ? `<div style="display:flex;gap:6px;margin-top:6px;">${urls.filter(Boolean).map((u, i) => `<img src="${esc(u)}" alt="" title="Foto ${i + 1}" style="width:34px;height:34px;object-fit:cover;border-radius:8px;border:1px solid #ddd6c6;" onerror="this.style.display='none'" />`).join('')}</div>` : ''}
+      </div>`;
+  }
+
+  function renderPhotosPreview() {
+    const box = $('#pv-photos');
+    if (!box) return;
+    // Se sto scrivendo in uno slot, l'anteprima segue la digitazione in diretta
+    const draftHero = ($$('.photo-url-input').find(i => i.dataset.group === 'hero') || {}).value;
+    const heroList = (draftHero !== undefined && document.activeElement && document.activeElement.classList.contains('photo-url-input'))
+      ? (() => { collectPhotoInputs(); return currentPhotos.hero; })()
+      : currentPhotos.hero;
+    const aboutList = (document.activeElement && document.activeElement.classList.contains('photo-url-input') && document.activeElement.dataset.group === 'about')
+      ? (() => { collectPhotoInputs(); return currentPhotos.about; })()
+      : currentPhotos.about;
+    const studioList = (document.activeElement && document.activeElement.classList.contains('photo-url-input') && document.activeElement.dataset.group === 'studio')
+      ? (() => { collectPhotoInputs(); return currentPhotos.studio; })()
+      : currentPhotos.studio;
+    box.innerHTML =
+      pvFrameHtml('Dove: Hero — dietro la targhetta «Valeria Moretti · Mental Coach»', heroList, 'aspect-ratio:4/5;', 'pv-photo-hero') +
+      pvFrameHtml('Dove: sezione «Chi sono — Ciao, sono Valeria»', aboutList, 'aspect-ratio:3/4;', 'pv-photo-about') +
+      pvFrameHtml('Dove: sezione «Il mio Studio»', studioList, 'aspect-ratio:16/10;', 'pv-photo-studio');
+  }
+
+  function initPhotosSection() {
+    // Delega eventi sugli slot (input, focus, rimozione)
+    ['#hero-slots', '#about-slots', '#studio-slots'].forEach(sel => {
+      const box = $(sel);
+      if (!box) return;
+      box.addEventListener('input', (e) => {
+        if (e.target.classList.contains('photo-url-input')) {
+          const g = e.target.dataset.group;
+          const url = validPhotoUrl(e.target.value);
+          const thumb = e.target.closest('.photo-slot')?.querySelector('.photo-thumb img');
+          if (thumb) {
+            if (url) { thumb.src = url; thumb.style.display = ''; }
+            else { thumb.style.opacity = '.35'; }
+          }
+          renderPhotosPreview();
+        }
+      });
+      box.addEventListener('click', (e) => {
+        const rm = e.target.closest('.photo-remove-btn');
+        if (rm) removePhotoSlot(rm.dataset.group, Number(rm.dataset.idx));
+      });
+    });
+    const bh = $('#btn-hero-add'); if (bh) bh.addEventListener('click', () => addPhotoSlot('hero'));
+    const ba = $('#btn-about-add'); if (ba) ba.addEventListener('click', () => addPhotoSlot('about'));
+    const bs = $('#btn-photos-save'); if (bs) bs.addEventListener('click', savePhotos);
+    const br = $('#btn-photos-reset'); if (br) br.addEventListener('click', resetPhotos);
+    loadPhotos();
+    // Live-sync: se l'admin ha due tab aperte, le foto si aggiornano da sole
+    try {
+      if (FB.onSnapshot) {
+        FB.onSnapshot(FB.doc(FB.db, PHOTOS_COL, PHOTOS_DOC), (snap) => {
+          if (!snap.exists()) return;
+          if (document.activeElement && document.activeElement.classList.contains('photo-url-input')) return;
+          const d = snap.data() || {};
+          ['hero', 'about', 'studio'].forEach(k => {
+            if (Array.isArray(d[k])) currentPhotos[k] = d[k].map(validPhotoUrl).filter(Boolean);
+          });
+          renderPhotoSlots();
+        });
+      }
+    } catch (e) { console.warn('onSnapshot foto non attivo:', e); }
   }
 
 
@@ -1419,6 +1652,7 @@
     { sel: '[data-panel="test"]', title: '2 · Test gratuito', text: 'Qui gestisci il questionario online: crea domande, modifica le risposte, riordina con ↑ ↓, attiva o disattiva ogni domanda. Tutto compare nel popup del test in Home.' },
     { sel: '[data-panel="servizi"]', title: '3 · Servizi e pacchetti', text: 'Aggiungi o rimuovi pacchetti, imposti prezzo e descrizione, decidi quali mostrare nella Home, crea le domande personalizzate del modulo di richiesta e consulta le richieste dei visitatori.' },
     { sel: '[data-panel="colori"]', title: '4 · Colori & stile', text: 'Cambia sfondi, testi e bottoni del sito pubblico, sezione per sezione. L\'anteprima a destra replica esattamente lo stile della Home mentre modifichi.' },
+    { sel: '[data-panel="foto"]', title: '5 · Aggiornamenti foto', text: 'Incolla il link (URL) di una foto per cambiare le immagini della Home: Hero (dietro alla targhetta «Valeria Moretti · Mental Coach»), Chi sono («Ciao, sono Valeria») e Il mio Studio. L\'anteprima live a destra ti mostra quale sezione della Home stai aggiornando.' },
     { sel: '#preview-pane', title: 'Anteprima live', text: 'Questa colonna mostra in tempo reale cosa vedranno i visitatori: recensioni, pacchetti, domande e mini-Home. Il pulsante Aggiorna rilegge il database.' },
     { sel: '.side-user', title: 'Sei pronta!', text: 'Da qui puoi uscire con "Esci". Riprendi questo tutorial quando vuoi dal pulsante Tutorial, e leggi tutte le spiegazioni dettagliate nel pulsante Istruzioni. Buon lavoro! ✨' },
   ];
@@ -1535,6 +1769,7 @@
     initQuizSection();
     initServicesSection();
     initThemeSection();
+    initPhotosSection(); // sezione "Aggiornamenti foto" + anteprima live hero/chisono/studio
     initHelpSection(); // bottoni Istruzioni + Tutorial con tour interattivo spotlight
     initDraftLivePreview(); // anteprima live si aggiorna mentre scrivi nei form
     // Anteprima live: aggiorna anche manualmente

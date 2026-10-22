@@ -1893,19 +1893,23 @@
   });
 })();
 /* ============================================================
-   SLIDESHOW FOTO (hero + chi sono)
+   SLIDESHOW FOTO (hero + chi sono) + AGGIORNAMENTO DA DASHBOARD
    Ogni contenitore con [data-slideshow] mostra le immagini in
    pila: la prima compare subito, poi una nuova ogni 4 secondi
    con dissolvenza incrociata.
+   Le foto possono essere cambiate dalla dashboard admin
+   ("Aggiornamenti foto"): sono salvate in Firestore
+   (collection 'site_photos', doc 'home') e lette qui sotto.
    ============================================================ */
 (function initPhotoSlideshows() {
-  function startSlideshow(container) {
-    var urls;
-    try {
-      urls = JSON.parse(container.getAttribute('data-slideshow') || '[]');
-    } catch (e) {
-      return;
-    }
+  var timers = []; // intervalli attivi, così possiamo riavviarli con le nuove foto
+
+  function clearTimers() {
+    timers.forEach(clearInterval);
+    timers = [];
+  }
+
+  function startSlideshow(container, urls) {
     if (!Array.isArray(urls) || urls.length === 0) return;
 
     var slideBox = container.querySelector('.slideshow');
@@ -1915,6 +1919,7 @@
       slideBox.setAttribute('aria-hidden', 'true');
       container.appendChild(slideBox);
     }
+    slideBox.innerHTML = '';
 
     var imgs = urls.map(function (url, i) {
       var img = document.createElement('img');
@@ -1929,16 +1934,78 @@
     imgs[0].classList.add('active');
 
     if (urls.length > 1) {
-      setInterval(function () {
+      timers.push(setInterval(function () {
         imgs[current].classList.remove('active');
         current = (current + 1) % imgs.length;
         imgs[current].classList.add('active');
-      }, 4000);
+      }, 4000));
     }
   }
 
+  function applyPhotos(photos) {
+    // photos = { hero:[...], about:[...], studio:[...] } (solo URL validi)
+    var hero = document.querySelector('.hero-visual[data-slideshow]');
+    var about = document.querySelector('.about-photo[data-slideshow]');
+    var studioImg = document.querySelector('[data-studio-img]');
+    clearTimers();
+    if (hero && Array.isArray(photos.hero) && photos.hero.length) {
+      hero.setAttribute('data-slideshow', JSON.stringify(photos.hero));
+      startSlideshow(hero, photos.hero);
+    } else if (hero) {
+      startSlideshow(hero, JSON.parse(hero.getAttribute('data-slideshow') || '[]'));
+    }
+    if (about && Array.isArray(photos.about) && photos.about.length) {
+      about.setAttribute('data-slideshow', JSON.stringify(photos.about));
+      startSlideshow(about, photos.about);
+    } else if (about) {
+      startSlideshow(about, JSON.parse(about.getAttribute('data-slideshow') || '[]'));
+    }
+    if (studioImg && Array.isArray(photos.studio) && photos.studio.length) {
+      studioImg.src = photos.studio[0];
+    }
+  }
+
+  function bootDefault() {
+    document.querySelectorAll('[data-slideshow]').forEach(function (el) {
+      try { startSlideshow(el, JSON.parse(el.getAttribute('data-slideshow') || '[]')); } catch (e) {}
+    });
+  }
+
+  async function loadPhotosFromDb() {
+    if (!window.firebaseDB || !window.firebaseDoc || !window.firebaseGetDoc) return;
+    try {
+      const snap = await window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB, 'site_photos', 'home'));
+      if (!snap.exists()) return;
+      const d = snap.data() || {};
+      const clean = (arr) => Array.isArray(arr) ? arr.filter(u => /^https?:\/\//i.test(String(u || ''))) : [];
+      const photos = { hero: clean(d.hero), about: clean(d.about), studio: clean(d.studio) };
+      if (photos.hero.length || photos.about.length || photos.studio.length) {
+        applyPhotos(photos);
+        console.log('✅ Foto aggiornate dalla dashboard:', photos);
+      }
+    } catch (err) {
+      console.warn('⚠️ Foto da database non disponibili (uso default):', err && err.message);
+    }
+    // Ascolto live: se l'admin salva nuove foto mentre la Home è aperta, si aggiornano
+    try {
+      if (window.firebaseOnSnapshot) {
+        window.firebaseOnSnapshot(window.firebaseDoc(window.firebaseDB, 'site_photos', 'home'), (snap) => {
+          if (!snap.exists()) return;
+          const d = snap.data() || {};
+          const clean = (arr) => Array.isArray(arr) ? arr.filter(u => /^https?:\/\//i.test(String(u || ''))) : [];
+          const photos = { hero: clean(d.hero), about: clean(d.about), studio: clean(d.studio) };
+          if (photos.hero.length || photos.about.length || photos.studio.length) {
+            applyPhotos(photos);
+            console.log('🔄 Foto aggiornate in tempo reale dalla dashboard');
+          }
+        }, (err) => console.warn('Ascolto foto non attivo:', err && err.message));
+      }
+    } catch (e) { console.warn('Ascolto foto non attivo:', e && e.message); }
+  }
+
   function boot() {
-    document.querySelectorAll('[data-slideshow]').forEach(startSlideshow);
+    bootDefault();          // parte subito con le foto nel markup (nessun buco)
+    loadPhotosFromDb();     // poi, se la dashboard ne ha salvate altre, le sostituisce
   }
 
   if (document.readyState === 'loading') {
