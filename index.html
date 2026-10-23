@@ -95,7 +95,8 @@
     }
   
     /* Modulo contatto/prenotazione a schermata unica */
-    .contact-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+    /* Griglia campi modulo: UNO SOTTO L'ALTRO (una colonna) */
+    .contact-field-grid { display: flex; flex-direction: column; gap: 14px; }
     .contact-field { display: flex; flex-direction: column; gap: 6px; }
     .contact-field--full { grid-column: 1 / -1; }
     .contact-field .step-label { font-weight: 700; color: var(--verde-bosco); font-size: .92rem; }
@@ -107,7 +108,7 @@
     .contact-field input:focus, .contact-field textarea:focus {
       border-color: var(--verde-bosco); box-shadow: 0 0 0 3px rgba(47,79,62,.12);
     }
-    @media (max-width: 640px) { .contact-field-grid { grid-template-columns: 1fr; } }
+
 
   </style>
 </head>
@@ -1357,7 +1358,7 @@
       });
     }, 6000);
   </script>
-  <script src="script.js?v=20261023d"></script>
+  <script src="script.js?v=20261023e"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script type="text/javascript">
     (function() { emailjs.init("zTOU9dbAR0XbmjhoR"); })();
