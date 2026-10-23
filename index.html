@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
   
   <!-- Fogli di stile -->
-  <link rel="stylesheet" href="style.css?v=20261023b" />
+  <link rel="stylesheet" href="style.css?v=20261024a" />
 
   <style>
     /* ============================================================
@@ -1191,7 +1191,7 @@
               </div>
               
               <!-- Progress bar: nascosta (modulo a schermata unica) -->
-              <div class="contact-progress" style="display:none;">
+              <div class="contact-progress">
                 <div class="contact-progress-bar-wrapper">
                   <div class="contact-progress-bar" id="contact-progress-bar" style="width: 100%"></div>
                 </div>
@@ -1206,21 +1206,34 @@
                 <i class="fa-solid fa-tag" aria-hidden="true"></i> Servizio selezionato: <strong id="selected-service-name">Richiesta generica</strong>
               </div>
 
-              <!-- MODULO SEMPLIFICATO (schermata unica): invia a EmailJS SOLO le variabili
-                   {{name}} Nome del visitatore, {{email}} Email, {{phone}} Telefono (opzionale),
-                   {{message}} Messaggio scritto dal visitatore. -->
+              <!-- MODULO IN 4 STEP (gestito da script.js): invia a EmailJS SOLO le variabili
+                   {{name}} Nome+Cognome, {{email}}, {{phone}} (opz.), {{message}}.
+                   Step 1 Nome + Cognome | Step 2 Email + Telefono (opz.)
+                   Step 3 Messaggio + privacy obbligatoria | Step 4 Riepilogo + Invio -->
               <form id="contact-form" novalidate>
                 <input type="hidden" id="contact-service" name="service">
                 <input type="hidden" id="contact-name" name="name">
                 <input type="hidden" id="contact-cognome" name="cognome">
 
-                <div class="contact-step active" data-step="1">
+                <div class="contact-step cs-step" data-step="1">
+                  <p class="cs-title">Come ti chiami? *</p>
                   <div class="contact-field-grid">
-                    <div class="contact-field contact-field--full">
-                      <label for="contact-nome-input" class="step-label">Nome e cognome *</label>
-                      <input type="text" id="contact-nome-input" name="nome_completo" placeholder="Es. Marco Rossi" required autocomplete="name">
-                      <span class="input-error" id="error-nome_completo">Inserisci il tuo nome</span>
+                    <div class="contact-field">
+                      <label for="contact-nome" class="step-label">Nome *</label>
+                      <input type="text" id="contact-nome" name="nome" placeholder="Es. Marco" required autocomplete="given-name">
+                      <span class="input-error" id="error-nome">Inserisci il tuo nome</span>
                     </div>
+                    <div class="contact-field">
+                      <label for="contact-cognome-input" class="step-label">Cognome *</label>
+                      <input type="text" id="contact-cognome-input" name="cognome_input" placeholder="Es. Rossi" required autocomplete="family-name">
+                      <span class="input-error" id="error-cognome_input">Inserisci il tuo cognome</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="contact-step cs-step" data-step="2">
+                  <p class="cs-title">Come posso ricontattarti? *</p>
+                  <div class="contact-field-grid">
                     <div class="contact-field">
                       <label for="contact-email" class="step-label">Email *</label>
                       <input type="email" id="contact-email" name="email" placeholder="nome@esempio.it" required autocomplete="email">
@@ -1230,29 +1243,41 @@
                       <label for="contact-phone" class="step-label">Telefono (opzionale)</label>
                       <input type="tel" id="contact-phone" name="phone" placeholder="+39 333 1234567" autocomplete="tel">
                     </div>
+                  </div>
+                </div>
+
+                <div class="contact-step cs-step" data-step="3">
+                  <p class="cs-title">Scrivimi qualcosa</p>
+                  <div class="contact-field-grid">
                     <div class="contact-field contact-field--full">
                       <label for="contact-message" class="step-label">Messaggio (opzionale)</label>
                       <textarea id="contact-message" name="message" rows="4" placeholder="Raccontami brevemente di cosa hai bisogno..."></textarea>
                     </div>
+                    <div class="contact-field contact-field--full">
+                      <label class="step-label checkbox-label">
+                        <input type="checkbox" id="contact-privacy" name="privacy" required>
+                        <span>Dichiaro di aver letto la <a href="privacy.html" target="_blank">Privacy Policy</a> e acconsento al trattamento dei miei dati personali per la gestione della mia richiesta o per l'analisi del quiz compilato. Autorizzo l'invio delle informazioni inserite tramite il modulo al titolare del sito tramite il servizio EmailJS. Sono consapevole che i dati forniti possono includere informazioni personali relative alla mia situazione relazionale e acconsento volontariamente alla loro trasmissione.</span>
+                      </label>
+                      <span class="input-error" id="error-privacy">Devi accettare per continuare</span>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Privacy: checkbox obbligatoria, ultimo step -->
-                <div class="contact-step" data-step="2">
-                  <label class="step-label checkbox-label">
-                    <input type="checkbox" id="contact-privacy" name="privacy" required>
-                    <span>Dichiaro di aver letto la <a href="privacy.html" target="_blank">Privacy Policy</a> e acconsento al trattamento dei miei dati personali per la gestione della mia richiesta o per l'analisi del quiz compilato. Autorizzo l'invio delle informazioni inserite tramite il modulo al titolare del sito tramite il servizio EmailJS. Sono consapevole che i dati forniti possono includere informazioni personali relative alla mia situazione relazionale e acconsento volontariamente alla loro trasmissione. *</span>
-                  </label>
-                  <span class="input-error" id="error-privacy">Devi accettare per continuare</span>
+                <div class="contact-step cs-step" data-step="4">
+                  <p class="cs-title">Controlla e invia</p>
+                  <div class="cs-summary" id="cs-summary" aria-live="polite"></div>
                 </div>
               </form>
-              
-              <!-- Navigation buttons: un solo pulsante di invio -->
+
+              <!-- Navigation buttons: Indietro / Avanti / Invia -->
               <div class="contact-nav">
-                <button type="submit" id="contact-submit-btn" form="contact-form" class="btn-contact-submit">
+                <button type="button" id="contact-back-btn" class="btn-contact-back">Indietro</button>
+                <button type="button" id="contact-next-btn" class="btn-contact-submit">Avanti <i class="fa-solid fa-arrow-right"></i></button>
+                <button type="submit" id="contact-submit-btn" form="contact-form" class="btn-contact-submit" style="display:none;">
                   <i class="fa-solid fa-paper-plane"></i> Invia richiesta
                 </button>
-              </div>            </div>
+              </div>
+            </div>
             
             <!-- Success state -->
             <div id="contact-success" class="contact-success">
@@ -1332,7 +1357,7 @@
       });
     }, 6000);
   </script>
-  <script src="script.js?v=20261023b"></script>
+  <script src="script.js?v=20261023d"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script type="text/javascript">
     (function() { emailjs.init("zTOU9dbAR0XbmjhoR"); })();
