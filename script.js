@@ -1400,17 +1400,40 @@
     const originalBtnContent = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Invio in corso...';
     submitBtn.disabled = true;
-    // EmailJS: il template riceve SOLO le variabili dichiarate:
-    //   {{name}} Nome del visitatore (nome + cognome)
-    //   {{email}} Email del visitatore
-    //   {{phone}} Telefono del visitatore (opzionale)
-    //   {{message}} Messaggio scritto dal visitatore (opzionale)
+
+    // EmailJS — il template template_86ls76q riceve ESATTAMENTE questi parametri:
+    //   Nome: {{name}}        → Nome del visitatore (nome + cognome)
+    //   Email: {{email}}      → Email del visitatore
+    //   Telefono: {{phone}}   → Telefono del visitatore (opzionale)
+    //   Messaggio: {{message}}→ Messaggio scritto dal visitatore
+    const fullName = `${nomeEl?.value?.trim() || ''} ${cogEl?.value?.trim() || ''}`.trim();
+    const userEmail = mailEl?.value?.trim() || '';
+    const userPhone = phoneEl?.value?.trim() || '';
+    const userMsg = msgEl?.value?.trim() || '';
     const templateParams = {
-      name: `${nomeEl?.value?.trim() || ''} ${cogEl?.value?.trim() || ''}`.trim(),
-      email: mailEl?.value?.trim() || '',
-      phone: phoneEl?.value?.trim() || '',
-      message: msgEl?.value?.trim() || ''
+      name: fullName,
+      email: userEmail,
+      phone: userPhone,
+      message: userMsg
     };
+
+    // Salvataggio della richiesta nel database (disponibile nella dashboard admin)
+    try {
+      if (window.firebaseDB && window.firebaseCollection && window.firebaseAddDoc) {
+        window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, 'service_requests'), {
+          packageKey: 'modulo-contatto',
+          servizio: selectedServiceName || 'Prenotazione / Contatto',
+          nome: nomeEl?.value?.trim() || '',
+          cognome: cogEl?.value?.trim() || '',
+          email: userEmail,
+          phone: userPhone,
+          message: userMsg,
+          answers: {},
+          createdAt: new Date().toISOString()
+        }).catch(() => { /* la DB non blocca l'invio dell'email */ });
+      }
+    } catch (e) { /* silenzioso */ }
+
     emailjs.send('service_wnyvmph', contactFormTemplateId, templateParams)
       .then(function(response) {
         console.log('✅ Email inviata!', response);
