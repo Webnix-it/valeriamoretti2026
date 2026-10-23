@@ -509,7 +509,7 @@
     }
     if (config.contact?.fields) {
       window.dynamicContactFields = config.contact.fields;
-      renderDynamicContactFields();
+      // Il modulo è a schermata unica: niente step dinamici nel popup.
     }
     if (config.contact) updateContactDynamic(config.contact);
     if (config.social) {
@@ -1214,7 +1214,14 @@
   }
 
   // --- CONTACT MODAL LOGIC ---
-  function buildContactFormSummary() {
+  // Il modulo contatto/prenotazione è stato semplificato a SCHERMATA UNICA con i soli
+  // campi richiesti: Nome, Cognome, Email, Telefono (opzionale), Messaggio (opzionale).
+  // Le domande personalizzate della dashboard (config.contact.fields /
+  // dynamic-contact-steps) NON vengono più rese nel popup: restiamo compatibili con
+  // eventuali dati legacy semplicemente ignorandoli.
+  function buildContactFormSummary() { return ''; }
+
+  function buildContactFormSummary_LEGACY() {
     const lines = ['', ''];
     const fields = getContactFields();
     if (fields && fields.length > 0) {
@@ -1293,48 +1300,56 @@
     return isValid;
   }
 
+  // Modulo a schermata unica: la navigazione multi-step non serve più.
+  // goToContactStep mostra lo step richiesto (1 = campi, 2 = privacy) senza progress bar.
   function goToContactStep(step) {
-    document.querySelectorAll('.contact-step').forEach(el => el.classList.remove('active'));
-    const currentStepEl = document.querySelector(`.contact-step[data-step="${step}"]`);
+    document.querySelectorAll('#contact-form .contact-step').forEach(el => el.classList.remove('active'));
+    const currentStepEl = document.querySelector(`#contact-form .contact-step[data-step="${step}"]`);
     if (currentStepEl) currentStepEl.classList.add('active');
-    const percent = Math.round((step / contactTotalSteps) * 100);
-    const progressBar = document.getElementById('contact-progress-bar');
-    const percentText = document.getElementById('contact-progress-percent');
-    const stepLabel = document.getElementById('contact-step-label');
-    if (progressBar) progressBar.style.width = `${percent}%`;
-    if (percentText) percentText.textContent = `${percent}%`;
-    if (stepLabel) stepLabel.textContent = `Step ${step} di ${contactTotalSteps}`;
-    const prevBtn = document.getElementById('contact-step-prev');
-    const nextBtn = document.getElementById('contact-step-next');
-    const submitBtn = document.getElementById('contact-submit-btn');
-    if (prevBtn) prevBtn.style.display = step === 1 ? 'none' : 'block';
-    if (nextBtn) nextBtn.style.display = step === contactTotalSteps ? 'none' : 'block';
-    if (submitBtn) submitBtn.style.display = step === contactTotalSteps ? 'block' : 'none';
     contactCurrentStep = step;
     if (window.innerWidth < 768) document.getElementById('contact-modal-body')?.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function handleContactSubmit(e) {
     e.preventDefault();
-    if (!validateContactStep(contactCurrentStep)) {
-      const firstError = document.querySelector('.contact-step.active .input-error[style*="display: block"]');
+    // Validazione: nome+cognome, email valida + privacy accettata (step 2)
+    const nomeEl = document.getElementById('contact-nome-input');
+    const mailEl = document.getElementById('contact-email');
+    const phoneEl = document.getElementById('contact-phone');
+    const msgEl = document.getElementById('contact-message');
+    const privEl = document.getElementById('contact-privacy');
+    let ok = true;
+    const showErr = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? 'block' : 'none'; };
+    if (!nomeEl?.value?.trim()) { showErr('error-nome_completo', true); ok = false; } else showErr('error-nome_completo', false);
+    const emailVal = mailEl?.value?.trim() || '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) { showErr('error-email', true); ok = false; } else showErr('error-email', false);
+    if (!privEl?.checked) { showErr('error-privacy', true); ok = false; } else showErr('error-privacy', false);
+    if (!ok) {
+      const firstError = document.querySelector('#contact-form .input-error[style*="display: block"]');
       if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+    // Sync hidden fields (compatibilità con codice esistente che legge contact-name/contact-cognome)
+    const hidName = document.getElementById('contact-name');
+    const hidCog = document.getElementById('contact-cognome');
+    const parts = nomeEl.value.trim().split(/\s+/);
+    if (hidName) hidName.value = parts[0] || '';
+    if (hidCog) hidCog.value = parts.slice(1).join(' ');
+
     const submitBtn = document.getElementById('contact-submit-btn');
     const originalBtnContent = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Invio in corso...';
     submitBtn.disabled = true;
+    // EmailJS: il template riceve SOLO le variabili dichiarate:
+    //   {{name}} Nome del visitatore (nome + cognome)
+    //   {{email}} Email del visitatore
+    //   {{phone}} Telefono del visitatore (opzionale)
+    //   {{message}} Messaggio scritto dal visitatore (opzionale)
     const templateParams = {
-      name: ((document.getElementById('contact-name')?.value?.trim() || '') + ' ' + (document.getElementById('contact-cognome')?.value?.trim() || '')).trim() || 'Non specificato',
-      email: document.getElementById('contact-email')?.value?.trim() || 'Non specificato',
-      phone: document.getElementById('contact-phone')?.value?.trim() || 'Non specificato',
-      message: document.getElementById('contact-message')?.value?.trim() || '',
-      service: selectedServiceName || document.getElementById('contact-service')?.value || 'Richiesta generica',
-      result: buildContactFormSummary(),
-      privacy: document.getElementById('contact-privacy')?.checked ? 'Accettato' : 'Non accettato',
-      sent_from: window.location.href,
-      date: new Date().toLocaleString('it-IT')
+      name: nomeEl.value.trim(),
+      email: emailVal,
+      phone: phoneEl?.value?.trim() || '',
+      message: msgEl?.value?.trim() || ''
     };
     emailjs.send('service_wnyvmph', contactFormTemplateId, templateParams)
       .then(function(response) {
@@ -1356,11 +1371,7 @@
   }
 
   function initContactStepForm() {
-    initDynamicFieldListeners();
-    const nextBtn = document.getElementById('contact-step-next');
-    const prevBtn = document.getElementById('contact-step-prev');
-    if (nextBtn) nextBtn.addEventListener('click', () => { if (validateContactStep(contactCurrentStep)) goToContactStep(Math.min(contactCurrentStep + 1, contactTotalSteps)); });
-    if (prevBtn) prevBtn.addEventListener('click', () => { goToContactStep(Math.max(contactCurrentStep - 1, 1)); });
+    // Modulo a schermata unica: niente step dinamici/Avanti/Indietro.
     const contactForm = document.getElementById('contact-form');
     if (contactForm) contactForm.addEventListener('submit', handleContactSubmit);
     window.resetContactForm = function() {
@@ -1372,25 +1383,20 @@
       if (formContent) formContent.classList.remove('hidden');
       if (successState) successState.classList.remove('visible');
       goToContactStep(1);
-      document.querySelectorAll('.input-error').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('input[type="range"]').forEach(range => {
-        const valueDisplay = document.getElementById(`${range.id}-value`);
-        if (valueDisplay) valueDisplay.textContent = `${range.value}/10`;
-      });
+      document.querySelectorAll('#contact-form .input-error').forEach(el => el.style.display = 'none');
     };
     goToContactStep(1);
   }
 
-  // Mostra/nasconde lo step "Servizio selezionato" nel modulo contatto
+  // Mostra/nasconde il banner "Servizio selezionato" nel modulo contatto
   function setSelectedService(name) {
     selectedServiceName = name || '';
-    const step = document.querySelector('#contact-form [data-step="fixed-service"]')
-      || document.querySelector('#contact-form .selected-service-chip')?.closest('.contact-step');
+    const banner = document.getElementById('selected-service-banner');
     const labelEl = document.getElementById('selected-service-name');
     const hiddenEl = document.getElementById('contact-service');
     if (labelEl) labelEl.textContent = selectedServiceName || 'Richiesta generica';
     if (hiddenEl) hiddenEl.value = selectedServiceName;
-    if (step) step.style.display = selectedServiceName ? '' : 'none';
+    if (banner) banner.style.display = selectedServiceName ? '' : 'none';
   }
 
   function openContactModal(templateId, serviceName) {

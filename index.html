@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
   
   <!-- Fogli di stile -->
-  <link rel="stylesheet" href="style.css?v=20261022k" />
+  <link rel="stylesheet" href="style.css?v=20261023b" />
 
   <style>
     /* ============================================================
@@ -93,6 +93,22 @@
       color: var(--verde-bosco) !important;
       background: transparent !important;
     }
+  
+    /* Modulo contatto/prenotazione a schermata unica */
+    .contact-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+    .contact-field { display: flex; flex-direction: column; gap: 6px; }
+    .contact-field--full { grid-column: 1 / -1; }
+    .contact-field .step-label { font-weight: 700; color: var(--verde-bosco); font-size: .92rem; }
+    .contact-field input, .contact-field textarea {
+      width: 100%; padding: .85rem 1rem; border: 1.5px solid var(--salvia, #cfe0d6);
+      border-radius: 10px; font-size: .95rem; background: #fff; color: var(--testo, #1b2a24);
+      transition: border-color .2s ease, box-shadow .2s ease; outline: none; font-family: inherit;
+    }
+    .contact-field input:focus, .contact-field textarea:focus {
+      border-color: var(--verde-bosco); box-shadow: 0 0 0 3px rgba(47,79,62,.12);
+    }
+    @media (max-width: 640px) { .contact-field-grid { grid-template-columns: 1fr; } }
+
   </style>
 </head>
 <body class="page-home">
@@ -1174,62 +1190,55 @@
                 <p>Compila il modulo: ti ricontatterò entro 24 ore.</p>
               </div>
               
-              <!-- Progress bar -->
-              <div class="contact-progress">
+              <!-- Progress bar: nascosta (modulo a schermata unica) -->
+              <div class="contact-progress" style="display:none;">
                 <div class="contact-progress-bar-wrapper">
-                  <div class="contact-progress-bar" id="contact-progress-bar" style="width: 12.5%"></div>
+                  <div class="contact-progress-bar" id="contact-progress-bar" style="width: 100%"></div>
                 </div>
                 <div class="contact-progress-info">
-                  <span id="contact-step-label">Step 1 di 8</span>
-                  <span id="contact-progress-percent">12%</span>
+                  <span id="contact-step-label"></span>
+                  <span id="contact-progress-percent"></span>
                 </div>
               </div>
-              
-              <!-- Servizio selezionato: banner sempre visibile sopra il modulo -->
+
+              <!-- Servizio selezionato: banner visibile sopra il modulo quando presente -->
               <div id="selected-service-banner" class="selected-service-banner" style="display:none;">
                 <i class="fa-solid fa-tag" aria-hidden="true"></i> Servizio selezionato: <strong id="selected-service-name">Richiesta generica</strong>
               </div>
 
+              <!-- MODULO SEMPLIFICATO (schermata unica): invia a EmailJS SOLO le variabili
+                   {{name}} Nome del visitatore, {{email}} Email, {{phone}} Telefono (opzionale),
+                   {{message}} Messaggio scritto dal visitatore. -->
               <form id="contact-form" novalidate>
-                <!-- STEP 1: Dati personali -->
+                <input type="hidden" id="contact-service" name="service">
+                <input type="hidden" id="contact-name" name="name">
+                <input type="hidden" id="contact-cognome" name="cognome">
+
                 <div class="contact-step active" data-step="1">
-                  <label for="contact-name" class="step-label">Come ti chiami? *</label>
-                  <input type="text" id="contact-name" name="name" placeholder="Es. Marco Rossi" required autocomplete="name">
-                  <span class="input-error" id="error-name">Inserisci il tuo nome</span>
-                </div>
-                <div class="contact-step" data-step="2">
-                  <label for="contact-cognome" class="step-label">Il tuo cognome *</label>
-                  <input type="text" id="contact-cognome" name="cognome" placeholder="Es. Rossi" required autocomplete="family-name">
-                  <span class="input-error" id="error-cognome">Inserisci il tuo cognome</span>
-                </div>
-                <div class="contact-step" data-step="3">
-                  <label for="contact-email" class="step-label">La tua email *</label>
-                  <input type="email" id="contact-email" name="email" placeholder="nome@esempio.it" required autocomplete="email">
-                  <span class="input-error" id="error-email">Inserisci un'email valida</span>
-                </div>
-                <div class="contact-step" data-step="4">
-                  <label for="contact-phone" class="step-label">Il tuo numero di telefono</label>
-                  <input type="tel" id="contact-phone" name="phone" placeholder="+39 333 1234567" autocomplete="tel">
-                  <small class="step-hint">Opzionale, ma utile per ricontattarti velocemente</small>
-                </div>
-                <div class="contact-step" data-step="5">
-                  <label for="contact-message" class="step-label">Messaggio</label>
-                  <textarea id="contact-message" name="message" rows="4" placeholder="Raccontami brevemente di cosa hai bisogno..."></textarea>
-                  <small class="step-hint">Opzionale</small>
+                  <div class="contact-field-grid">
+                    <div class="contact-field contact-field--full">
+                      <label for="contact-nome-input" class="step-label">Nome e cognome *</label>
+                      <input type="text" id="contact-nome-input" name="nome_completo" placeholder="Es. Marco Rossi" required autocomplete="name">
+                      <span class="input-error" id="error-nome_completo">Inserisci il tuo nome</span>
+                    </div>
+                    <div class="contact-field">
+                      <label for="contact-email" class="step-label">Email *</label>
+                      <input type="email" id="contact-email" name="email" placeholder="nome@esempio.it" required autocomplete="email">
+                      <span class="input-error" id="error-email">Inserisci un'email valida</span>
+                    </div>
+                    <div class="contact-field">
+                      <label for="contact-phone" class="step-label">Telefono (opzionale)</label>
+                      <input type="tel" id="contact-phone" name="phone" placeholder="+39 333 1234567" autocomplete="tel">
+                    </div>
+                    <div class="contact-field contact-field--full">
+                      <label for="contact-message" class="step-label">Messaggio (opzionale)</label>
+                      <textarea id="contact-message" name="message" rows="4" placeholder="Raccontami brevemente di cosa hai bisogno..."></textarea>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Servizio selezionato (chip informativo nello step dedicato, nascosto se non serve) -->
-                <div class="contact-step" data-step="fixed-service">
-                  <label class="step-label">Servizio selezionato</label>
-                  <div class="selected-service-chip"><i class="fa-solid fa-tag" aria-hidden="true"></i> <span class="selected-service-mirror">Richiesta generica</span></div>
-                  <input type="hidden" id="contact-service" name="service">
-                </div>
-                
-                <!-- Step dinamici (vengono inseriti qui da script.js) -->
-                <div id="dynamic-contact-steps"></div>
-                
-                <!-- STEP: Privacy -->
-                <div class="contact-step" data-step="fixed-privacy">
+                <!-- Privacy: checkbox obbligatoria, ultimo step -->
+                <div class="contact-step" data-step="2">
                   <label class="step-label checkbox-label">
                     <input type="checkbox" id="contact-privacy" name="privacy" required>
                     <span>Dichiaro di aver letto la <a href="privacy.html" target="_blank">Privacy Policy</a> e acconsento al trattamento dei miei dati personali per la gestione della mia richiesta o per l'analisi del quiz compilato. Autorizzo l'invio delle informazioni inserite tramite il modulo al titolare del sito tramite il servizio EmailJS. Sono consapevole che i dati forniti possono includere informazioni personali relative alla mia situazione relazionale e acconsento volontariamente alla loro trasmissione. *</span>
@@ -1238,19 +1247,12 @@
                 </div>
               </form>
               
-              <!-- Navigation buttons -->
+              <!-- Navigation buttons: un solo pulsante di invio -->
               <div class="contact-nav">
-                <button type="button" id="contact-step-prev" class="btn-contact-prev">
-                  <i class="fa-solid fa-arrow-left"></i> Indietro
-                </button>
-                <button type="button" id="contact-step-next" class="btn-contact-next">
-                  Avanti <i class="fa-solid fa-arrow-right"></i>
-                </button>
-                <button type="submit" id="contact-submit-btn" form="contact-form" class="btn-contact-submit" style="display:none;">
+                <button type="submit" id="contact-submit-btn" form="contact-form" class="btn-contact-submit">
                   <i class="fa-solid fa-paper-plane"></i> Invia richiesta
                 </button>
-              </div>
-            </div>
+              </div>            </div>
             
             <!-- Success state -->
             <div id="contact-success" class="contact-success">
@@ -1330,7 +1332,7 @@
       });
     }, 6000);
   </script>
-  <script src="script.js?v=20261023a"></script>
+  <script src="script.js?v=20261023b"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script type="text/javascript">
     (function() { emailjs.init("zTOU9dbAR0XbmjhoR"); })();
