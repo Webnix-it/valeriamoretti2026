@@ -1314,9 +1314,10 @@
 
   function goToContactStep(step) {
     step = Math.max(1, Math.min(CONTACT_TOTAL_STEPS, step));
-    document.querySelectorAll('#contact-form .cs-step').forEach(el => {
-      el.classList.toggle('active', Number(el.dataset.step) === step);
-    });
+    for (let n = 1; n <= CONTACT_TOTAL_STEPS; n++) {
+      const el = document.getElementById(`cs-step${n}`);
+      if (el) el.classList.toggle('active', n === step);
+    }
     contactCurrentStep = step;
     // Progress: barra + "Step X di 4" + percentuale
     const bar = document.getElementById('contact-progress-bar');
@@ -1337,7 +1338,7 @@
   }
 
   function validateContactInputStep(step) {
-    const el = document.querySelector(`#contact-form .cs-step[data-step="${step}"]`);
+    const el = document.getElementById(`cs-step${step}`);
     if (!el) return true;
     let ok = true;
     const showErr = (id, on) => { const e = document.getElementById(id); if (e) e.style.display = on ? 'block' : 'none'; };
