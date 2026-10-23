@@ -2142,7 +2142,59 @@ body.loading { overflow: hidden; }
   line-height: 1.8;
 }
 
+/* ============================================================
+   "Parliamone insieme" — effetto Uiverse (cssbuttons-io) + zoom hover 1.2
+   ripple ::after, sollevamento translateY e ombra al passaggio.
+   ============================================================ */
 #faq-vm .faq-vm-cta-button {
+  position: relative;
+  z-index: 1;
+  font-size: 17px;
+  text-transform: uppercase;
+  padding: 1em 2.5em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  cursor: pointer;
+  border-radius: 6em;
+  transition: all 0.2s ease;
+  border: none;
+  font-family: 'Inter', inherit;
+  font-weight: 500;
+  color: #1b2a24;
+  background-color: #ffffff;
+  text-decoration: none;
+}
+#faq-vm .faq-vm-cta-button::after {
+  content: "";
+  display: inline-block;
+  height: 100%;
+  width: 100%;
+  border-radius: 100px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  background-color: #fff;
+  transition: all 0.4s ease;
+}
+#faq-vm .faq-vm-cta-button:hover {
+  transform: scale(1.2) translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  background-color: #ffffff;
+  color: #1b2a24;
+}
+#faq-vm .faq-vm-cta-button:hover::after {
+  transform: scaleX(1.4) scaleY(1.6);
+  opacity: 0;
+}
+#faq-vm .faq-vm-cta-button:active {
+  transform: scale(1.2) translateY(-1px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+#faq-vm .faq-vm-cta-button--legacy {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2168,14 +2220,6 @@ body.loading { overflow: hidden; }
   width: 19px;
   height: 19px;
   transition: transform 0.3s ease;
-}
-
-#faq-vm .faq-vm-cta-button:hover {
-  transform: translateY(-3px);
-  background: var(--faq-salvia);
-  border-color: var(--faq-salvia);
-  color: var(--faq-verde-scuro);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.15);
 }
 
 #faq-vm .faq-vm-cta-button:hover svg {
