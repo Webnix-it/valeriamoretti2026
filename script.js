@@ -1485,7 +1485,7 @@
     activeModal = 'contact-modal';
     document.addEventListener('keydown', handleContactEscapeKey);
     window.resetContactForm();
-    setTimeout(() => { const firstInput = modal.querySelector('.contact-step.active input:not([type=hidden]), .contact-step.active textarea'); if (firstInput) firstInput.focus(); }, 100);
+    setTimeout(() => { const firstInput = modal.querySelector('.cs-step.active input:not([type=hidden]), .cs-step.active textarea'); if (firstInput) firstInput.focus(); }, 100);
   }
 
   function closeContactModal() {
