@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Area Riservata | Valeria Moretti — Pannello Amministrativo</title>
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Font Heavitas locale per i titoli della dashboard */
+    @font-face {
+      font-family: 'Heavitas';
+      src: url('Heavitas.ttf') format('truetype');
+      font-weight: normal; font-style: normal; font-display: swap;
+    }
+    /* ==========================================================
+       ADMIN DASHBOARD — Valeria Moretti (stile coordinato al sito)
+       ========================================================== */
+    :root {
+      --verde-bosco: #2f4f3e;
+      --salvia: #8fac8f;
+      --crema: #fbf8f2;            /* sfondo dashboard: crema chiaro (come prima) */
+      --avorio: #ffffff;           /* card chiare */
+      --antracite: #1b2a24;        /* testo principale scuro */
+      --grigio: #6b7280;
+      --bordo: #591c2f;
+      --danger: #b3382f;
+      --warn: #c07f2a;
+      --ok: #2e7d4f;
+      --radius: 14px;
+      --shadow: 0 10px 30px rgba(47, 79, 62, .10);
+      --sidebar-w: 265px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--crema); color: var(--antracite); min-height: 100vh; }
+    button { font-family: inherit; cursor: pointer; }
+    input, textarea, select { font-family: inherit; font-size: 14px; color: var(--antracite); background: #fff; border: 1.5px solid #d9d3c6; border-radius: 8px; padding: 9px 12px; width: 100%; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--verde-bosco); box-shadow: 0 0 0 3px rgba(47,79,62,.12); }
+    label { display: block; font-size: 12.5px; font-weight: 600; color: var(--verde-bosco); margin-bottom: 5px; letter-spacing: .02em; }
+    /* Titoli dashboard in Heavitas, tutto il resto sans-serif */
+    h1, h2, h3, .serif { font-family: 'Heavitas', system-ui, sans-serif; letter-spacing: .01em; }
+
+    /* ---------- LOGIN ---------- */
+    #login-view {
+      position: fixed; inset: 0; z-index: 50;
+      background: linear-gradient(150deg, var(--verde-bosco) 0%, #1d3529 60%, #142519 100%);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    #login-view[hidden] { display: none; }
+    .login-card {
+      background: var(--avorio); border-radius: 20px; padding: 44px 38px; width: 100%; max-width: 400px;
+      box-shadow: 0 25px 60px rgba(0,0,0,.35); text-align: center;
+    }
+    .login-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(47,79,62,.08); color: var(--verde-bosco); font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 999px; margin-bottom: 18px; }
+    .login-card h1 { font-size: 26px; color: var(--verde-bosco); margin-bottom: 6px; }
+    .login-card p.sub { color: var(--grigio); font-size: 14px; line-height: 1.55; margin-bottom: 26px; }
+    .btn-google {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+      background: #fff; border: 1.5px solid #d9d3c6; border-radius: 10px; padding: 13px 18px;
+      font-size: 15px; font-weight: 600; color: var(--antracite); transition: all .2s;
+    }
+    .btn-google:hover { border-color: var(--verde-bosco); box-shadow: var(--shadow); transform: translateY(-1px); }
+    .btn-google svg { width: 18px; height: 18px; }
+    .login-msg { margin-top: 16px; font-size: 13px; min-height: 18px; }
+    .login-msg.err { color: var(--danger); }
+    .login-foot { margin-top: 26px; font-size: 12px; color: var(--grigio); }
+    .login-foot a { color: var(--verde-bosco); }
+
+    /* ---------- LAYOUT ---------- */
+    #app-view { display: none; }
+    #app-view.active { display: block; }
+
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-w);
+      background: var(--verde-bosco); color: #e9efe7; padding: 22px 16px;
+      display: flex; flex-direction: column; z-index: 30;
+      /* Scroll verticale sempre disponibile (le sezioni sono tante) */
+      overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent;
+    }
+    .sidebar::-webkit-scrollbar { width: 8px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.28); border-radius: 999px; }
+    .sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.5); }
+    .side-brand { padding: 4px 10px 18px; border-bottom: 1px solid rgba(255,255,255,.14); margin-bottom: 16px; }
+    .side-brand strong { display: block; font-family: 'Heavitas', system-ui, sans-serif; font-size: 19px; color: #fff; }
+    .side-brand span { font-size: 12px; color: #dce7dc; opacity: 1; }
+    .side-brand .tag-private { display: inline-block; margin-top: 8px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: rgba(255,255,255,.14); padding: 3px 10px; border-radius: 999px; }
+    /* Le voci non devono comprimersi: se lo spazio è poco, la sidebar scrolla */
+    .side-nav { display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; }
+    .side-btn { flex-shrink: 0; }
+    .side-brand { flex-shrink: 0; }
+    .side-help { flex-shrink: 0; }
+    .side-user { flex-shrink: 0; }
+    .side-btn {
+      display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
+      background: transparent; border: none; color: #d5e0d3; padding: 12px 14px;
+      border-radius: 10px; font-size: 14px; font-weight: 500; transition: all .15s;
+    }
+    .side-btn i { width: 20px; text-align: center; }
+    .side-btn small { display: block; font-size: 11px; color: #c3d2c4; font-weight: 400; opacity: 1; }
+    .side-btn:hover { background: rgba(255,255,255,.08); color: #fff; transform: scale(1.2); }
+    .side-btn { transition: transform .25s ease, background .2s ease, color .2s ease; transform-origin: left center; position: relative; z-index: 2; }
+    /* Voce selezionata: box bianco con icona e testo nel verde brand */
+    .side-btn.active { background: #ffffff; color: #315b55; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+    .side-btn.active i { color: #315b55; }
+    .side-btn.active span { color: #315b55; }
+    .side-btn.active small { color: #315b55; opacity: .8; }
+    /* Se la sidebar è più alta dello schermo, porta in vista la voce attiva */
+    .sidebar.scrolled-to-active { scroll-behavior: smooth; }
+    .side-user { padding: 14px 10px 4px; border-top: 1px solid rgba(255,255,255,.14); margin-top: 14px; font-size: 12px; }
+    .side-user .u-email { opacity: .8; word-break: break-all; margin-bottom: 10px; }
+    .btn-logout { width: 100%; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 8px; padding: 9px; font-size: 13px; }
+    .btn-logout:hover { background: rgba(255,255,255,.2); }
+
+    .main { margin-left: var(--sidebar-w); min-height: 100vh; padding: 30px 34px 80px; }
+    /* ---------- ANTEPRIMA LIVE (pannello destro) ---------- */
+    @media (min-width: 1200px) {
+      .main { margin-right: 390px; }
+    }
+    .preview-pane {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 370px; z-index: 25;
+      background: #f4f1ea; border-left: 1px solid #ddd6c8; padding: 20px 18px;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .preview-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .preview-head h3 { font-family: 'Heavitas', system-ui, sans-serif; color: var(--verde-bosco); font-size: 17px; margin: 0; }
+    .preview-note { font-size: 12px; color: var(--grigio); line-height: 1.5; margin: 8px 0 12px; }
+    .preview-scroll { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; padding-right: 4px; }
+    .pv-block { background: #fff; border: 1px solid #e3ddcf; border-radius: 12px; padding: 14px 14px 16px; box-shadow: 0 2px 8px rgba(40,50,40,.05); }
+    .pv-block h4 { font-family: 'Heavitas', system-ui, sans-serif; font-size: 13.5px; color: var(--verde-bosco); margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+    .pv-empty { font-size: 12.5px; color: #98917f; font-style: italic; margin: 0; }
+    .pv-hint { font-size: 11.5px; color: #98917f; margin: -4px 0 10px; line-height: 1.5; }
+    /* ---- Anteprima live del popup Test (replica lo stile del sito pubblico) ---- */
+    .pv-quiz-live { display: flex; flex-direction: column; gap: 10px; }
+    .pvq-modal { background: linear-gradient(160deg, #f7f4ec, #eef3ea); border: 1px solid #ddd6c8; border-radius: 14px; padding: 14px 14px 16px; box-shadow: 0 6px 18px rgba(40,50,40,.08); }
+    .pvq-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .pvq-head i { color: #2f4f3e; font-size: 13px; }
+    .pvq-title { font-family: 'Heavitas', system-ui, sans-serif; font-size: 14px; color: #2f4f3e; line-height: 1.3; }
+    .pvq-progress { height: 5px; border-radius: 999px; background: #e2ddcd; overflow: hidden; margin: 8px 0 12px; }
+    .pvq-progress span { display: block; height: 100%; width: 12%; border-radius: 999px; background: linear-gradient(90deg, #7d9c7d, #2f4f3e); }
+    .pvq-qnum { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7d9c7d; margin-bottom: 4px; }
+    .pvq-qtext { font-size: 12.5px; font-weight: 600; color: #3a3a35; line-height: 1.5; margin-bottom: 9px; }
+    .pvq-answer { display: flex; align-items: flex-start; gap: 8px; background: #fff; border: 1.5px solid #e2ddcd; border-radius: 10px; padding: 8px 10px; margin-bottom: 7px; font-size: 11.5px; color: #4b4a44; line-height: 1.45; transition: border-color .2s, transform .2s; }
+    .pvq-answer:last-child { margin-bottom: 0; }
+    .pvq-answer:hover { border-color: #7d9c7d; transform: translateX(2px); }
+    .pvq-letter { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: #e3ebe5; color: #2f4f3e; font-size: 10px; font-weight: 700; }
+    .pvq-off-badge { margin-left: auto; flex: none; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #b0483a; background: #f6e3e0; border-radius: 999px; padding: 2px 7px; }
+    .pvq-off .pvq-modal { opacity: .55; }
+    .pvq-draft { outline: 2px dashed var(--salvia-dark, #7d9c7d); outline-offset: 3px; border-radius: 14px; position: relative; }
+    .pvq-draft::after { content: "bozza"; position: absolute; top: -9px; right: 8px; background: var(--salvia-dark, #7d9c7d); color: #fff; font-size: 9.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; z-index: 3; }
+    /* card anteprima pacchetti (ricrea lo stile della Home con i temi correnti) */
+    .pv-pkg { border: 1.5px solid var(--pv-border, #dcd6c6); border-radius: 12px; padding: 12px; margin-bottom: 10px; background: var(--pv-card-bg, #fff); }
+    .pv-pkg:last-child { margin-bottom: 0; }
+    .pv-pkg .pv-pname { font-weight: 700; font-size: 13.5px; color: var(--pv-heading, var(--verde-bosco)); font-family: 'Heavitas', system-ui, sans-serif; }
+    .pv-pkg .pv-pprice { font-size: 12.5px; color: var(--pv-text, var(--antracite)); margin-top: 2px; }
+    .pv-pkg .pv-pdesc { font-size: 12px; color: var(--pv-text, #55534b); line-height: 1.5; margin-top: 5px; }
+    .pv-pkg .pv-pbtn { display: inline-block; margin-top: 8px; font-size: 11.5px; font-weight: 600; padding: 6px 12px; border-radius: 8px; background: var(--pv-btn-bg, var(--verde-bosco)); color: var(--pv-btn-txt, #fff); }
+    /* chip anteprima quiz */
+    .pv-q { display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; padding: 5px 0; border-bottom: 1px dashed #eee7d8; }
+    .pv-q:last-child { border-bottom: none; }
+    .pv-q .pv-num { font-weight: 700; color: var(--salvia-dark, #7d9c7d); min-width: 20px; }
+    .pv-q.off { opacity: .45; text-decoration: line-through; }
+    /* editor dei risultati del test (testi inviati via EmailJS) */
+    .q-profile-card { border: 1.5px solid #e6e0d4; border-radius: var(--radius); background: #fffdf9; padding: 16px 16px 14px; margin-bottom: 14px; }
+    .q-profile-card:last-child { margin-bottom: 0; }
+    .q-profile-card h4 { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--antracite); margin-bottom: 12px; }
+    .q-profile-card .badge { flex: 0 0 auto; }
+    /* Bozza in corso di digitazione (anteprima live mentre scrivi nei form) */
+    .pv-draft { outline: 2px dashed var(--salvia-dark, #7d9c7d); outline-offset: 3px; border-radius: 10px; position: relative; }
+    .pv-draft::after { content: "bozza"; position: absolute; top: -9px; right: 6px; background: var(--salvia-dark, #7d9c7d); color: #fff; font-size: 9.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; z-index: 3; }
+    /* ---------- CARD PACCHETTO IN ANTEPRIMA: stile identico alla Home ----------
+       Repliche fedeli di .service-card / .featured / .btn--uiverse di style.css,
+       con i colori pilotati dalle variabili --pv-* impostate da admin.js.      */
+    .pv-service-card {
+      box-sizing: border-box; position: relative; display: flex; flex-direction: column; gap: 8px;
+      background: var(--pv-card-bg, #ffffff); border: 1px solid #e6e0d2; border-radius: 17px;
+      padding: 14px 14px 14px; margin-bottom: 12px; box-shadow: 0 6px 18px rgba(40,50,40,.06);
+    }
+    .pv-service-card:last-child { margin-bottom: 0; }
+    .pv-service-card h3 { font-family: sans-serif; font-weight: 700; font-size: 0.95rem; line-height: 1.3; margin: 0; display: flex; align-items: center; gap: 8px; color: var(--pv-card-txt, #2e3734); }
+    .pv-title-icon { flex: 0 0 auto; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; color: var(--pv-btn1-bg, #315B55); background: var(--pv-sage-bg, #C6D6CA); border-radius: 8px; }
+    .pv-title-icon svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .pv-service-price { font-family: 'Playfair Display', serif; font-size: 1.25rem; color: var(--pv-btn1-bg, #315B55); font-weight: 700; line-height: 1.1; }
+    .pv-service-card ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .pv-service-card li { font-size: 0.74rem; color: var(--pv-card-txt, #2e3734); padding: 0 0 0 20px; position: relative; line-height: 1.4; }
+    .pv-service-card li::before { content: "✓"; position: absolute; left: 0; top: 1px; width: 14px; height: 14px; border-radius: 50%; background: var(--pv-sage-bg, #C6D6CA); color: var(--pv-btn1-bg, #315B55); font-size: 0.55rem; font-weight: 700; display: grid; place-items: center; }
+    .pv-service-card p.pv-pdesc { font-size: 0.74rem; color: var(--pv-card-txt, #2e3734); opacity: .85; line-height: 1.5; margin: 0; }
+    .pv-service-tag { position: absolute; top: -9px; left: 14px; background: var(--pv-sage-bg, #C6D6CA); color: var(--pv-btn1-bg, #315B55); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; padding: 3px 9px; border-radius: 999px; z-index: 2; }
+    .pv-hbtn { display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; margin-top: auto; padding: 8px 12px; font-size: 0.74rem; font-weight: 600; border-radius: 17px; border: 1px solid rgba(255,255,255,.9); box-shadow: 4px 8px 19px -3px rgba(0,0,0,.27); }
+    .pv-hbtn--forest { background: var(--pv-btn1-bg, #315B55); color: var(--pv-btn1-txt, #F8F5EF); }
+    .pv-hbtn--sage   { background: var(--pv-sage-bg, #C6D6CA);  color: var(--pv-sage-txt, #212121); }
+    .pv-hbtn--light  { background: var(--pv-btn2-bg, #F8F5EF);  color: var(--pv-btn2-txt, #212121); }
+    .pv-hbtn--nav    { background: var(--pv-nav-bg, #315B55);   color: var(--pv-nav-txt, #F8F5EF); }
+    .pv-service-card.featured { background: var(--pv-feat-bg, #315B55); border-color: var(--pv-feat-bg, #315B55); }
+    .pv-service-card.featured h3, .pv-service-card.featured .pv-service-price, .pv-service-card.featured li, .pv-service-card.featured p.pv-pdesc { color: var(--pv-feat-txt, #F8F5EF); }
+    .pv-service-card.featured .pv-title-icon { background: rgba(248,245,239,.15); color: var(--pv-feat-txt, #F8F5EF); border: 1px solid rgba(248,245,239,.25); }
+    .pv-service-card.featured li::before { background: rgba(248,245,239,.2); color: var(--pv-feat-txt, #F8F5EF); border: 1px solid rgba(248,245,239,.3); }
+    /* ---------- MINIATURA HOME (anteprima sezioni + bottoni) ---------- */
+    .pv-mini-section { border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,.05); }
+    .pv-mini-section:last-child { margin-bottom: 0; }
+    .pv-mini-kicker { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; opacity: .7; }
+    .pv-mini-section h4 { font-family: 'Heavitas', system-ui, sans-serif !important; font-size: 13px; margin: 4px 0 6px; color: inherit !important; }
+    .pv-mini-lead { font-size: 11px; opacity: .8; margin: 0 0 10px; }
+    .pv-mini-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pv-mini-btns .pv-hbtn { width: auto; }
+    .pv-mini-hero { background: var(--pv-hero-bg, #F8F5EF); color: var(--pv-hero-txt, #2e3734); }
+    .pv-mini-services { background: var(--pv-services-bg, #F8F5EF); color: var(--pv-services-txt, #2e3734); }
+    .pv-mini-method { background: var(--pv-method-bg, #E3EBE5); color: var(--pv-method-txt, #2e3734); }
+    .pv-mini-testi { background: var(--pv-testi-bg, #E3EBE5); color: var(--pv-testi-txt, #2e3734); }
+    .pv-mini-faq { background: var(--pv-faq-bg, #F8F5EF); color: var(--pv-faq-txt, #2e3734); }
+    .pv-mini-grid { display: flex; flex-direction: column; gap: 10px; }
+    .pv-mini-grid .pv-service-card { margin-bottom: 0; }
+    .pv-mini-tcard { background: var(--pv-card-bg, #fff); border: 1px solid #e6e0d2; border-radius: 10px; padding: 10px; font-size: 11.5px; color: var(--pv-card-txt, #2e3734); }
+    .pv-mini-tcard p { margin: 4px 0 0; line-height: 1.5; }
+    .pv-mini-footer { background: var(--pv-footer-bg, #22272b); color: var(--pv-footer-txt, #dfe4dd); border-radius: 10px; padding: 10px 12px; font-size: 10.5px; text-align: center; }
+    @media (max-width: 1199px) {
+      .preview-pane { position: static; width: auto; border-left: none; border-top: 1px solid #ddd6c8; margin-left: var(--sidebar-w); }
+      .preview-scroll { max-height: 520px; }
+    }
+    @media (max-width: 760px) {
+      .preview-pane { margin-left: 0; }
+    }
+    /* ---------- COLORI & STILE ---------- */
+    /* Griglia delle sezioni: una card per ogni area del sito, con dentro le
+       sue righe (sfondo + testo). Prima era un unico grid a 3 colonne in cui
+       le righe si schiacciavano e i testi andavano a capo in modo caotico. */
+    .color-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 14px; align-items: start; margin-top: 14px; }
+    .color-group { background: #fbfaf6; border: 1px solid #e5dfd0; border-radius: 12px; padding: 12px 14px; min-width: 0; }
+    .color-group-title { font-weight: 700; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--verde-bosco); margin: 0 0 6px; line-height: 1.4; }
+    .color-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border: 0; border-radius: 0; background: transparent; min-width: 0; }
+    .color-row + .color-row { border-top: 1px dashed #e7e1d3; }
+    .color-row label.cl { margin: 0; flex: 1 1 auto; min-width: 0; font-size: 12.5px; line-height: 1.35; }
+    .color-row input[type="color"] { width: 42px; height: 32px; padding: 2px; border: 1px solid #cfc8ba; border-radius: 8px; background: #fff; cursor: pointer; flex: none; }
+    .color-row .hexv { font-size: 12px; color: var(--verde-bosco); font-family: ui-monospace, monospace; text-align: center; border: 1px solid #d9d3c6; border-radius: 8px; background: #fff; padding: 6px 6px; width: 92px; flex: none; cursor: text; }
+    .color-row .hexv:focus { outline: 2px solid var(--verde-bosco); border-color: transparent; }
+    @media (max-width: 620px) {
+      .color-row label.cl { font-size: 12px; }
+      .color-row .hexv { width: 84px; }
+    }
+    .page-head { margin-bottom: 24px; }
+    .page-head h2 { font-size: 26px; color: var(--verde-bosco); }
+    .page-head p { color: var(--grigio); font-size: 13.5px; margin-top: 4px; }
+
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ---------- COMPONENTS ---------- */
+    .card { background: var(--avorio); border: 1px solid #ece5d8; border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; margin-bottom: 22px; }
+    /* Colori & stile — box sezioni/bottoni */
+    .style-box { background: #f6f3ec; border: 1.5px solid #e4ddcf; border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; margin-bottom: 22px; cursor: pointer; transition: background .25s ease, border-color .25s ease, box-shadow .25s ease; }
+    .style-box h3 { color: var(--verde-bosco); font-size: 16px; display: flex; align-items: center; gap: 10px; transition: color .25s ease; }
+    .style-box h3 i { color: var(--salvia); font-size: 18px; transition: color .25s ease; }
+    .style-box-hint { font-size: 13px; color: var(--grigio); margin-top: 8px; transition: color .25s ease; }
+    .style-box.active { background: #ffffff; border-color: var(--verde-bosco); box-shadow: 0 12px 32px rgba(47,79,62,.18); }
+    .style-box.active h3, .style-box.active .style-box-hint { color: var(--verde-bosco); }
+    .style-box.active h3 i { color: var(--verde-bosco); }
+
+    /* ---- Selettore icone pacchetto (dashboard Servizi) ---- */
+    .icon-picker { padding: 18px; border: 1.5px solid #e4eae6; border-radius: 16px; background: #fff; }
+    .icon-picker .ip-head { margin-bottom: 14px; }
+    .icon-picker .ip-head h4 { font-size: 15px; margin: 0 0 4px; letter-spacing: -.3px; color: #25332f; }
+    .icon-picker .ip-head p { margin: 0; color: #75817c; font-size: 12.5px; line-height: 1.5; }
+    .icon-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .icon-option { position: relative; min-height: 96px; padding: 12px 6px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; border: 1.5px solid #e4e9e6; border-radius: 14px; background: #fff; color: #5c6b64; cursor: pointer; font: inherit; transition: .2s ease; }
+    .icon-option:hover { border-color: #8eaaa0; background: #f8fbf9; transform: translateY(-2px); }
+    .icon-option[aria-pressed="true"] { color: #315b55; border-color: #315b55; background: #edf4f0; box-shadow: 0 0 0 2px rgba(49,91,85,.08); }
+    .icon-option svg { width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-option span { font-size: 11.5px; font-weight: 600; text-align: center; }
+    .icon-option .check { display: none; position: absolute; top: 7px; right: 7px; width: 16px; height: 16px; border-radius: 50%; background: #315b55; color: #fff; align-items: center; justify-content: center; font-size: 10px; }
+    .icon-option[aria-pressed="true"] .check { display: flex; }
+    .icon-selection { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: #f7f9f8; border: 1px solid #edf0ee; }
+    .icon-preview { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; background: #e5eee9; color: #315b55; border-radius: 10px; }
+    .icon-preview svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-selection small { display: block; margin-bottom: 3px; color: #829089; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; }
+    .icon-selection strong { font-size: 13px; font-weight: 650; color: #25332f; }
+    .icon-selection code { margin-left: auto; font-size: 11px; color: #728079; background: #fff; border: 1px solid #e5eae7; border-radius: 7px; padding: 5px 7px; }
+    @media (max-width: 720px) { .icon-options { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 480px) { .icon-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } .icon-selection code { display: none; } }
+    .card > h3 { font-size: 18px; color: var(--verde-bosco); margin-bottom: 14px; display: flex; align-items: center; gap: 9px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .row > div { flex: 1; min-width: 160px; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 9px; padding: 11px 20px; font-size: 14px; font-weight: 600; transition: all .15s; }
+    .btn--primary { background: var(--verde-bosco); color: #fff; }
+    .btn--primary:hover { background: #234031; }
+    .btn--soft { background: rgba(143,172,143,.18); color: var(--verde-bosco); border: 1.5px solid var(--salvia); }
+    .btn--soft:hover { background: rgba(143,172,143,.32); }
+    .btn--danger { background: transparent; color: var(--danger); border: 1.5px solid #e3b7b2; }
+    .btn--danger:hover { background: #fbeceb; }
+    .btn--sm { padding: 7px 13px; font-size: 12.5px; border-radius: 7px; }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; }
+    /* Hover zoom 1.2 sui bottoni principali (Salva recensione / Annulla modifica) */
+    #review-form .btn, #review-form .btn:hover { transform-origin: center; }
+    #review-form .btn:hover:not([disabled]) { transform: scale(1.2); z-index: 1; position: relative; }
+    #review-form .btn { transition: all .2s ease; }
+
+    /* ---------- RATING A STELLE (aggiunta/modifica recensione) ---------- */
+    .star-rating { display: flex; gap: 6px; align-items: center; margin-top: 2px; }
+    .star-rating input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+    .star-rating label {
+      cursor: pointer; font-size: 30px; line-height: 1; margin: 0; color: #cfc8ba;
+      text-shadow: 1px 1px 0 rgba(0,0,0,.45);            /* ombra nera */
+      transition: transform .18s ease, color .18s ease, text-shadow .18s ease;
+    }
+    /* hover: animazione + colore giallo */
+    .star-rating label:hover {
+      transform: scale(1.25) rotate(-6deg);
+      color: #f5c518;
+      text-shadow: 2px 3px 5px rgba(0,0,0,.5);
+    }
+    /* stelle selezionate (gialle con ombra nera) */
+    .star-rating label.checked {
+      color: #d9a419;
+      text-shadow: 1px 2px 3px rgba(0,0,0,.5);
+    }
+    .star-rating label.checked:hover { color: #f5c518; }
+    .star-rating .star-value { font-size: 12.5px; color: var(--grigio); margin-left: 8px; font-weight: 600; }
+
+    /* ---------- CERCA (stile Uiverse — garerim) ---------- */
+    .container-input { position: relative; display: inline-flex; align-items: center; }
+    .container-input > svg {
+      position: absolute; top: 50%; left: 10px;
+      transform: translate(0, -50%); pointer-events: none;
+    }
+    .container-input .input {
+      width: 150px; padding: 10px 14px 10px 40px; border-radius: 9999px;
+      border: solid 1px #333; background: #fff; transition: all .2s ease-in-out;
+      outline: none; opacity: .8; font-size: 14px;
+    }
+    .container-input .input:focus { opacity: 1; width: 250px; box-shadow: none; border-color: #333; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--grigio); padding: 10px 12px; border-bottom: 2px solid #e7e0d2; }
+    td { padding: 12px; border-bottom: 1px solid #efe9dc; vertical-align: top; }
+    tr:hover td { background: rgba(143,172,143,.06); }
+    .tbl-wrap { overflow-x: auto; }
+
+    .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .badge--on { background: #e2f2e7; color: var(--ok); }
+    .badge--off { background: #f3eaea; color: var(--danger); }
+    .badge--info { background: #e8eef7; color: #3b5b8c; }
+    .stars-view { color: #d9a419; letter-spacing: 1px; white-space: nowrap; }
+
+    .switch { position: relative; display: inline-block; width: 40px; height: 22px; flex: none; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider-sw { position: absolute; inset: 0; background: #cfc8ba; border-radius: 999px; transition: .2s; }
+    .slider-sw:before { content: ""; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+    .switch input:checked + .slider-sw { background: var(--ok); }
+    .switch input:checked + .slider-sw:before { transform: translateX(18px); }
+
+    .empty-note { color: var(--grigio); font-size: 13.5px; padding: 18px 6px; text-align: center; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 100;
+      background: var(--verde-bosco); color: #fff; padding: 13px 20px; border-radius: 10px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25); font-size: 14px; opacity: 0; transform: translateY(12px);
+      transition: all .25s; pointer-events: none; max-width: 340px;
+    }
+    #toast.show { opacity: 1; transform: none; }
+    #toast.err { background: var(--danger); }
+
+    /* Confirm modal */
+    #confirm-overlay { position: fixed; inset: 0; background: rgba(20,30,24,.55); z-index: 80; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    #confirm-overlay[hidden] { display: none; }
+    .confirm-box { background: var(--avorio); border-radius: 16px; max-width: 420px; width: 100%; padding: 28px; box-shadow: 0 25px 60px rgba(0,0,0,.35); }
+    .confirm-box h3 { color: var(--verde-bosco); margin-bottom: 10px; font-size: 19px; }
+    .confirm-box p { font-size: 14px; color: var(--antracite); line-height: 1.55; margin-bottom: 22px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* Option editor rows */
+    .opt-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .opt-row input[type=text] { flex: 1; }
+    .opt-row .profile-sel { width: 130px; flex: none; }
+    .icon-btn { background: transparent; border: none; color: var(--grigio); font-size: 14px; padding: 6px; border-radius: 6px; }
+    .icon-btn:hover { background: #eee7d9; color: var(--danger); }
+
+    .q-item { border: 1.5px solid #e7e0d2; border-radius: 10px; padding: 14px; margin-bottom: 12px; background: #fff; }
+    .q-item.disabled-q { opacity: .55; }
+    .q-item-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .q-num { font-weight: 700; color: var(--salvia); font-size: 15px; min-width: 26px; }
+    .q-text { flex: 1; font-size: 14px; font-weight: 500; }
+    .q-actions { display: flex; gap: 4px; }
+
+    .req-card { border: 1.5px solid #e7e0d2; border-left: 4px solid var(--salvia); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; background: #fff; }
+    .req-card summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--verde-bosco); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .req-body { margin-top: 12px; font-size: 13.5px; }
+    .req-body dl { display: grid; grid-template-columns: 160px 1fr; gap: 6px 14px; }
+    .req-body dt { color: var(--grigio); font-weight: 600; }
+
+    .loading-bar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 3px; background: transparent; z-index: 60; }
+    .loading-bar.busy:after { content: ""; display: block; height: 100%; width: 40%; background: var(--salvia); animation: slide 1s linear infinite; }
+    @keyframes slide { from { margin-left: -40%; } to { margin-left: 100%; } }
+
+    @media (max-width: 900px) {
+      .sidebar { position: static; width: 100%; flex-direction: column; padding: 16px; }
+      .side-nav { flex-direction: row; flex-wrap: wrap; }
+      .side-btn { width: auto; }
+      .main { margin-left: 0; padding: 20px 16px 60px; }
+      .loading-bar { left: 0; }
+    }
+
+    /* ---------- TEMA CHIARO DASHBOARD (come l'originale) — rifiniture ---------- */
+    body { background: var(--crema); }
+    .card { background: var(--avorio); border-color: #e6e0d2; box-shadow: var(--shadow); }
+    input, textarea, select { background: #fff; border-color: #d9d3c6; color: var(--antracite); }
+    input:focus, textarea:focus, select:focus { border-color: var(--verde-bosco); box-shadow: 0 0 0 3px rgba(47,79,62,.12); }
+    label { color: var(--verde-bosco); }
+    .btn--primary { background: var(--verde-bosco); color: #fff; }
+    .btn--primary:hover { background: #24402f; }
+    .btn--danger { border-color: #d8b4ae; color: var(--danger); }
+    .btn--danger:hover { background: rgba(179,56,47,.08); }
+    th { color: var(--grigio); border-bottom-color: #e2dccd; }
+    td { border-bottom-color: #ece6d9; }
+    tr:hover td { background: rgba(143,172,143,.08); }
+    .badge--on { background: rgba(46,125,79,.14); color: #2e7d4f; }
+    .badge--off { background: rgba(179,56,47,.12); color: #b3382f; }
+    .badge--info { background: rgba(59,91,140,.12); color: #3b5b8c; }
+    .q-item, .req-card { background: #fbf8f2; border-color: #e6e0d2; }
+    .icon-btn:hover { background: #efe9db; }
+    .slider-sw { background: #cfc8b8; }
+    .container-input .input { background: #fff; border-color: #c9c2b2; color: var(--antracite); }
+    .container-input > svg path { fill: #6b7280; }
+    .color-group { background: #fbf8f2; border-color: #e6e0d2; }
+    .color-group-title { color: var(--verde-bosco); }
+    .color-row + .color-row { border-top-color: #e6e0d2; }
+    .color-row input[type="color"] { background: #fff; border-color: #d9d3c6; }
+    .color-row .hexv { background: #fff; border-color: #d9d3c6; color: var(--verde-bosco); }
+    .star-rating label { color: #cfc8b8; }
+    #toast { background: #1f2937; color: #f8f6f1; }
+    .login-card { background: #fffdf8; }
+    .login-card h1 { color: var(--verde-bosco); }
+    .login-badge { background: rgba(47,79,62,.08); color: var(--verde-bosco); }
+    .btn-google { background: #fff; border-color: #d9d3c6; color: var(--antracite); }
+    .btn-google:hover { border-color: var(--verde-bosco); }
+    .confirm-box p { color: var(--antracite); }
+    .empty-note, .pv-empty { color: var(--grigio); }
+    /* L'anteprima live a destra RESTA CHIARA: deve replicare esattamente lo stile della Home */
+    .preview-pane { background: #f4f1ea; }
+    .preview-head h3 { color: #2f4f3e; }
+    .preview-note { color: #6b7280; }
+    .pv-empty-state { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 40px 18px; color: #8a9299; }
+    .pv-empty-state[hidden] { display: none; }
+    .pv-empty-state i { font-size: 26px; color: #b9c2bd; }
+    .pv-empty-state p { font-size: 12.5px; line-height: 1.6; margin: 0; max-width: 240px; }
+    .pv-block { background: #fff; }
+    .pv-block h4 { color: #2f4f3e; }
+
+    /* ---------- Aiuto: bottoni Istruzioni / Tutorial ---------- */
+    .side-help { display: flex; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.14); }
+    .btn--help, .btn--tour {
+      flex: 1; font-size: 12.5px; padding: 9px 10px; border-radius: 9px; border: none; cursor: pointer;
+      font-weight: 600; transition: transform .2s ease, filter .2s ease; color: #fff;
+    }
+    .btn--help { background: rgba(255,255,255,.14); }
+    .btn--tour { background: #d9a419; color: #24332b; }
+    .btn--help:hover, .btn--tour:hover { transform: scale(1.06); filter: brightness(1.08); }
+
+    /* ---------- Modale Istruzioni ---------- */
+    #help-overlay { position: fixed; inset: 0; z-index: 120; background: rgba(16,18,21,.62); display: flex; align-items: center; justify-content: center; padding: 22px; }
+    #help-overlay[hidden] { display: none; }
+    .help-box { background: #fbf8f2; border-radius: 16px; max-width: 900px; width: 100%; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 24px 70px rgba(0,0,0,.4); overflow: hidden; }
+    .help-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px 14px; border-bottom: 1px solid #e7e0d2; }
+    .help-head h3 { font-family: 'Heavitas', sans-serif; font-size: 17px; color: #2f4f3e; margin: 0; }
+    .help-close { background: transparent; border: none; font-size: 26px; line-height: 1; color: #6b7280; cursor: pointer; padding: 2px 8px; border-radius: 8px; }
+    .help-close:hover { background: #eee7d9; color: #24332b; }
+    .help-scroll { overflow-y: auto; padding: 6px 22px 14px; }
+    .help-scroll section { margin-top: 16px; }
+    .help-scroll h4 { font-family: 'Heavitas', sans-serif; font-size: 14px; color: #2f4f3e; margin: 0 0 6px; }
+    .help-scroll p, .help-scroll li { font-size: 13.5px; line-height: 1.6; color: #3c4037; margin: 0 0 6px; }
+    .help-scroll ul { padding-left: 20px; margin: 0; }
+    .help-scroll strong { color: #24332b; }
+    .help-foot { display: flex; justify-content: space-between; gap: 10px; padding: 14px 22px 18px; border-top: 1px solid #e7e0d2; }
+    /* Istruzioni: sottotitoli, suggerimenti e domande apribili */
+    .help-scroll section { scroll-margin-top: 8px; }
+    .help-sub { font-family: 'Heavitas', sans-serif; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #3f5f50; margin: 14px 0 6px; }
+    .help-tip { background: #fff; border-left: 3px solid #7d9c7d; border-radius: 0 8px 8px 0; padding: 9px 12px; font-size: 12.5px; line-height: 1.55; color: #3c4037; margin: 8px 0 4px; }
+    .help-tip strong { color: #24332b; }
+    .help-qa { border: 1px solid #e7e0d2; border-radius: 10px; background: #fff; margin-top: 8px; }
+    .help-qa summary { list-style: none; cursor: pointer; padding: 11px 14px; font-size: 13px; font-weight: 700; color: #24332b; display: flex; gap: 10px; align-items: flex-start; }
+    .help-qa summary::-webkit-details-marker { display: none; }
+    .help-qa summary .qa-mark { flex: none; width: 20px; height: 20px; border-radius: 50%; background: #315b55; color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+    .help-qa summary::after { content: '▾'; margin-left: auto; color: #7d9c7d; font-size: 13px; transition: transform .2s ease; }
+    .help-qa[open] summary::after { transform: rotate(180deg); }
+    .help-qa[open] summary { border-bottom: 1px dashed #ece6d9; }
+    .help-qa .qa-body { padding: 10px 14px 12px 44px; }
+    .help-qa .qa-body p { font-size: 13px; margin: 0 0 6px; }
+    .help-qa .qa-body p:last-child { margin-bottom: 0; }
+    .help-qa .qa-body ul { padding-left: 18px; }
+    .help-qa .qa-body li { font-size: 12.8px; }
+
+    /* ---------- Tour guidato con spotlight ---------- */
+    #tour-overlay { position: fixed; inset: 0; z-index: 130; }
+    #tour-overlay[hidden] { display: none; }
+    #tour-mask { position: absolute; inset: 0; }
+    #tour-hole { transition: all .35s ease; }
+    .tour-card { position: absolute; width: min(360px, calc(100vw - 36px)); background: #fbf8f2; border-radius: 14px; padding: 18px 20px 16px; box-shadow: 0 18px 55px rgba(0,0,0,.45); transition: left .35s ease, top .35s ease; }
+    .tour-card { max-height: calc(100vh - 36px); overflow-y: auto; }
+    .tour-step-indicator { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #6b7280; font-weight: 700; margin-bottom: 2px; }
+    .tour-section { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: #7d9c7d; font-weight: 700; margin-bottom: 6px; }
+    .tour-card h4 { font-family: 'Heavitas', sans-serif; font-size: 15.5px; color: #2f4f3e; margin: 0 0 6px; }
+    .tour-card p { font-size: 13.5px; line-height: 1.55; color: #3c4037; margin: 0 0 14px; }
+    .tour-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .tour-nav-right { display: flex; gap: 8px; }
+    @media (max-width: 760px) { .help-box { max-height: 92vh; } .tour-card { width: calc(100vw - 28px); } }
+
+    .social-field { display:flex; align-items:center; gap:12px; background:#fff; border:1px solid #ddd6c6; border-radius:14px; padding:9px 14px; }
+    .social-field b { width:150px; flex-shrink:0; font-size:13px; color:#2f4f3e; font-weight:700; }
+    .social-field-icon { width:34px; height:34px; border-radius:50%; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+    .pixel-row { display:flex; align-items:center; gap:8px; grid-column:1/-1; }
+    .pixel-row .pixel-field { flex:1; margin-bottom:0; }
+    .pixel-help-btn { width:30px; height:30px; border-radius:50%; border:1.5px solid #cfd9d4; background:#fff; color:#2f4f3e; font-size:17px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:all .2s ease; flex-shrink:0; padding:0; }
+    .pixel-help-btn:hover { background:#315b55; border-color:#315b55; color:#fff; transform:scale(1.08); }
+    .pixel-help-btn.active { background:#315b55; border-color:#315b55; color:#fff; }
+    .pixel-remove-btn { display:inline-flex; align-items:center; gap:7px; border:1.5px solid #e2c8c2; background:#fff; color:#b04a3a; font-size:12.5px; font-weight:600; border-radius:999px; padding:6px 14px; cursor:pointer; transition:all .2s ease; flex-shrink:0; }
+    .pixel-remove-btn:hover { background:#b04a3a; border-color:#b04a3a; color:#fff; transform:scale(1.04); }
+    .pixel-remove-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+    .pixel-help-box { grid-column:1/-1; background:#f4f7f5; border:1px solid #dbe5df; border-left:4px solid #315b55; border-radius:10px; padding:14px 16px; margin-top:10px; font-size:13px; line-height:1.55; color:#3d4a44; animation:pixelHelpIn .25s ease; }
+    @keyframes pixelHelpIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .pixel-help-box[hidden] { display:none; }
+    .pixel-help-head { display:flex; align-items:center; gap:8px; color:#315b55; font-size:13.5px; margin:10px 0 4px; }
+    .pixel-help-head:first-child { margin-top:0; }
+    .pixel-help-box ol { margin:4px 0 4px 22px; padding:0; }
+    .pixel-help-box li { margin-bottom:6px; }
+    .pixel-help-box a { color:#315b55; font-weight:600; }
+    .pixel-help-note { margin-top:8px; font-size:12px; color:#6b7a72; background:#fff; border-radius:8px; padding:8px 10px; border:1px dashed #cfd9d4; }
+    .social-field .input { flex:1; min-width:0; }
+    @media (max-width:640px){ .social-field{flex-wrap:wrap;} .social-field b{width:auto;} }
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var btn = document.getElementById('pixel-help-btn');
+      var box = document.getElementById('pixel-help-box');
+      if (btn && box) {
+        btn.addEventListener('click', function () {
+          var isOpen = !box.hidden;
+          box.hidden = isOpen;
+          btn.classList.toggle('active', !isOpen);
+          btn.setAttribute('aria-expanded', String(!isOpen));
+        });
+      }
+    });
+  </script>
+</head>
+<body>
+
+  <!-- ==================== LOGIN ==================== -->
+  <div id="login-view">
+    <div class="login-card">
+      <span class="login-badge"><i class="fa-solid fa-lock"></i> Area riservata · Privato</span>
+      <h1>Valeria Moretti</h1>
+      <p class="sub">Pannello amministrativo<br />Accesso esclusivamente all'amministratrice autorizzata tramite account Google.</p>
+      <button type="button" class="btn-google" id="btn-login-google">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.24 1.05-3.71 1.05-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09A7 7 0 0 1 5.5 12c0-.73.13-1.43.34-2.09V7.07H2.18A11 11 0 0 0 1 12c0 1.77.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Accedi con Google
+      </button>
+      <div class="login-msg" id="login-msg" role="alert"></div>
+      <p class="login-foot">L'identità viene verificata tramite Firebase Authentication.<br /><a href="index.html">← Torna al sito pubblico</a></p>
+    </div>
+  </div>
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <div id="app-view">
+    <div class="loading-bar" id="loading-bar"></div>
+
+    <aside class="sidebar">
+      <div class="side-brand">
+        <strong>Valeria Moretti</strong>
+        <span>Pannello amministrativo</span><br />
+        <span class="tag-private"><i class="fa-solid fa-lock"></i>&nbsp; Privato</span>
+      </div>
+      <nav class="side-nav" aria-label="Sezioni della dashboard">
+        <button type="button" class="side-btn active" data-panel="recensioni">
+          <i class="fa-solid fa-star"></i>
+          <span>Recensioni<small>Aggiungi, modifica, cerca ed elimina le recensioni pubblicate in Home.</small></span>
+        </button>
+        <button type="button" class="side-btn" data-panel="test">
+          <i class="fa-solid fa-circle-question"></i>
+          <span>Test gratuito<small>Domande, risposte e ordine del test online.</small></span>
+        </button>
+        <button type="button" class="side-btn" data-panel="servizi">
+          <i class="fa-solid fa-briefcase"></i>
+          <span>Servizi e pacchetti<small>Pacchetti, moduli di richiesta e domande personalizzate.</small></span>
+        </button>
+        <button type="button" class="side-btn" data-panel="colori">
+          <i class="fa-solid fa-palette"></i>
+          <span>Colori &amp; stile<small>Sfondi, testi e bottoni del sito pubblico.</small></span>
+        </button>
+        <button type="button" class="side-btn" data-panel="foto">
+          <i class="fa-solid fa-images"></i>
+          <span>Aggiornamenti foto<small>Le immagini di Home, Chi sono e dello Studio.</small></span>
+        </button>
+        <button type="button" class="side-btn" data-panel="social">
+          <i class="fa-solid fa-link"></i>
+          <span>Aggiornamento social<small>I link di WhatsApp, Instagram, TikTok, email e telefono.</small></span>
+        </button>
+        <button type="button" class="side-btn" data-panel="faq">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>FAQ<small>Domande e risposte della sezione «Le risposte che cercavi».</small></span>
+        </button>
+        <div class="side-help">
+          <button type="button" class="btn btn--help" id="btn-istruzioni"><i class="fa-solid fa-book-open"></i> Istruzioni</button>
+          <button type="button" class="btn btn--tour" id="btn-tutorial"><i class="fa-solid fa-route"></i> Tutorial</button>
+        </div>
+      </nav>
+      <div class="side-user">
+        <div class="u-email"><i class="fa-solid fa-user-shield"></i>&nbsp; <span id="user-email">—</span></div>
+        <button type="button" class="btn-logout" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i>&nbsp; Esci</button>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <!-- ============ PANNELLO: RECENSIONI ============ -->
+      <section class="panel active" id="panel-recensioni">
+        <div class="page-head">
+          <h2>Recensioni</h2>
+          <p>Ogni recensione salvata qui viene pubblicata automaticamente nella sezione «Cosa dicono di me» della Home.</p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-plus-circle"></i> <span id="rev-form-title">Aggiungi una recensione</span></h3>
+          <form id="review-form">
+            <input type="hidden" id="rev-edit-id" value="" />
+            <div class="grid-2">
+              <div>
+                <label for="rev-name">Nome *</label>
+                <input type="text" id="rev-name" required placeholder="Es. Maria R." maxlength="60" />
+              </div>
+              <div>
+                <label for="rev-initial">Iniziale cognome *</label>
+                <input type="text" id="rev-initial" required maxlength="1" placeholder="Es. B." pattern="[A-Za-zÀ-ù]" style="text-transform: uppercase;" />
+              </div>
+              <div>
+                <label id="rev-stars-label">Stelle *</label>
+                <!-- Rating a stelle animato (hover giallo + ombra nera). Il valore viene letto da admin.js -->
+                <div class="star-rating" id="rev-star-rating" role="radiogroup" aria-labelledby="rev-stars-label">
+                  <input type="radio" name="rev-stars-radio" id="rev-star-1" value="1" />
+                  <label for="rev-star-1" data-value="1" title="1 stella" aria-label="1 stella">&#9733;</label>
+                  <input type="radio" name="rev-stars-radio" id="rev-star-2" value="2" />
+                  <label for="rev-star-2" data-value="2" title="2 stelle" aria-label="2 stelle">&#9733;</label>
+                  <input type="radio" name="rev-stars-radio" id="rev-star-3" value="3" />
+                  <label for="rev-star-3" data-value="3" title="3 stelle" aria-label="3 stelle">&#9733;</label>
+                  <input type="radio" name="rev-stars-radio" id="rev-star-4" value="4" />
+                  <label for="rev-star-4" data-value="4" title="4 stelle" aria-label="4 stelle">&#9733;</label>
+                  <input type="radio" name="rev-stars-radio" id="rev-star-5" value="5" checked />
+                  <label for="rev-star-5" data-value="5" title="5 stelle" aria-label="5 stelle">&#9733;</label>
+                  <span class="star-value" id="rev-star-value">5 / 5</span>
+                </div>
+                <!-- Campo nascosto retro-compatibile con admin.js (value sincronizzata) -->
+                <input type="hidden" id="rev-stars" value="5" />
+              </div>
+              <div>
+                <label for="rev-date">Data *</label>
+                <input type="date" id="rev-date" required />
+              </div>
+            </div>
+            <div style="margin-top:14px;">
+              <label for="rev-text">Descrizione *</label>
+              <textarea id="rev-text" rows="4" required placeholder="Testo della recensione (solo testimonianze reali e autorizzate alla pubblicazione)."></textarea>
+            </div>
+            <div class="row" style="margin-top:16px;">
+              <button type="submit" class="btn btn--primary"><i class="fa-solid fa-floppy-disk"></i> Salva recensione</button>
+              <button type="button" class="btn btn--soft" id="rev-cancel-edit" hidden><i class="fa-solid fa-rotate-left"></i> Annulla modifica</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-list-check"></i> Recensioni pubblicate</h3>
+          <div class="row" style="margin-bottom:14px;">
+            <div>
+              <label for="rev-search">Cerca per nome o iniziale del cognome</label>
+              <!-- From Uiverse.io by garerim -->
+              <div class="container-input">
+                <input type="text" placeholder="Es. Laura oppure L…" name="text" id="rev-search" class="input" />
+                <svg fill="#000000" width="20px" height="20px" viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M790.588 1468.235c-373.722 0-677.647-303.924-677.647-677.647 0-373.722 303.925-677.647 677.647-677.647 373.723 0 677.647 303.925 677.647 677.647 0 373.723-303.924 677.647-677.647 677.647Zm596.781-160.715c120.396-138.692 193.807-319.285 193.807-516.932C1581.176 354.748 1226.428 0 790.588 0S0 354.748 0 790.588s354.748 790.588 790.588 790.588c197.647 0 378.24-73.411 516.932-193.807l516.028 516.142 79.963-79.963-516.142-516.028Z" fill-rule="evenodd"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr><th>Nome</th><th>Iniziale</th><th>Stelle</th><th>Data</th><th>Descrizione</th><th>Azioni</th></tr>
+              </thead>
+              <tbody id="reviews-tbody"></tbody>
+            </table>
+          </div>
+          <p class="empty-note" id="reviews-empty" hidden>Nessuna recensione trovata. Aggiungine una con il modulo qui sopra.</p>
+        </div>
+      </section>
+
+      <!-- ============ PANNELLO: TEST GRATUITO ============ -->
+      <section class="panel" id="panel-test">
+        <div class="page-head">
+          <h2>Test gratuito</h2>
+          <p>Qui puoi solo aggiungere, modificare e riordinare le domande con le relative risposte. Tutto ciò che salvi compare nel popup del test sulla pagina pubblica (<a href="index.html" target="_blank">index.html</a>) e nell'email inviata via EmailJS.</p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-sliders"></i> Elenco delle domande (<span id="quiz-count">0</span>)</h3>
+          <div id="questions-list"></div>
+          <p class="empty-note" id="questions-empty" hidden>Nessuna domanda attiva. Crea la prima qui sotto.</p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-plus-circle"></i> <span id="question-form-title">Crea una nuova domanda</span></h3>
+          <p style="font-size:12.5px;color:var(--grigio);margin-bottom:14px;">Scrivi il testo della domanda e le risposte che il visitatore vedrà nel popup del test sul sito. Per un esempio di formulazione guarda la domanda già presente in elenco.</p>
+          <form id="question-form">
+            <input type="hidden" id="q-edit-key" value="" />
+            <label for="q-text">Testo della domanda *</label>
+            <textarea id="q-text" rows="2" required placeholder="Es. Quando ricevi un messaggio dalla persona che stai frequentando:"></textarea>
+            <div style="margin-top:14px;">
+              <label>Risposte disponibili *</label>
+              <div id="options-editor"></div>
+              <button type="button" class="btn btn--soft btn--sm" id="btn-add-option"><i class="fa-solid fa-plus"></i> Aggiungi risposta</button>
+              <p style="font-size:12px;color:var(--grigio);margin-top:8px;"><i class="fa-regular fa-lightbulb"></i> <strong>Esempio di domanda ben formulata:</strong> «Quando ricevi un messaggio dalla persona che stai frequentando:» — Risposta 1: «Rispondo quasi subito: mi piace far sentire la mia presenza e disponibilità.» · Risposta 2: «Rispondo con entusiasmo: ogni messaggio mi fa sognare un po' di più il nostro futuro.» Scrivi solo il testo delle risposte: verranno inviate così come sono nell'email, senza profili né punteggi.</p>
+            </div>
+            <div class="row" style="margin-top:16px;">
+              <button type="submit" class="btn btn--primary"><i class="fa-solid fa-floppy-disk"></i> Salva domanda</button>
+              <button type="button" class="btn btn--soft" id="q-cancel-edit" hidden><i class="fa-solid fa-rotate-left"></i> Annulla modifica</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ============ PANNELLO: SERVIZI E PACCHETTI ============ -->
+      <section class="panel" id="panel-servizi">
+        <div class="page-head">
+          <h2>Servizi e pacchetti</h2>
+          <p>Gestisci i pacchetti mostrati nella Home, le domande del modulo popup e consulta le richieste inviate dai visitatori.</p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-boxes-stacked"></i> Pacchetti</h3>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr><th>Ordine</th><th>Nome</th><th>Prezzo</th><th>Attivo</th><th>In Home</th><th>Domande modulo</th><th>Azioni</th></tr>
+              </thead>
+              <tbody id="packages-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-plus-circle"></i> <span id="pkg-form-title">Aggiungi un nuovo pacchetto</span></h3>
+          <form id="package-form">
+            <input type="hidden" id="pkg-edit-key" value="" />
+            <div class="grid-2">
+              <div>
+                <label for="pkg-name">Nome del servizio *</label>
+                <input type="text" id="pkg-name" required placeholder="Es. Sessione di coppia" />
+              </div>
+              <div>
+                <label for="pkg-price">Prezzo (se previsto)</label>
+                <input type="text" id="pkg-price" placeholder="Es. 80 € · oppure: Prossimo avvio" />
+              </div>
+            </div>
+            <div style="margin-top:14px;">
+              <label>Punti elenco del pacchetto</label>
+              <p style="font-size:12px;color:var(--grigio);margin:-4px 0 8px;">Un beneficio per riga: verranno mostrati come elenco puntato nella card e nel popup.</p>
+              <div id="features-editor"></div>
+              <button type="button" class="btn btn--soft btn--sm" id="btn-add-feature" style="margin-top:6px;"><i class="fa-solid fa-plus"></i> Aggiungi punto elenco</button>
+            </div>
+            <div style="margin-top:14px;">
+              <label for="pkg-tag">Etichetta card (es. "Il più completo")</label>
+              <input type="text" id="pkg-tag" placeholder="Es. Il più completo — vuoto = nessuna etichetta" />
+            </div>
+            <div style="margin-top:16px;">
+              <main class="icon-picker">
+                <header class="ip-head">
+                  <h4>Scegli un'icona</h4>
+                  <p>Seleziona l'icona che rappresenta meglio il tuo servizio.</p>
+                </header>
+                <div class="icon-options" id="iconOptions" role="group" aria-label="Seleziona un'icona">
+                  <button class="icon-option" type="button" data-icon="singolo" data-label="Persona singola" aria-pressed="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg>
+                    <span>Singolo</span><i class="check">✓</i>
+                  </button>
+                  <button class="icon-option" type="button" data-icon="coppia" data-label="Coppia" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="8" r="2.5"/><path d="M2.5 20v-1.5a6.5 6.5 0 0 1 13 0V20M15 14a5 5 0 0 1 6.5 4.5V20"/></svg>
+                    <span>In due</span><i class="check">✓</i>
+                  </button>
+                  <button class="icon-option" type="button" data-icon="gruppo" data-label="Gruppo" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3"/><circle cx="5" cy="9" r="2.3"/><circle cx="19" cy="9" r="2.3"/><path d="M6.5 20v-1a5.5 5.5 0 0 1 11 0v1M1 19v-1a4 4 0 0 1 4-4M23 19v-1a4 4 0 0 0-4-4"/></svg>
+                    <span>In gruppo</span><i class="check">✓</i>
+                  </button>
+                  <button class="icon-option" type="button" data-icon="documento" data-label="Documento" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+                    <span>Documento</span><i class="check">✓</i>
+                  </button>
+                  <button class="icon-option" type="button" data-icon="digitale" data-label="Digitale" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8M12 16v5M7 8h4M7 11h7M17 7v4"/></svg>
+                    <span>Digitale</span><i class="check">✓</i>
+                  </button>
+                  <button class="icon-option" type="button" data-icon="calendario" data-label="Calendario" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg>
+                    <span>Calendario</span><i class="check">✓</i>
+                  </button>
+                  <button class="icon-option" type="button" data-icon="obiettivo" data-label="Obiettivo" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/><path d="m14 10 6-6M16 4h4v4"/></svg>
+                    <span>Obiettivo</span><i class="check">✓</i>
+                  </button>
+                  <button class="icon-option" type="button" data-icon="messaggio" data-label="Messaggio" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.7 7.4L3 21l1.8-5.3A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 12h8M8 9h5"/></svg>
+                    <span>Messaggio</span><i class="check">✓</i>
+                  </button>
+                </div>
+                <section class="icon-selection" aria-live="polite">
+                  <div class="icon-preview" id="previewIcon"></div>
+                  <div>
+                    <small>Icona selezionata</small>
+                    <strong id="selectedLabel">Persona singola</strong>
+                  </div>
+                  <code id="selectedValue">singolo</code>
+                </section>
+                <input type="hidden" id="pkg-icon-key" value="singolo" />
+              </main>
+            </div>
+            <div class="row" style="margin-top:16px;" id="pkg-switches">
+              <div style="display:flex;gap:22px;align-items:center;">
+                <label style="display:flex;gap:8px;align-items:center;margin:0;font-weight:500;">
+                  <span class="switch"><input type="checkbox" id="pkg-active" checked /><span class="slider-sw"></span></span> Attivo
+                </label>
+                <label style="display:flex;gap:8px;align-items:center;margin:0;font-weight:500;">
+                  <span class="switch"><input type="checkbox" id="pkg-visible" checked /><span class="slider-sw"></span></span> Mostra nella Home
+                </label>
+              </div>
+            </div>
+            <div class="row" style="margin-top:16px;">
+              <button type="submit" class="btn btn--primary"><i class="fa-solid fa-floppy-disk"></i> Salva pacchetto</button>
+              <button type="button" class="btn btn--soft" id="pkg-cancel-edit" hidden><i class="fa-solid fa-rotate-left"></i> Annulla modifica</button>
+            </div>
+          </form>
+        </div>
+
+      </section>
+
+      <!-- ============ PANNELLO: COLORI & STILE ============ -->
+      <section class="panel" id="panel-colori">
+        <div class="page-head">
+          <h2>Colori &amp; stile</h2>
+          <p>Cambia i colori del sito pubblico: sfondi delle sezioni, testi e bottoni (background e testo di ogni singolo bottone). Le modifiche sono salvate nel database e si vedono subito nella Home e nell'anteprima live a destra.</p>
+        </div>
+
+        <div class="style-box active" id="box-sezioni">
+          <h3><i class="fa-solid fa-fill-drip"></i> Sfondi e testi delle sezioni</h3>
+          <p class="style-box-hint">Scegli i colori di sfondo e testo di ogni area del sito pubblico (Hero, Card, Footer…). Clicca un campione o scrivi il codice esadecimale, poi premi «Salva colori».</p>
+          <div class="color-grid" id="theme-sections-grid"><!-- card generate da admin.js --></div>
+        </div>
+
+        <div class="style-box" id="box-bottoni">
+          <h3><i class="fa-solid fa-toggle-on"></i> Bottoni</h3>
+          <p class="style-box-hint">Per ogni tipo di bottone puoi impostare separatamente il colore di sfondo e il colore del testo. Clicca un campione o scrivi il codice esadecimale, poi premi «Salva colori».</p>
+          <div class="color-grid" id="theme-buttons-grid"><!-- card generate da admin.js --></div>
+        </div>
+
+        <div class="row" style="margin-top:16px;">
+          <button type="button" class="btn btn--primary" id="btn-theme-save"><i class="fa-solid fa-floppy-disk"></i> Salva colori</button>
+          <button type="button" class="btn btn--soft" id="btn-theme-reset"><i class="fa-solid fa-rotate-left"></i> Ripristina colori originali</button>
+        </div>
+      </section>
+
+      <!-- ============ PANNELLO: AGGIORNAMENTI FOTO ============ -->
+      <section class="panel" id="panel-foto">
+        <div class="page-head">
+          <h2>Aggiornamenti foto</h2>
+          <p>Cambia le immagini del sito pubblico incollando un link (URL) della foto. Ogni sezione qui sotto ti dice esattamente DOVE compare quella foto nella Home. Le modifiche sono salvate nel database e si vedono subito nell'anteprima live a destra e sul sito.</p>
+        </div>
+
+        <div class="card" id="foto-card-hero">
+          <h3><i class="fa-solid fa-image"></i> 1 · Foto Hero — Home «Trasforma i tuoi obiettivi…»</h3>
+          <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Queste foto compaiono nel riquadro grande a destra del titolo principale della Home, dietro alla targhetta «Valeria Moretti · Mental Coach». La prima appare subito, poi cambiano automaticamente ogni 4 secondi.</p>
+          <div id="hero-slots"><!-- slot generati da admin.js -->
+            <div class="photo-slot" style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
+              <div class="photo-thumb" style="width:74px;flex-shrink:0;border-radius:12px;overflow:hidden;border:1px solid #ddd6c6;background:#efe9dd;aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#b3ab97;font-size:18px;"></i></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <input type="url" class="input photo-url-input" data-group="hero" data-idx="0" placeholder="Incolla qui il link (https://…) della foto 1" value="" />
+                <span style="font-size:10.5px;color:#98917f;">Foto 1 · ruota ogni 4 secondi nella Home.</span>
+              </div>
+              <button type="button" class="btn btn--soft btn--sm photo-remove-btn" data-group="hero" data-idx="0" title="Rimuovi questa foto" disabled><i class="fa-solid fa-xmark"></i></button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;display:flex;gap:10px;align-items:center;">
+            <button type="button" class="btn btn--soft btn--sm" id="btn-hero-add"><i class="fa-solid fa-plus"></i> Aggiungi un'altra foto</button>
+            <button type="button" class="btn btn--primary btn--sm" id="btn-hero-save"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
+          </div>
+        </div>
+
+        <div class="card" id="foto-card-about">
+          <h3><i class="fa-solid fa-user"></i> 2 · Foto «Chi sono — Ciao, sono Valeria»</h3>
+          <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Queste foto compaiono nel riquadro verticale accanto al testo «Ciao, sono Valeria» nella sezione Chi sono della Home. Si alternano ogni 4 secondi.</p>
+          <div id="about-slots"><!-- slot generati da admin.js -->
+            <div class="photo-slot" style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
+              <div class="photo-thumb" style="width:74px;flex-shrink:0;border-radius:12px;overflow:hidden;border:1px solid #ddd6c6;background:#efe9dd;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#b3ab97;font-size:18px;"></i></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <input type="url" class="input photo-url-input" data-group="about" data-idx="0" placeholder="Incolla qui il link (https://…) della foto 1" value="" />
+                <span style="font-size:10.5px;color:#98917f;">Foto 1 · ruota ogni 4 secondi nella Home.</span>
+              </div>
+              <button type="button" class="btn btn--soft btn--sm photo-remove-btn" data-group="about" data-idx="0" title="Rimuovi questa foto" disabled><i class="fa-solid fa-xmark"></i></button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;display:flex;gap:10px;align-items:center;">
+            <button type="button" class="btn btn--soft btn--sm" id="btn-about-add"><i class="fa-solid fa-plus"></i> Aggiungi un'altra foto</button>
+            <button type="button" class="btn btn--primary btn--sm" id="btn-about-save"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
+          </div>
+        </div>
+
+        <div class="card" id="foto-card-studio">
+          <h3><i class="fa-solid fa-building"></i> 3 · Foto «Il mio Studio»</h3>
+          <p style="font-size:13px;color:var(--grigio);margin-bottom:14px;">Queste foto compaiono nella sezione «Il mio Studio» della Home (raggiungibile dal menu). La prima appare subito, poi cambiano automaticamente ogni 4 secondi. Se non imposti nulla, resta la foto attuale.</p>
+          <div id="studio-slots"><!-- slot generati da admin.js --></div>
+          <div class="row" style="margin-top:10px;display:flex;gap:10px;align-items:center;">
+            <button type="button" class="btn btn--soft btn--sm" id="btn-studio-add"><i class="fa-solid fa-plus"></i> Aggiungi un'altra foto</button>
+            <button type="button" class="btn btn--primary btn--sm" id="btn-studio-save"><i class="fa-solid fa-floppy-disk"></i> Salva</button>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:16px;">
+          <button type="button" class="btn btn--primary" id="btn-photos-save"><i class="fa-solid fa-floppy-disk"></i> Salva foto</button>
+          <button type="button" class="btn btn--soft" id="btn-photos-reset"><i class="fa-solid fa-rotate-left"></i> Ripristina foto originali</button>
+        </div>
+      </section>
+
+      <!-- ============ PANNELLO: AGGIORNAMENTO SOCIAL ============ -->
+      <section class="panel" id="panel-social">
+        <div class="page-head">
+          <h2>Aggiornamento social</h2>
+          <p>Cambia i link dei tuoi canali social e dei contatti. Quello che salvi qui aggiorna automaticamente il footer della Home, il popup «Scegli la modalità» (pulsante Parliamone insieme) e i pulsanti social del sito pubblico. Lascia un campo vuoto per mantenere il link attuale.</p>
+        </div>
+
+        <div class="card" id="social-card">
+          <h3><i class="fa-solid fa-share-nodes"></i> Link social e contatti</h3>
+          <div id="social-fields" style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+            <label class="social-field"><span class="social-field-icon" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);"><i class="fa-brands fa-instagram"></i></span><b>Instagram</b><input type="url" class="input social-url-input" data-key="instagram" placeholder="https://www.instagram.com/mentalcoachvaleria95" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#010101;"><i class="fa-brands fa-tiktok"></i></span><b>TikTok</b><input type="url" class="input social-url-input" data-key="tiktok" placeholder="https://www.tiktok.com/@mentalcoachvaleria95" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#ff0000;"><i class="fa-brands fa-youtube"></i></span><b>YouTube</b><input type="url" class="input social-url-input" data-key="youtube" placeholder="https://www.youtube.com/@mentalcoachvaleria95" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#229ED9;"><i class="fa-brands fa-telegram"></i></span><b>Telegram</b><input type="url" class="input social-url-input" data-key="telegram" placeholder="https://t.me/mentalcoachvaleria95" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#25D366;"><i class="fa-brands fa-whatsapp"></i></span><b>WhatsApp</b><input type="url" class="input social-url-input" data-key="whatsapp" placeholder="https://wa.me/393458407102" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#2f4f3e;"><i class="fa-solid fa-phone"></i></span><b>Numero di telefono</b><input type="tel" class="input social-url-input" data-key="phone" placeholder="+39 345 840 7102" /></label>
+            <label class="social-field"><span class="social-field-icon" style="background:#ea4335;"><i class="fa-solid fa-envelope"></i></span><b>Email</b><input type="email" class="input social-url-input" data-key="email" placeholder="mentalcoachvaleria@gmail.com" /></label>
+            <div class="pixel-row">
+                <label class="social-field pixel-field"><span class="social-field-icon" style="background:#1877F2;"><i class="fa-brands fa-facebook"></i></span><b>Facebook Pixel</b><input type="text" inputmode="numeric" class="input social-url-input" data-key="fb_pixel_id" placeholder="Es. 1234567890123456" /></label>
+                <button type="button" class="pixel-help-btn" id="pixel-help-btn" aria-label="Cos'è il Facebook Pixel?" aria-expanded="false"><i class="fa-solid fa-circle-question"></i></button>
+                <button type="button" class="pixel-remove-btn" id="pixel-remove-btn"><i class="fa-solid fa-trash-can"></i> Rimuovi pixel</button>
+            </div>
+            <div class="pixel-help-box" id="pixel-help-box" hidden>
+                <div class="pixel-help-head"><i class="fa-solid fa-circle-info"></i><b>Cos'è il Facebook Pixel?</b></div>
+                <p>È un piccolo codice che Meta inserisce nel tuo sito per tracciare le visite e le azioni importanti (come l'invio del modulo di contatto o del test gratuito). Ti permette di creare pubblici simili e misurare le campagne pubblicitarie su Facebook e Instagram.</p>
+                <div class="pixel-help-head"><i class="fa-solid fa-list-ol"></i><b>Come ottenerlo — 4 passi</b></div>
+                <ol>
+                    <li>Apri <a href="https://business.facebook.com/events_manager2/list" target="_blank" rel="noopener">Meta Events Manager</a> con il tuo account business.</li>
+                    <li>Nel menu a sinistra seleziona <b>Origini dati → Set di dati</b>, poi clicca <b>+ Aggiungi</b> se non ne hai uno.</li>
+                    <li>Copia l'<b>ID set di dati</b>: è una sequenza di numeri (es. 1234567890123456): quello è il tuo Pixel.</li>
+                    <li>Incolla solo l'ID nel campo qui sopra e premi <b>Salva social</b>: il codice verrà inserito automaticamente nel sito e inizierà a tracciare subito.</li>
+                </ol>
+                <p class="pixel-help-note"><i class="fa-solid fa-lightbulb"></i> Suggerimento: dopo il salvataggio, verifica in Events Manager che tra pochi minuti compaiano i primi eventi "PageView" del sito.</p>
+            </div>
+          </div>
+          <div class="row" style="margin-top:16px;display:flex;gap:10px;align-items:center;">
+            <button type="button" class="btn btn--primary" id="btn-social-save"><i class="fa-solid fa-floppy-disk"></i> Salva social</button>
+            <button type="button" class="btn btn--soft" id="btn-social-reset"><i class="fa-solid fa-rotate-left"></i> Ripristina default</button>
+          </div>
+          <p id="social-status" style="font-size:12.5px;margin-top:10px;color:#98917f;"></p>
+          <p style="font-size:11.5px;color:#98917f;margin-top:8px;">💡 WhatsApp: usa il formato https://wa.me/39NUMERO · Telegram: https://t.me/TUOUSERNAME · Telefono: solo cifre con prefisso (es. +39…).</p>
+        </div>
+      </section>
+
+      <!-- ============ PANNELLO: FAQ ============ -->
+      <section class="panel" id="panel-faq">
+        <div class="page-head">
+          <h2>FAQ</h2>
+          <p>Gestisci le domande frequenti della sezione «Le risposte che cercavi» della Home. Puoi aggiungerne di nuove, modificare o eliminare quelle esistenti, riordinarle con ↑ ↓ e attivarle o disattivarle. Quello che salvi qui compare automaticamente nella Home.</p>
+        </div>
+
+        <div class="card" id="faq-card">
+          <h3><i class="fa-solid fa-circle-question"></i> Aggiungi una nuova domanda</h3>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+            <label class="field"><span>Domanda *</span><input type="text" class="input" id="faq-q" placeholder="Es. Che cos'è la consulenza relazionale?" /></label>
+            <label class="field"><span>Risposta *</span><textarea class="input" id="faq-a" rows="4" placeholder="Scrivi qui la risposta completa che i visitatori leggeranno aprendo la domanda…"></textarea></label>
+          </div>
+          <div class="row" style="margin-top:14px;display:flex;gap:10px;align-items:center;">
+            <button type="button" class="btn btn--primary" id="btn-faq-add"><i class="fa-solid fa-plus"></i> Salva domanda</button>
+            <button type="button" class="btn btn--soft" id="btn-faq-cancel-edit" hidden><i class="fa-solid fa-xmark"></i> Annulla modifica</button>
+            <span id="faq-editing-badge" style="display:none;font-size:12px;color:#b45309;">✏️ stai modificando una domanda esistente</span>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <h3><i class="fa-solid fa-list"></i> Domande pubblicate</h3>
+          <p id="faq-status" style="font-size:12.5px;margin-top:6px;color:#98917f;"></p>
+          <div id="faq-list" style="margin-top:12px;"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ============ ANTEPRIMA LIVE (a destra) ============ -->
+    <aside class="preview-pane" id="preview-pane" aria-label="Anteprima live del sito">
+      <div class="preview-head">
+        <h3><i class="fa-solid fa-eye"></i> Anteprima live</h3>
+        <button type="button" class="btn btn--soft btn--sm" id="btn-preview-refresh"><i class="fa-solid fa-rotate"></i> Aggiorna</button>
+      </div>
+      <p class="preview-note" id="preview-note">L'anteprima resta vuota finché non inizi a compilare i campi di una sezione: appena scrivi compare solo l'anteprima di quella sezione, aggiornata mentre digiti.</p>
+      <div class="preview-scroll">
+        <div class="pv-empty-state" id="pv-empty-state">
+          <i class="fa-regular fa-eye-slash"></i>
+          <p id="pv-empty-text">Apri una sezione e inizia a compilare i campi: qui vedrai l'anteprima di quella sezione.</p>
+        </div>
+
+        <section class="pv-block pv-mini-home-block" data-preview="colori" hidden>
+          <h4><i class="fa-solid fa-desktop"></i> Home — anteprima sezioni e bottoni</h4>
+          <div id="pv-mini-home" class="pv-body"></div>
+        </section>
+        <section class="pv-block" data-preview="servizi" hidden>
+          <h4><i class="fa-solid fa-briefcase"></i> Pacchetti in Home</h4>
+          <div id="pv-draft-package" class="pv-body"></div>
+          <div id="pv-packages" class="pv-body"></div>
+        </section>
+        <section class="pv-block" data-preview="test" hidden>
+          <h4><i class="fa-solid fa-circle-question"></i> Anteprima test — come lo vede il visitatore</h4>
+          <p class="pv-hint">Riproduce il popup del test sul sito: ogni domanda con le sue risposte, nell'ordine in cui il visitatore le incontrerà.</p>
+          <div id="pv-draft-question" class="pv-body"></div>
+          <div class="pvq-modal" style="margin-bottom:12px;">
+            <div class="pvq-head"><i class="fa-solid fa-wand-magic-sparkles"></i><span class="pvq-title" id="pv-quiz-title">Test gratuito</span></div>
+            <div class="pvq-progress"><span></span></div>
+            <div class="pvq-qnum">Domanda 1 di N</div>
+            <div class="pvq-qtext">Inizia a scrivere una domanda nel modulo «Crea una nuova domanda»: la vedrai comparire qui, risposta per risposta.</div>
+          </div>
+          <div id="pv-quiz" class="pv-body pv-quiz-live"></div>
+        </section>
+        <section class="pv-block" data-preview="servizi" hidden>
+          <h4><i class="fa-solid fa-clipboard-list"></i> Modulo di richiesta</h4>
+          <div id="pv-draft-cq" class="pv-body"></div>
+        </section>
+        <section class="pv-block" data-preview="foto" hidden>
+          <h4><i class="fa-solid fa-images"></i> Foto in Home — Hero / Chi sono / Studio</h4>
+          <div id="pv-photos" class="pv-body"></div>
+        </section>
+        <section class="pv-block" data-preview="social" hidden>
+          <h4><i class="fa-solid fa-link"></i> Social — anteprima Footer e popup «Scegli la modalità»</h4>
+          <div id="pv-social" class="pv-body"></div>
+        </section>
+        <section class="pv-block" data-preview="faq" hidden>
+          <h4><i class="fa-solid fa-circle-info"></i> FAQ — sezione «Le risposte che cercavi»</h4>
+          <div id="pv-draft-faq" class="pv-body"></div>
+          <div id="pv-faq" class="pv-body"></div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Conferma eliminazione -->
+  <div id="confirm-overlay" hidden role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="confirm-box">
+      <h3 id="confirm-title">Confermi l'eliminazione?</h3>
+      <p id="confirm-text">Questa azione è definitiva.</p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn--soft" id="confirm-no">Annulla</button>
+        <button type="button" class="btn btn--danger" id="confirm-yes"><i class="fa-solid fa-trash-can"></i> Elimina</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  <!-- ============ MODALE ISTRUZIONI ============ -->
+  <div id="help-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="help-box">
+      <div class="help-head">
+        <h3 id="help-title"><i class="fa-solid fa-book-open"></i> Istruzioni — Come funziona la dashboard</h3>
+        <button type="button" class="help-close" id="help-close" aria-label="Chiudi istruzioni">&times;</button>
+      </div>
+      <div class="help-scroll">
+        <section>
+          <h4><i class="fa-solid fa-circle-info"></i> Come è fatta questa dashboard</h4>
+          <p>La dashboard è il «cervello» del sito: quello che salvi qui viene scritto in un <strong>database online</strong> (Firebase) e il sito pubblico lo legge e lo mostra <strong>senza toccare il codice</strong>. La schermata è divisa in tre parti:</p>
+          <ul>
+            <li><strong>Barra laterale sinistra</strong>: le 7 sezioni (Recensioni, Test gratuito, Servizi e pacchetti, Colori &amp; stile, Aggiornamenti foto, Aggiornamento social, FAQ) più i pulsanti <strong>Istruzioni</strong> e <strong>Tutorial</strong>. In basso vedi l'account collegato e <strong>Esci</strong>.</li>
+            <li><strong>Area centrale</strong>: il pannello della sezione scelta, con i moduli da compilare e gli elenchi dei contenuti già pubblicati.</li>
+            <li><strong>Colonna destra «Anteprima live»</strong>: una miniatura del sito che si aggiorna mentre scrivi, così vedi subito l'effetto delle modifiche.</li>
+          </ul>
+          <p class="help-tip"><i class="fa-solid fa-lightbulb"></i> <strong>Regola d'oro:</strong> niente compare sul sito finché non premi il pulsante di salvataggio della sezione (Salva recensione, Salva domanda, Salva pacchetto, Salva colori, Salva foto, Salva social).</p>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-lock"></i> 1 · Accesso e sicurezza</h4>
+          <ul>
+            <li><strong>Login</strong>: si entra solo con l'account Google autorizzato, tramite il pulsante «Accedi con Google». Non esistono username o password da ricordare: l'accesso è gestito da Google.</li>
+            <li><strong>Account non autorizzato</strong>: se provi ad entrare con un'altra email il sistema ti disconnette subito e mostra «Accesso negato». Il sito pubblico resta comunque visibile a tutti: è solo la dashboard a essere privata.</li>
+            <li><strong>Esci</strong> (in basso a sinistra): chiude la sessione su quel dispositivo. Fallo sempre su computer condivisi.</li>
+            <li><strong>Durata della sessione</strong>: Google tiene l'accesso per un po' anche chiudendo il browser; se vedi la schermata di login significa che la sessione è scaduta, basta rientrare.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-star"></i> 2 · Recensioni</h4>
+          <p>Dove si vede: Home → sezione <strong>«Cosa dicono di me»</strong>. Le recensioni salvate sostituiscono automaticamente quelle scritte nel codice del sito.</p>
+          <h5 class="help-sub">Campi del modulo «Aggiungi una recensione»</h5>
+          <ul>
+            <li><strong>Nome *</strong>: il nome della persona (es. «Maria»). Massimo 60 caratteri. È obbligatorio.</li>
+            <li><strong>Iniziale cognome *</strong>: UNA sola lettera (es. «R»). Per privacy in Home si pubblica solo «Maria R.». Il campo accetta una lettera e la converte in maiuscolo.</li>
+            <li><strong>Stelle *</strong>: le 5 stelle: passaci sopra il mouse (si illuminano in giallo) e clicca il numero che vuoi dare, da 1 a 5. Il contatore accanto mostra «N / 5». La selezione è sempre «piena» da sinistra verso destra, come nelle recensioni classiche.</li>
+            <li><strong>Data *</strong>: la data della testimonianza, nel formato anno-mese-giorno del calendario. In Home le recensioni vengono ordinate dalla più recente.</li>
+            <li><strong>Descrizione *</strong>: il testo della recensione, quello che i visitatori leggono. In Home i testi lunghi mostrano «Leggi di più»; scrivi quindi il testo completo. Pubblica solo testimonianze reali e autorizzate.</li>
+            <li><strong>Salva recensione</strong>: scrive nel database e pubblica subito. Se stai modificando una recensione esistente il pulsante diventa <strong>Aggiorna recensione</strong> e il titolo del modulo «Modifica recensione».</li>
+            <li><strong>Annulla modifica</strong>: compare solo mentre stai modificando; svuota il modulo e torna alla modalità «nuova recensione».</li>
+          </ul>
+          <h5 class="help-sub">Elenco e ricerca</h5>
+          <ul>
+            <li><strong>Cerca per nome o iniziale del cognome</strong>: filtra la tabella mentre digiti (basta una lettera). Non modifica nulla: serve solo a trovare prima una recensione.</li>
+            <li><strong>Tabella «Recensioni pubblicate»</strong>: mostra Nome, Iniziale, Stelle, Data, Descrizione e la colonna <strong>Azioni</strong>.</li>
+            <li><strong>Matita</strong>: carica la recensione nel modulo per correggerla; <strong>Cestino</strong>: elimina (chiede sempre conferma); <strong>↑ ↓</strong> dove presenti cambiano l'ordine.</li>
+            <li><strong>Nota</strong>: le recensioni non sono replicate nella colonna «Anteprima live»; per vederle apri la Home.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-circle-question"></i> 3 · Test gratuito</h4>
+          <p>Dove si vede: popup del test in Home (pulsanti «Fai il test gratuito», «Inizia il test gratuito», «Test gratuito» nel menu e nel footer).</p>
+          <h5 class="help-sub">Elenco delle domande</h5>
+          <ul>
+            <li><strong>Contatore</strong>: accanto al titolo vedi quante domande esistono. Le domande <strong>attive</strong> sono quelle che il visitatore incontra, nell'ordine indicato.</li>
+            <li><strong>↑ ↓</strong>: spostano la domanda di una posizione (cambia l'ordine nel test).</li>
+            <li><strong>Attiva / Disattiva</strong>: la domanda resta salvata ma non viene mostrata nel test quando è disattivata.</li>
+            <li><strong>Matita</strong>: apre la domanda nel modulo per modificarla; <strong>Cestino</strong>: la elimina definitivamente (con conferma).</li>
+          </ul>
+          <h5 class="help-sub">Modulo «Crea una nuova domanda»</h5>
+          <ul>
+            <li><strong>Testo della domanda *</strong>: la domanda vera e propria (es. «Quando ricevi un messaggio dalla persona che stai frequentando:»). Meglio formularla in modo concreto, così le risposte sono immediate.</li>
+            <li><strong>Risposte disponibili *</strong>: una riga per ogni risposta. Ogni riga contiene SOLO il testo: niente profili A/B/C né punteggi, perché il test non calcola un risultato ma raccoglie le risposte che ricevi via email. Minimo 2 risposte, puoi aggiungerne quante vuoi.</li>
+            <li><strong>Aggiungi risposta</strong>: crea una nuova riga vuota; la ✕ sulla riga la rimuove.</li>
+            <li><strong>Salva domanda</strong>: pubblica la domanda subito nel popup. Se stai modificando, il pulsante diventa «Salva modifiche» e accanto compare <strong>Annulla modifica</strong>.</li>
+          </ul>
+          <p class="help-tip"><i class="fa-solid fa-lightbulb"></i> Nell'anteprima a destra la domanda compare <strong>mentre la scrivi</strong>, con le risposte nell'ordine esatto in cui le vedrà il visitatore.</p>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-briefcase"></i> 4 · Servizi e pacchetti</h4>
+          <p>Dove si vede: Home → sezione <strong>Servizi</strong> (le card dei pacchetti) e popup che si apre cliccando il pulsante di ogni card.</p>
+          <h5 class="help-sub">Tabella dei pacchetti</h5>
+          <ul>
+            <li><strong>Ordine</strong>: le frecce <strong>↑ ↓</strong> cambiano la posizione della card nella Home (la prima è quella in evidenza se ha l'etichetta).</li>
+            <li><strong>Attivo</strong>: se è spento il pacchetto non esiste più per i visitatori (non viene mostrato e il popup non si apre).</li>
+            <li><strong>In Home</strong>: se è spento il pacchetto resta attivo ma non compare nella vetrina della Home.</li>
+            <li><strong>Domande modulo</strong>: quante domande personalizzate sono collegate a quel pacchetto.</li>
+            <li><strong>Azioni</strong>: <strong>matita</strong> modifica, <strong>duplica</strong> crea una copia da cui partire (utile per un pacchetto simile), <strong>cestino</strong> elimina (con conferma).</li>
+          </ul>
+          <h5 class="help-sub">Modulo «Aggiungi un nuovo pacchetto»</h5>
+          <ul>
+            <li><strong>Nome del servizio *</strong>: il titolo della card (es. «Sessione in studio»).</li>
+            <li><strong>Prezzo</strong>: testo libero, quindi vanno bene sia «50 €/ora» sia «Prossimo avvio» o «Su richiesta». Lascialo vuoto se non vuoi mostrare alcun prezzo.</li>
+            <li><strong>Punti elenco del pacchetto</strong>: un beneficio per riga, mostrati come elenco puntato con la spunta verde. Premi <strong>Invio</strong> o <strong>Aggiungi punto elenco</strong> per una nuova riga, la ✕ la elimina. Lasciali vuoti per mostrare solo la descrizione.</li>
+            <li><strong>Etichetta card</strong>: il badge in alto sulla card (es. «Il più completo»). Se lo lasci vuoto la card non ha etichetta.</li>
+            <li><strong>Scegli un'icona</strong>: clicca una delle icone proposte; quella selezionata viene mostrata accanto al nome nella card e nel popup.</li>
+            <li><strong>Attivo</strong> / <strong>Mostra nella Home</strong>: gli stessi due interruttori della tabella, impostabili già alla creazione.</li>
+            <li><strong>Salva pacchetto</strong>: crea o aggiorna la card. L'identificativo interno viene generato dal sistema: non c'è nulla da inventare.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-palette"></i> 5 · Colori &amp; stile</h4>
+          <p>Cambia l'aspetto del sito pubblico <strong>senza codice</strong>: il tema salvato viene applicato a tutte le pagine e a tutti i dispositivi (computer, tablet, telefono).</p>
+          <h5 class="help-sub">Box «Sfondi e testi delle sezioni»</h5>
+          <ul>
+            <li>Ogni <strong>card</strong> corrisponde a un'area del sito: Sfondo/testo generale, Hero, Blocchi, Metodo, Servizi, Card pacchetto, Card in evidenza, Recensioni, FAQ, Studio, Footer.</li>
+            <li>Per ogni area ci sono due righe: <strong>sfondo</strong> e <strong>testo</strong>. Sono indipendenti: puoi cambiare solo lo sfondo e lasciare il testo com'è.</li>
+            <li><strong>Campione colorato</strong>: clicca il quadratino e scegli il colore dal selettore del sistema. La modifica si vede subito nell'anteprima.</li>
+            <li><strong>Campo esadecimale</strong>: scrivi il codice del colore (es. <strong>#315B55</strong>). Sono accettati sia 6 cifre (#315B55) sia la forma breve a 3 (#3B5). Se il codice non è valido il campo torna all'ultimo valore corretto.</li>
+            <li><strong>Consiglio sul contrasto</strong>: testo chiaro su fondo scuro e testo scuro su fondo chiaro; se un testo «sparisce» è quasi certamente dello stesso colore dello sfondo.</li>
+          </ul>
+          <h5 class="help-sub">Box «Bottoni»</h5>
+          <ul>
+            <li>Per ogni famiglia di bottoni (verdi scuri/primari, chiari, salvia delle card, bottone della navbar e CTA del menu mobile) imposti <strong>separatamente</strong> il colore di sfondo e quello del testo.</li>
+            <li>Il cambio vale per tutti i bottoni di quella famiglia: anche le icone e il testo dentro al bottone seguono il colore scelto.</li>
+          </ul>
+          <h5 class="help-sub">Salvataggio e ripristino</h5>
+          <ul>
+            <li><strong>Salva colori</strong>: scrive il tema nel database e il sito pubblico si aggiorna subito (chi ha la Home già aperta la vede cambiare senza ricaricare, al massimo dopo qualche secondo).</li>
+            <li><strong>Ripristina colori originali</strong>: chiede conferma, cancella il tema personalizzato dal database e riporta il sito ai colori di fabbrica. È reversibile solo rifacendo le scelte a mano.</li>
+            <li><strong>Anteprima live «Home»</strong>: a destra vedi subito i colori di Hero, Servizi, Card, Recensioni, FAQ e Footer e i bottoni con i colori scelti.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-image"></i> 6 · Aggiornamenti foto</h4>
+          <p>Cambia le immagini del sito incollando il <strong>link diretto</strong> di ogni foto. Le foto ruotano automaticamente ogni 4 secondi.</p>
+          <h5 class="help-sub">I tre gruppi</h5>
+          <ul>
+            <li><strong>1 · Hero</strong>: il riquadro grande a destra del titolo «Trasforma i tuoi obiettivi…», dietro alla targhetta «Valeria Moretti · Mental Coach».</li>
+            <li><strong>2 · Chi sono</strong>: il riquadro verticale accanto a «Ciao, sono Valeria».</li>
+            <li><strong>3 · Il mio Studio</strong>: l'immagine della sezione «Il mio Studio».</li>
+          </ul>
+          <h5 class="help-sub">Come si usano gli slot</h5>
+          <ul>
+            <li><strong>Campo del link</strong>: incolla un indirizzo che inizi con <strong>https://</strong> e che punti direttamente a un file immagine (jpg, png, webp). La miniatura a sinistra mostra l'anteprima; se non si carica, il link non è valido o non è pubblico.</li>
+            <li><strong>Aggiungi un'altra foto</strong>: crea una nuova riga vuota sotto le esistenti (fino a 12 per gruppo).</li>
+            <li><strong>×</strong> sulla riga: rimuove quella foto; per Hero e Chi sono è sempre lasciata almeno una foto.</li>
+            <li><strong>Salva</strong> accanto al gruppo: salva solo quel gruppo. In fondo alla pagina <strong>Salva foto</strong> salva tutti i gruppi insieme.</li>
+            <li><strong>Ripristina foto originali</strong>: cancella le foto personalizzate dal database e riporta quelle di partenza.</li>
+          </ul>
+          <p class="help-tip"><i class="fa-solid fa-lightbulb"></i> Link di una <em>pagina</em> (Google Foto, Instagram, Drive…) non funzionano come immagine: serve il link diretto al file. Il modo più affidabile è caricare le foto in una galleria tipo GitHub e copiare il link «raw».</p>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-share-nodes"></i> 7 · Aggiornamento social</h4>
+          <p>Dove si vede: footer della Home, popup «Scegli la modalità» (pulsante «Parliamone insieme») e pulsanti social del sito.</p>
+          <ul>
+            <li><strong>Instagram / TikTok / YouTube / Telegram</strong>: incolla l'indirizzo completo del profilo o canale. Se lasci un campo vuoto resta il link attuale.</li>
+            <li><strong>WhatsApp</strong>: usa il formato <strong>https://wa.me/39NUMERO</strong> (prefisso internazionale, senza spazi).</li>
+            <li><strong>Numero di telefono</strong>: cifre con prefisso, es. +39 345 840 7102. Serve per il pulsante «Chiama».</li>
+            <li><strong>Email</strong>: l'indirizzo che riceve i contatti dal sito.</li>
+            <li><strong>Facebook Pixel</strong>: solo l'ID numerico del set di dati Meta. Il pulsante <strong>?</strong> accanto al campo apre la guida in 4 passi; <strong>Rimuovi pixel</strong> lo disattiva (il tracciamento si ferma al salvataggio).</li>
+            <li><strong>Salva social</strong>: aggiorna tutto il sito. <strong>Ripristina default</strong> rimette i link originali.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-circle-question"></i> 8 · FAQ</h4>
+          <p>Dove si vede: Home → sezione <strong>«Le risposte che cercavi»</strong>. Solo le domande attive compaiono.</p>
+          <ul>
+            <li><strong>Domanda *</strong>: la domanda come la leggono i visitatori (es. «Che cos'è la consulenza relazionale?»).</li>
+            <li><strong>Risposta *</strong>: il testo completo che si apre cliccando la domanda. Puoi scrivere più frasi: l'accordion si adatta.</li>
+            <li><strong>Salva domanda</strong>: pubblica subito. Modificando una domanda esistente diventa «Salva modifiche» e compare il badge «stai modificando una domanda esistente».</li>
+            <li><strong>Elenco «Domande pubblicate»</strong>: <strong>matita</strong> modifica, <strong>cestino</strong> elimina (con conferma), <strong>↑ ↓</strong> cambiano l'ordine, l'interruttore <strong>Attiva</strong> la nasconde senza cancellarla.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-eye"></i> 9 · Anteprima live (colonna destra)</h4>
+          <p>La colonna a destra <strong>parte vuota</strong>: compare l'anteprima solo quando sei su una sezione e inizi a compilare i suoi campi, e mostra <strong>solo i blocchi di quella sezione</strong>. Cambiando sezione torna vuota, così non vedi contenuti che non stai modificando.</p>
+          <ul>
+            <li><strong>Home</strong>: miniatura di Hero, Servizi, Metodo, Recensioni, FAQ e Footer con i colori scelti in «Colori &amp; stile».</li>
+            <li><strong>Pacchetti in Home</strong>, <strong>Test</strong>, <strong>Foto</strong>, <strong>Social</strong> e <strong>FAQ</strong>: replicano ciò che è salvato nel database, più la «bozza» che stai scrivendo in quel momento (evidenziata).</li>
+            <li><strong>Aggiorna</strong>: rilegge il database e ridisegna l'anteprima, utile dopo una modifica fatta da un altro dispositivo.</li>
+            <li>Su schermi piccoli l'anteprima si sposta sotto il pannello invece di stare a destra.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-route"></i> 10 · Tutorial guidato</h4>
+          <p>Il pulsante <strong>Tutorial</strong> avvia un percorso con spotlight: oscura la pagina, illumina un elemento alla volta e spiega che cosa contiene e cosa inserire. Il tour è diviso in sezioni (Introduzione, Recensioni, Test, Servizi, Colori, Foto, Social, FAQ, Anteprima).</p>
+          <ul>
+            <li><strong>Avanti / Indietro</strong>: passaggio successivo o precedente.</li>
+            <li><strong>Salta sezione</strong>: salta le spiegazioni rimanenti della sezione corrente e passa alla successiva (comodo se una parte non ti serve).</li>
+            <li><strong>Chiudi</strong> (o il tasto Esc): interrompe il tour; puoi riprenderlo quando vuoi dal pulsante Tutorial.</li>
+            <li>Il tour cambia da solo la sezione della dashboard quando deve mostrarti un campo di un altro pannello.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4><i class="fa-solid fa-comments"></i> Domande e risposte</h4>
+          <p>Tocca una domanda per leggere la risposta.</p>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Ho salvato, ma la Home non mostra la modifica: perché?</span></summary><div class="qa-body"><p>Prima controlla di aver premuto il pulsante di salvataggio di quella sezione (non basta scrivere nel campo). Se hai salvato, la Home aperta in un'altra scheda si aggiorna da sola in pochi secondi; se resta ferma, ricarica la pagina con <strong>Ctrl + F5</strong> (Mac: ⌘ + Shift + R).</p><p>Se nemmeno così cambia nulla, apri la Home da un indirizzo <strong>http/https</strong> e non come file locale: dal file il sito non riesce a leggere il database.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Devo ripubblicare il sito dopo ogni modifica?</span></summary><div class="qa-body"><p><strong>No.</strong> Testi, foto, colori e pacchetti sono salvati in un database separato dal codice: il sito li legge a ogni visita. Serve ripubblicare solo se cambia il codice del sito (nuove pagine, nuove funzioni).</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Compare «Salvataggio bloccato dalle REGOLE di Firebase»: cosa faccio?</span></summary><div class="qa-body"><p>Il database rifiuta la scrittura perché le regole di sicurezza non sono aggiornate. Apri la Console Firebase del progetto → <strong>Firestore Database → Regole</strong>, incolla il contenuto del file <strong>firestore-rules.txt</strong> del progetto e premi <strong>Pubblica</strong>. Dopo pochi secondi riprova a salvare.</p><p>Le regole permettono la lettura pubblica e la scrittura solo all'account amministratore: non vanno mai aperte a tutti.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Posso cambiare solo lo sfondo di un bottone e lasciare il testo com'è?</span></summary><div class="qa-body"><p>Sì. Ogni bottone ha due righe separate (background e testo) e ogni colore è indipendente: puoi cambiare solo quella che ti interessa e salvare.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>I colori personalizzati valgono anche su telefono e tablet?</span></summary><div class="qa-body"><p>Sì. Il tema è salvato nel database e applicato via CSS a qualunque dispositivo e a qualunque pagina del sito: non devi rifare nulla per il mobile.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Come torno ai colori originali?</span></summary><div class="qa-body"><p>Pannello <strong>Colori &amp; stile</strong> → <strong>Ripristina colori originali</strong> → conferma. Il tema personalizzato viene cancellato dal database e il sito torna ai colori di partenza; l'operazione non è annullabile, quindi se ti serve conservare le scelte annotale prima.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Ho scelto uno sfondo scuro e ora il testo non si legge: perché?</span></summary><div class="qa-body"><p>Il colore del testo è indipendente da quello dello sfondo: se sono simili il testo «sparisce». Scegli un testo chiaro (#F8F5EF, #FFFFFF) su sfondi scuri e uno scuro (#2E3734, #212121) su sfondi chiari. Puoi correggere solo la riga «testo» di quella sezione senza toccare il resto.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Ho aggiunto una foto ma in Home non appare.</span></summary><div class="qa-body"><p>Controlla tre cose, in ordine:</p><ul><li>hai premuto <strong>Salva</strong> accanto al gruppo (o <strong>Salva foto</strong> in fondo);</li><li>il link inizia con <strong>https://</strong> e punta direttamente a un'immagine (la miniatura nello slot deve caricarsi);</li><li>la foto non è protetta da login (Instagram, Google Drive e simili di solito non funzionano).</li></ul></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Quante foto posso caricare per ogni sezione?</span></summary><div class="qa-body"><p>Fino a 12 per gruppo. Con una sola foto l'immagine resta ferma, con due o più ruotano automaticamente ogni 4 secondi nella Home. Per Hero e Chi sono non puoi restare senza foto; lo Studio può anche essere svuotato.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Ho eliminato una recensione (o una FAQ) per errore: si può recuperare?</span></summary><div class="qa-body"><p>No, l'eliminazione è definitiva: per questo prima di cancellare viene sempre chiesta conferma. L'unico modo è reinserire il contenuto a mano dal modulo.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Perché l'anteprima a destra resta vuota?</span></summary><div class="qa-body"><p>È il comportamento previsto: l'anteprima si attiva quando inizi a lavorare in una sezione (basta scrivere in un campo, cambiare un colore o premere un pulsante di quella sezione). Prima resta vuota per non mostrarti contenuti che non stai modificando. Se hai appena cambiato sezione, scrivi qualcosa nei campi e apparirà.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Perché l'anteprima a destra non mostra le recensioni?</span></summary><div class="qa-body"><p>L'anteprima live mostra i pacchetti, il test, le foto, i social, le FAQ e la mini-Home con i colori, ma non le recensioni: quelle si vedono direttamente nella sezione «Cosa dicono di me» della Home. Anche per la sezione Recensioni la colonna resta quindi vuota, con un messaggio che lo spiega.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Chi può vedere i contenuti non ancora salvati?</span></summary><div class="qa-body"><p>Nessuno: restano solo nella tua pagina finché non premi salva. Anche la «bozza» dell'anteprima è visibile solo a te, dentro la dashboard.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Posso lavorare da due dispositivi contemporaneamente?</span></summary><div class="qa-body"><p>Puoi accedere da più dispositivi con lo stesso account, ma evita di modificare lo stesso contenuto in due punti nello stesso momento: l'ultimo salvataggio sovrascrive il precedente. L'anteprima live si aggiorna comunque da sola quando i dati cambiano.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Le modifiche ai link social valgono subito anche per chi è già sulla Home?</span></summary><div class="qa-body"><p>Sì: footer, popup e pulsanti social vengono riletti dal database in tempo reale, quindi si aggiornano senza ricaricare la pagina. In caso di dubbio usa <strong>Aggiorna</strong> nell'anteprima.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Cosa succede se svuoto un campo social e salvo?</span></summary><div class="qa-body"><p>Il campo vuoto viene ignorato e resta il link attuale già pubblicato: non rischi di «cancellare» WhatsApp o l'email per sbaglio. Per cambiare un link scrivi il nuovo indirizzo completo e salva.</p></div></details>
+        </section>
+      </div>
+      <div class="help-foot">
+        <button type="button" class="btn btn--tour btn--sm" id="help-start-tour"><i class="fa-solid fa-route"></i> Avvia il tour guidato</button>
+        <button type="button" class="btn btn--primary btn--sm" id="help-close-2">Ho capito</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TOUR GUIDATA INTERATTIVA (spotlight) ============ -->
+  <div id="tour-overlay" hidden>
+    <svg id="tour-mask" width="100%" height="100%" aria-hidden="true">
+      <defs>
+        <mask id="tour-hole-mask">
+          <rect x="0" y="0" width="100%" height="100%" fill="white"></rect>
+          <rect id="tour-hole" x="0" y="0" width="0" height="0" rx="10" fill="black"></rect>
+        </mask>
+      </defs>
+      <rect x="0" y="0" width="100%" height="100%" fill="rgba(16,18,21,.72)" mask="url(#tour-hole-mask)"></rect>
+    </svg>
+    <div class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+      <div class="tour-step-indicator" id="tour-counter">Passaggio 1 / 10</div>
+      <div class="tour-section" id="tour-section">Introduzione</div>
+      <h4 id="tour-title">Benvenuto!</h4>
+      <p id="tour-text">Ti mostro come funziona la dashboard.</p>
+      <div class="tour-actions">
+        <div class="tour-nav-right">
+          <button type="button" class="btn btn--soft btn--sm" id="tour-skip-section" title="Passa alla sezione successiva del tour">Salta sezione</button>
+          <button type="button" class="btn btn--soft btn--sm" id="tour-skip">Chiudi</button>
+        </div>
+        <div class="tour-nav-right">
+          <button type="button" class="btn btn--soft btn--sm" id="tour-prev" hidden><i class="fa-solid fa-arrow-left"></i> Indietro</button>
+          <button type="button" class="btn btn--primary btn--sm" id="tour-next">Avanti <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase (config globale) + logica admin -->
+  <script type="module" src="firebase-config.js"></script>
+  <script src="quiz-defaults.js?v=20261028j"></script>
+  <script type="module" src="admin.js?v=20261029o"></script>
+</body>
+</html>
