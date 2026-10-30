@@ -18,6 +18,8 @@
   --brand-primary: #591c2f;
   --brand-primary-dark: #451624;
   --accent: #FF0072;
+  /* Verde del brand usato per i titoli delle sezioni e per il box CTA FAQ */
+  --brand-titoli: #385952;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -86,7 +88,7 @@ button { font-family: inherit; cursor: pointer; }
   text-transform: uppercase; color: var(--verde-bosco); background: var(--salvia);
   padding: 6px 16px; border-radius: 999px; margin-bottom: 16px; font-weight: 600;
 }
-.section-head h2 { font-size: clamp(1.8rem, 3.4vw, 2.6rem); margin-bottom: 14px; }
+.section-head h2 { font-size: clamp(1.8rem, 3.4vw, 2.6rem); margin-bottom: 14px; color: var(--brand-titoli); }
 .section-head p { color: var(--testo-soft); }
 
 /* ============================================================
@@ -279,8 +281,10 @@ button { font-family: inherit; cursor: pointer; }
   background: radial-gradient(circle at 85% 20%, rgba(198, 214, 202, 0.55), transparent 45%), var(--avorio);
 }
 .hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 60px; align-items: center; }
-.hero h1 { font-size: 28px; margin: 18px 0 20px; }
-.hero h1 em { font-style: italic; color: var(--testo); }
+.hero h1 { font-size: 28px; margin: 18px 0 20px; color: var(--brand-titoli); }
+/* "azioni concrete": nero nel disegno originale; se dalla dashboard viene
+   scelto un altro colore per il testo Hero, segue quel colore. */
+.hero h1 em { font-style: italic; color: var(--theme-hero-txt, var(--testo)); }
 .hero p.lead { color: var(--testo-soft); font-size: 1.08rem; max-width: 480px; margin-bottom: 32px; }
 .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
 .hero-visual {
@@ -331,7 +335,12 @@ button { font-family: inherit; cursor: pointer; }
   color: #ffffff; display: grid; place-items: center; font-size: 1.2rem; margin-bottom: 2px;
 }
 .pain-card h3 { font-size: 1.1rem; margin-bottom: 0; color: #ffffff; }
-.pain-card p { font-size: 0.88rem; color: rgba(255, 255, 255, 0.85); margin: 0; }
+.pain-card p { font-size: 0.88rem; color: #ffffff; margin: 0; }
+/* Le card hanno sempre lo sfondo verde del brand: il loro testo resta bianco
+   anche quando dalla dashboard viene salvato un tema colori (il "Testo
+   sezione Blocchi" non deve renderlo scuro e illeggibile). */
+#problemi .pain-card h3,
+#problemi .pain-card p { color: #ffffff; }
 
 .method-timeline { list-style: none; margin: 0 auto; padding: 8px 0 0; max-width: 720px; position: relative; }
 .timeline-item { position: relative; display: grid; grid-template-columns: 64px 1fr; align-items: start; gap: 22px; padding-bottom: 38px; }
@@ -454,7 +463,7 @@ button { font-family: inherit; cursor: pointer; }
   border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 22px;
   box-shadow: 12px 17px 51px rgba(49, 91, 85, 0.14); padding: 40px 38px;
 }
-.method-split-right .method-cta-copy h3 { font-family: 'Heavitas', 'Playfair Display', serif; font-weight: 400; font-size: clamp(1.15rem, 2.4vw, 1.6rem); margin-bottom: 16px; }
+.method-split-right .method-cta-copy h3 { font-family: 'Heavitas', 'Playfair Display', serif; font-weight: 400; font-size: clamp(1.15rem, 2.4vw, 1.6rem); margin-bottom: 16px; color: var(--brand-titoli); }
 .method-split-right .method-cta-copy p { color: var(--testo-soft); font-size: 0.95rem; line-height: 1.7; max-width: 560px; margin: 0 0 12px; }
 .method-split-right .method-cta-emphasis { color: var(--verde-bosco); font-weight: 600; margin: 0 auto 20px; max-width: 460px; }
 /* Blocco finale: frase chiave, bottone e freccia, tutti centrati */
@@ -2015,7 +2024,7 @@ body.loading { overflow: hidden; }
 
 #faq-vm {
   --faq-avorio: var(--theme-faq-bg, #F8F5EF); /* sfondo sezione = colore scelto nella dashboard */
-  --faq-verde: var(--theme-faq-txt, #315B55); /* testo domande = colore scelto nella dashboard */
+  --faq-verde: var(--theme-faq-txt, #385952); /* testo domande = colore scelto nella dashboard */
   --faq-verde-scuro: #24443F;
   --faq-salvia: #C6D6CA;
   --faq-salvia-chiaro: #E3EBE5;
@@ -2300,11 +2309,7 @@ body.loading { overflow: hidden; }
       rgba(198, 214, 202, 0.20),
       transparent 40%
     ),
-    linear-gradient(
-      145deg,
-      var(--faq-verde),
-      var(--faq-verde-scuro)
-    );
+    var(--brand-titoli);
   text-align: center;
   box-shadow: 0 16px 40px rgba(49, 91, 85, 0.17);
   overflow: hidden;
@@ -2334,7 +2339,9 @@ body.loading { overflow: hidden; }
 
 #faq-vm .faq-vm-cta h3 {
   margin: 0 0 12px;
-  color: var(--faq-avorio);
+  /* Il box CTA ha sfondo verde brand fisso: il testo resta avorio anche con
+     un tema colori attivo (altrimenti diventerebbe del colore della sezione). */
+  color: var(--avorio);
   font-family: 'Playfair Display', serif;
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 600;
@@ -2685,6 +2692,43 @@ body.modal-open { overflow: hidden; }
 /* SVG icon style (come i bottoni Email/WhatsApp della sezione "Chi sono") */
 .mode-btn-icon svg { width: 22px; height: 22px; fill: currentColor; display: block; }
 .mode-btn:focus-visible { outline: 2px solid var(--verde-bosco); outline-offset: 3px; }
+
+/* Stessa animazione dei bottoni Email/WhatsApp di "Chi sono": al passaggio del
+   mouse (o col focus da tastiera) il cerchio si allunga in una pillola e il nome
+   del contatto compare accanto all'icona. Su touch restano le etichette sotto. */
+.mode-btn {
+  transition:
+    width .35s cubic-bezier(.22, 1, .36, 1),
+    border-radius .35s cubic-bezier(.22, 1, .36, 1),
+    background .25s ease,
+    color .25s ease,
+    box-shadow .25s ease,
+    transform .2s ease;
+}
+.mode-btn-icon { flex: 0 0 auto; transition: transform .35s cubic-bezier(.22, 1, .36, 1); }
+.mode-btn-label {
+  max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+  font-size: .8rem; font-weight: 700; line-height: 1; letter-spacing: .01em;
+  transition: max-width .35s cubic-bezier(.22, 1, .36, 1), opacity .22s ease;
+}
+@media (hover: hover) {
+  /* Larghezza studiata per restare nella riga dei 4 cerchi senza mandarla
+     a capo: 4 × 52 px + margini lasciano circa 132 px al bottone aperto. */
+  .mode-btn:hover, .mode-btn:focus-visible {
+    width: 132px;
+    justify-content: flex-start;
+    gap: 7px;
+    padding: 0 14px 0 13px;
+    border-radius: 40px;
+  }
+  .mode-btn:hover .mode-btn-label,
+  .mode-btn:focus-visible .mode-btn-label { max-width: 76px; opacity: 1; }
+  .mode-btn:hover .mode-btn-icon,
+  .mode-btn:focus-visible .mode-btn-icon { transform: scale(.88); }
+  .mode-btn:hover { box-shadow: 0 12px 22px rgba(0, 0, 0, .18); }
+  /* Il nome è dentro la pillola: il tooltip flottante diventa inutile */
+  .mode-tooltip { display: none; }
+}
 
 /* Tooltip che sale sopra il cerchio in hover/focus */
 .mode-tooltip {

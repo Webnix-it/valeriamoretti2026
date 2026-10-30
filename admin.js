@@ -1505,6 +1505,7 @@
     youtube:   'https://www.youtube.com/@mentalcoachvaleria95',
     telegram:  'https://t.me/mentalcoachvaleria95',
     whatsapp:  'https://wa.me/393458407102',
+    qr_whatsapp: 'https://i.ibb.co/rKP576pf/qrcode-api-whatsapp-com.png',
     phone:     '+393458407102',
     email:     'mentalcoachvaleria@gmail.com',
     fb_pixel_id: ''
@@ -1516,6 +1517,7 @@
     { key: 'youtube',   label: 'YouTube',   icon: 'fa-brands fa-youtube',   bg: '#ff0000' },
     { key: 'telegram',  label: 'Telegram',  icon: 'fa-brands fa-telegram',  bg: '#229ED9' },
     { key: 'whatsapp',  label: 'WhatsApp',  icon: 'fa-brands fa-whatsapp',  bg: '#25D366' },
+    { key: 'qr_whatsapp', label: 'QR WhatsApp', icon: 'fa-solid fa-qrcode', bg: '#25D366' },
     { key: 'phone',     label: 'Telefono',  icon: 'fa-solid fa-phone',      bg: '#2f4f3e' },
     { key: 'email',     label: 'Email',     icon: 'fa-solid fa-envelope',   bg: '#ea4335' },
     { key: 'fb_pixel_id', label: 'Facebook Pixel', icon: 'fa-brands fa-facebook', bg: '#1877F2' }
@@ -1554,7 +1556,34 @@
     // Stato bottone "Rimuovi pixel": attivo solo se un pixel è salvato nel database
     const prBtn = $('#pixel-remove-btn');
     if (prBtn) prBtn.disabled = !currentSocial.fb_pixel_id;
+    renderQrPreview(currentSocial.qr_whatsapp);
     renderSocialPreview();
+  }
+
+  /* Anteprima del QR WhatsApp: mostra l'immagine del link inserito nel campo.
+     Se il link manca o non è un'immagine il riquadro lo dice esplicitamente. */
+  function renderQrPreview(url) {
+    const img = $('#qr-social-img'), empty = $('#qr-social-empty');
+    if (!img || !empty) return;
+    const ok = /^https?:\/\/.+\..+/i.test(String(url || '').trim());
+    if (!ok) {
+      img.hidden = true;
+      img.removeAttribute('src');
+      empty.hidden = false;
+      empty.textContent = 'Nessun QR';
+      return;
+    }
+    img.onload = () => { img.hidden = false; empty.hidden = true; };
+    img.onerror = () => { img.hidden = true; empty.hidden = false; empty.textContent = 'Immagine non trovata'; };
+    img.src = String(url).trim();
+  }
+
+  /* Rinfresca il QR solo quando si smette di digitare, per non far lampeggiare
+     l'anteprima a ogni carattere del link. */
+  let qrPreviewTimer = null;
+  function queueQrPreview(url) {
+    clearTimeout(qrPreviewTimer);
+    qrPreviewTimer = setTimeout(() => renderQrPreview(url), 400);
   }
 
   // Rimuovi Facebook Pixel: cancella l'ID dal campo, dal database e disattiva
@@ -1660,15 +1689,19 @@
       const inp = $(`.social-url-input[data-key="${m.key}"]`);
       live[m.key] = validSocialValue(m.key, inp ? inp.value : '') || currentSocial[m.key] || '';
     });
+    queueQrPreview(live.qr_whatsapp);
+    const qrLive = /^https?:\/\/.+\..+/i.test(String(live.qr_whatsapp || '')) ? live.qr_whatsapp : '';
     box.innerHTML = `
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        ${SOCIAL_META.filter(m => m.key !== 'fb_pixel_id').map(m => `
-          <a href="${esc(socialHrefFor(m.key, live[m.key]))}" target="_blank" rel="noopener noreferrer" title="${esc(live[m.key] || 'Non impostato')}"
-             style="display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid #ddd6c6;border-radius:999px;padding:6px 12px 6px 6px;text-decoration:none;color:#2f4f3e;font-size:11.5px;font-weight:600;transition:transform .2s ease;"
-             onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform=''">
+        ${SOCIAL_META.filter(m => m.key !== 'fb_pixel_id' && m.key !== 'qr_whatsapp').map(m => `
+          <a href="${esc(socialHrefFor(m.key, live[m.key]))}" target="_blank" rel="noopener noreferrer" title="${esc(live[m.key] || 'Non impostato')}" class="pv-social-chip">
             <span style="width:24px;height:24px;border-radius:50%;background:${m.bg};color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;"><i class="${m.icon}"></i></span>
             ${m.label}
           </a>`).join('')}
+      </div>
+      <div class="pv-social-qr">
+        ${qrLive ? `<img src="${esc(qrLive)}" alt="QR WhatsApp" />` : `<span style="width:62px;height:62px;flex:0 0 auto;border:3px dashed #cfc8ba;border-radius:8px;display:grid;place-items:center;font-size:10px;color:#98917f;background:#fff;text-align:center;">Nessun QR</span>`}
+        <span>QR WhatsApp nel popup «Parliamo insieme»<br><small>compare al passaggio del mouse sul pulsante WhatsApp</small></span>
       </div>
       <p style="font-size:10.5px;color:#98917f;margin-top:8px;">Anteprima dei collegamenti reali: cliccabili come nella Home.</p>`;
   }
@@ -1699,6 +1732,29 @@
         });
       }
     } catch (e) { console.warn('onSnapshot social non attivo:', e); }
+  }
+
+  /* ===== MODALITÀ CHIARA / SCURA (solo dashboard) =====
+     L'icona luna/sole nella barra laterale cambia l'aspetto del pannello.
+     La scelta è memorizzata nel browser (localStorage) e non tocca il sito. */
+  function initAdminTheme() {
+    const btn = $('#btn-theme-toggle');
+    if (!btn) return;
+    const icon = $('#theme-toggle-icon');
+    const apply = (mode) => {
+      const dark = mode === 'dark';
+      document.documentElement.setAttribute('data-admin-theme', dark ? 'dark' : 'light');
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.title = dark ? 'Passa alla modalità chiara' : 'Passa alla modalità scura';
+      if (icon) icon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      try { localStorage.setItem('admin-theme', dark ? 'dark' : 'light'); } catch (e) {}
+    };
+    let saved = 'light';
+    try { saved = localStorage.getItem('admin-theme') === 'dark' ? 'dark' : 'light'; } catch (e) { saved = 'light'; }
+    apply(saved);
+    btn.addEventListener('click', () => {
+      apply(document.documentElement.getAttribute('data-admin-theme') === 'dark' ? 'light' : 'dark');
+    });
   }
 
 
@@ -1949,6 +2005,66 @@
     { key: 'btnNavText', label: 'Testo — bottone navbar' }
   ];
 
+  /* Palette pronte: combinazioni complete di tutti i 30 colori. Un clic le
+     applica ai campi e all'anteprima (senza pubblicare: serve «Salva
+     colori»). La prima è esattamente il disegno attuale del sito, quindi
+     equivale a «Ripristina colori originali». */
+  const THEME_PALETTES = [
+    {
+      id: 'originale',
+      name: 'Originale brand',
+      desc: 'Avorio, salvia e verde bosco con i titoli verdi del brand: i colori di partenza del sito.',
+      swatches: ['#F8F5EF', '#E3EBE5', '#315B55', '#385952', '#C6D6CA'],
+      colors: { ...THEME_DEFAULTS }
+    },
+    {
+      id: 'notte',
+      name: 'Verde notte',
+      desc: 'Fondi scuri verde bosco e testi chiari, con bottoni salvia: deciso ed elegante.',
+      swatches: ['#1B2624', '#22302D', '#2B3A36', '#385952', '#C6D6CA'],
+      colors: {
+        pageBg: '#1B2624', pageText: '#F1EDE4',
+        heroBg: '#22302D', heroText: '#F1EDE4',
+        problemsBg: '#1B2624', problemsText: '#F1EDE4',
+        methodBg: '#22302D', methodText: '#F1EDE4',
+        servicesBg: '#2B3A36', servicesText: '#F1EDE4',
+        cardBg: '#2F403B', cardText: '#F1EDE4',
+        featCardBg: '#385952', featCardText: '#F8F5EF',
+        testimonialsBg: '#18211F', testimonialsText: '#F1EDE4',
+        faqBg: '#22302D', faqText: '#F1EDE4',
+        studioBg: '#2B3A36', studioText: '#F1EDE4',
+        footerBg: '#18211F', footerText: '#F1EDE4',
+        btnPrimaryBg: '#C6D6CA', btnPrimaryText: '#1B2624',
+        btnSecondaryBg: '#F1EDE4', btnSecondaryText: '#1B2624',
+        btnSageBg: '#385952', btnSageText: '#F8F5EF',
+        btnNavBg: '#C6D6CA', btnNavText: '#1B2624'
+      }
+    },
+    {
+      id: 'salvia',
+      name: 'Salvia chiara',
+      desc: 'Bianco, avorio e salvia con i titoli verdi del brand: luminoso e leggero.',
+      swatches: ['#FFFFFF', '#F8F5EF', '#E3EBE5', '#385952', '#C6D6CA'],
+      colors: {
+        pageBg: '#F8F5EF', pageText: '#2E3734',
+        heroBg: '#FFFFFF', heroText: '#2E3734',
+        problemsBg: '#E3EBE5', problemsText: '#2E3734',
+        methodBg: '#FFFFFF', methodText: '#2E3734',
+        servicesBg: '#E3EBE5', servicesText: '#2E3734',
+        cardBg: '#FFFFFF', cardText: '#2E3734',
+        featCardBg: '#385952', featCardText: '#F8F5EF',
+        testimonialsBg: '#315B55', testimonialsText: '#F8F5EF',
+        faqBg: '#FFFFFF', faqText: '#2E3734',
+        studioBg: '#F8F5EF', studioText: '#2E3734',
+        footerBg: '#385952', footerText: '#F8F5EF',
+        btnPrimaryBg: '#385952', btnPrimaryText: '#F8F5EF',
+        btnSecondaryBg: '#FFFFFF', btnSecondaryText: '#385952',
+        btnSageBg: '#C6D6CA', btnSageText: '#2E3734',
+        btnNavBg: '#385952', btnNavText: '#F8F5EF'
+      }
+    }
+  ];
+
   let currentTheme = { ...THEME_DEFAULTS };
 
   function hexToCss(v, fallback) {
@@ -1996,6 +2112,77 @@
     box.innerHTML = html;
   }
 
+  /* ===================== PALETTE PRONTE ===================== */
+  function paletteSwatchesHtml(p) {
+    return `<span class="palette-swatch">${p.swatches.map(c => `<i style="background:${esc(c)}"></i>`).join('')}</span>`;
+  }
+
+  function renderPalettes() {
+    const box = $('#theme-palettes');
+    if (!box) return;
+    box.innerHTML = THEME_PALETTES.map(p => `
+      <button type="button" class="palette-card" data-palette="${esc(p.id)}" aria-pressed="false" title="Applica la palette ${esc(p.name)}">
+        ${paletteSwatchesHtml(p)}
+        <span class="palette-name">${esc(p.name)}</span>
+        <span class="palette-desc">${esc(p.desc)}</span>
+        <span class="palette-apply">Applica palette</span>
+      </button>`).join('');
+    if (!box.dataset.bound) {
+      box.dataset.bound = '1';
+      box.addEventListener('click', (e) => {
+        const card = e.target.closest('[data-palette]');
+        if (!card) return;
+        const p = THEME_PALETTES.find(x => x.id === card.dataset.palette);
+        if (p) applyPalette(p);
+      });
+    }
+    markActivePalette(null);
+  }
+
+  /* Evidenzia la palette i cui colori coincidono con quelli attuali
+     (null = nessuna: i colori sono stati ritoccati a mano). */
+  function markActivePalette(id) {    $$('#theme-palettes [data-palette]').forEach(card => {
+      const on = !!id && card.dataset.palette === id;
+      card.classList.toggle('active', on);
+      card.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    const box = $('#theme-palettes');
+    if (box) box.dataset.palette = id || '';
+  }
+
+  /* Confronta i colori attuali con le 3 palette e evidenzia quella che
+     corrisponde esattamente (se nessuna, nessuna card resta evidenziata). */
+  function syncPaletteState() {
+    if (!$('#theme-palettes')) return;
+    const keys = Object.keys(THEME_DEFAULTS);
+    const same = (p) => keys.every(k =>
+      hexToCss(currentTheme[k], THEME_DEFAULTS[k]).toUpperCase() ===
+      hexToCss(p.colors[k], THEME_DEFAULTS[k]).toUpperCase());
+    const match = THEME_PALETTES.find(same);
+    markActivePalette(match ? match.id : null);
+  }
+
+  /* Scrive nei campi tutti i colori della palette, aggiorna l'anteprima ma     NON pubblica: l'utente vede il risultato e decide con «Salva colori». */
+  function applyPalette(p) {
+    const ae = document.activeElement;
+    if (ae && ae.blur && ae !== document.body) ae.blur();
+    currentTheme = { ...THEME_DEFAULTS, ...p.colors };
+    $$('input[type="color"][data-tkey]').forEach(inp => {
+      const val = hexToCss(currentTheme[inp.dataset.tkey], '#000000');
+      if (inp.value !== val) inp.value = val;
+    });
+    $$('input.hexv[data-thex]').forEach(inp => {
+      const val = hexToCss(currentTheme[inp.dataset.thex], '#000000');
+      if (inp.value !== val) inp.value = val;
+    });
+    markActivePalette(p.id);
+    applyPreviewTheme(currentTheme);
+    const how = p.id === 'originale'
+      ? 'Sono i colori originali del sito: puoi anche usare «Ripristina colori originali».'
+      : 'Guarda l\'anteprima: se ti piace, premi «Salva colori» per pubblicarla sul sito.';
+    toast(`Palette «${p.name}» caricata nei campi. ${how}`);
+  }
+
   /* Cambio dal campione colore: aggiorna tema, campo hex gemello e anteprima. */
   function onThemePickerChange(e) {
     const inp = e.target.closest('input[type="color"][data-tkey]');
@@ -2004,6 +2191,7 @@
     currentTheme[k] = inp.value.toUpperCase();
     const hv = $('#hv-' + k);
     if (hv) hv.value = currentTheme[k];
+    markActivePalette(null);
     applyPreviewTheme(currentTheme);
   }
 
@@ -2022,6 +2210,7 @@
       const picker = $('#tc-' + k);
       if (picker) picker.value = val;
       inp.value = val;
+      markActivePalette(null);
       applyPreviewTheme(currentTheme);
     } else {
       inp.value = hexToCss(currentTheme[k], THEME_DEFAULTS[k]);
@@ -2064,6 +2253,18 @@
     pane.style.setProperty('--pv-sage-txt', v('btnSageText'));
     pane.style.setProperty('--pv-nav-bg', v('btnNavBg'));
     pane.style.setProperty('--pv-nav-txt', v('btnNavText'));
+    /* Titoli della miniatura: come sul sito restano del colore del disegno
+       (verde brand #385952) finché il testo della sezione è quello
+       originale; se il testo viene personalizzato seguono il testo scelto. */
+    const isOrigTxt = (k) => String(t[k] || '').toUpperCase() === String(THEME_DEFAULTS[k] || '').toUpperCase();
+    // originali → verde brand; personalizzati → lo stesso colore del testo
+    const titleCol = (k) => (isOrigTxt(k) ? '#385952' : v(k));
+    pane.style.setProperty('--pv-title-hero', titleCol('heroText'));
+    pane.style.setProperty('--pv-title-services', titleCol('servicesText'));
+    pane.style.setProperty('--pv-title-method', titleCol('methodText'));
+    pane.style.setProperty('--pv-title-faq', titleCol('faqText'));
+    pane.style.setProperty('--pv-title-testi', v('testimonialsText'));
+    syncPaletteState();
     renderMiniHome();
   }
 
@@ -2119,7 +2320,7 @@
     box.innerHTML = `
       <div class="pv-mini-section pv-mini-hero">
         <span class="pv-mini-kicker">Mental Coach</span>
-        <h4>Trasforma i tuoi obiettivi in azioni concrete.</h4>
+        <h4>Trasforma i tuoi obiettivi in <em>azioni concrete</em>.</h4>
         <p class="pv-mini-lead">Anteprima dello stile reale della sezione Hero della Home.</p>
         <div class="pv-mini-btns">
           <span class="pv-hbtn pv-hbtn--nav">Prenota una sessione</span>
@@ -2172,6 +2373,7 @@
     const ae = document.activeElement;
     if (ae && ae.blur && ae !== document.body) ae.blur();
     currentTheme = { ...THEME_DEFAULTS };
+    markActivePalette('originale');
     $$('input[type="color"][data-tkey]').forEach(inp => {
       const val = hexToCss(THEME_DEFAULTS[inp.dataset.tkey], '#000000');
       if (inp.value !== val) inp.value = val;
@@ -2242,6 +2444,7 @@
   }
 
   function initThemeSection() {
+    renderPalettes();
     buildColorRows('#theme-sections-grid', THEME_SECTIONS);
     buildColorRows('#theme-buttons-grid', THEME_BUTTONS);
     // Box "Sfondi e testi" / "Bottoni": al click la sezione attiva prende
@@ -2533,6 +2736,7 @@
       ['foto', initPhotosSection], // sezione "Aggiornamenti foto" + anteprima live hero/chisono/studio
       ['social', initSocialSection], // sezione "Aggiornamento social" + anteprima live footer/popup
       ['faq', initFaqSection], // sezione "FAQ" (Home «Le risposte che cercavi») + anteprima live
+      ['tema-dashboard', initAdminTheme], // icona luna/sole: modalità chiara o scura della dashboard
       ['aiuto', initHelpSection], // bottoni Istruzioni + Tutorial con tour interattivo spotlight
       ['gate-anteprima', initPreviewGate], // l'anteprima appare solo nella sezione in cui scrivi
       ['anteprima', initDraftLivePreview] // anteprima live si aggiorna mentre scrivi nei form

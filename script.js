@@ -1941,6 +1941,24 @@
 
   function isHex(v) { return /^#[0-9a-fA-F]{3,8}$/.test(String(v || '')); }
 
+  /* Colori di testo con cui la Home è disegnata da style.css. Servono per
+     distinguere "colore originale" da "colore scelto a mano": finché il
+     testo di una sezione è quello di partenza, i suoi titoli mantengono i
+     colori del disegno (verde brand #385952 sui fondi chiari, avorio sui
+     fondi scuri). Se invece l'utente sceglie un altro testo, titoli e
+     paragrafi seguono quel colore per restare leggibili. */
+  const THEME_TEXT_ORIGINALS = {
+    pageText: '#2E3734', heroText: '#2E3734', problemsText: '#2E3734',
+    methodText: '#2E3734', servicesText: '#2E3734', cardText: '#2E3734',
+    featCardText: '#F8F5EF', testimonialsText: '#F8F5EF', faqText: '#2E3734',
+    studioText: '#2E3734', footerText: '#F8F5EF'
+  };
+
+  function isOriginalText(key, val) {
+    const def = THEME_TEXT_ORIGINALS[key];
+    return !def || String(val || '').toUpperCase() === def;
+  }
+
   /* Toglie ogni traccia del tema personalizzato: il foglio di regole inline e
      le variabili CSS impostate sul <html>. Serve quando la dashboard ripristina
      i colori originali (documento eliminato): senza questa pulizia la Home
@@ -1960,11 +1978,17 @@
     const root = document.documentElement;
     let css = '';
     Object.entries(THEME_CSS_MAP).forEach(([key, [sel, varName, prop]]) => {
-      if (isHex(t[key])) {
-        root.style.setProperty(varName, t[key]);
-        const imp = prop === 'background' ? 'background' : prop;
-        css += `\n${sel}{ ${imp}: var(${varName}) !important; }`;
-        if (prop === 'color') css += `\n${sel} h1,${sel} h2,${sel} h3,${sel} p,${sel} li{ color: inherit; }`;
+      if (!isHex(t[key])) return;
+      /* Testo lasciato al colore originale: non si imposta nulla. Così titoli,
+         box CTA e componenti che leggono la variabile (es. --faq-verde) restano
+         esattamente come li disegna style.css, anche salvando il tema. */
+      if (prop === 'color' && isOriginalText(key, t[key])) return;
+      root.style.setProperty(varName, t[key]);
+      const imp = prop === 'background' ? 'background' : prop;
+      css += `\n${sel}{ ${imp}: var(${varName}) !important; }`;
+      /* Testo scelto a mano → anche titoli e paragrafi seguono quel colore. */
+      if (prop === 'color') {
+        css += `\n${sel} h1,${sel} h2,${sel} h3,${sel} p,${sel} li{ color: inherit; }`;
       }
     });
     /* Bottoni: la classe reale nel DOM è "btn btn--uiverse btn--forest" ecc.,
@@ -2326,6 +2350,10 @@
     if (mPhone && s.phone) { mPhone.href = 'tel:' + s.phone; changed++; }
     var mWa = document.querySelector('.mode-btn--whatsapp');
     if (mWa && s.whatsapp) { mWa.href = s.whatsapp; changed++; }
+    // QR WhatsApp mostrato sopra il pulsante WhatsApp del popup: immagine
+    // aggiornata dalla dashboard (campo «QR WhatsApp (immagine)»).
+    var qrImg = document.querySelector('.mode-qr-pop img');
+    if (qrImg && s.qr_whatsapp) { qrImg.src = s.qr_whatsapp; changed++; }
     if (changed) console.log('✅ Link social aggiornati dalla dashboard (' + changed + ')');
   }
 
@@ -2344,7 +2372,7 @@
       const d = snap.data() || {};
       if (typeof injectFacebookPixel === 'function') injectFacebookPixel(pixelIdOf(d));
       const clean = {};
-      ['instagram', 'tiktok', 'youtube', 'telegram', 'whatsapp', 'phone', 'email'].forEach(k => {
+      ['instagram', 'tiktok', 'youtube', 'telegram', 'whatsapp', 'qr_whatsapp', 'phone', 'email'].forEach(k => {
         const v = valid(k, d[k]);
         if (v) clean[k] = v;
       });
@@ -2359,7 +2387,7 @@
           const d = snap.data() || {};
           if (typeof injectFacebookPixel === 'function') injectFacebookPixel(pixelIdOf(d));
           const clean = {};
-          ['instagram', 'tiktok', 'youtube', 'telegram', 'whatsapp', 'phone', 'email'].forEach(k => {
+          ['instagram', 'tiktok', 'youtube', 'telegram', 'whatsapp', 'qr_whatsapp', 'phone', 'email'].forEach(k => {
             const v = valid(k, d[k]);
             if (v) clean[k] = v;
           });
