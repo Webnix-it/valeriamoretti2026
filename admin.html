@@ -195,6 +195,18 @@
     .pv-hbtn--sage   { background: var(--pv-sage-bg, #C6D6CA);  color: var(--pv-sage-txt, #212121); }
     .pv-hbtn--light  { background: var(--pv-btn2-bg, #F8F5EF);  color: var(--pv-btn2-txt, #212121); }
     .pv-hbtn--nav    { background: var(--pv-nav-bg, #315B55);   color: var(--pv-nav-txt, #F8F5EF); }
+    /* ---------- CARD RECENSIONE IN ANTEPRIMA: come «Cosa dicono di me» ---------- */
+    .pv-review-card {
+      background: var(--pv-feat-bg, #315B55); color: var(--pv-feat-txt, #F8F5EF);
+      border-radius: 15px; padding: 13px 14px; margin-bottom: 10px;
+      box-shadow: 0 6px 18px rgba(40,50,40,.10);
+    }
+    .pv-review-card:last-child { margin-bottom: 0; }
+    .pv-review-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .pv-review-name { font-weight: 700; font-size: 0.86rem; }
+    .pv-review-stars { color: #F2C14E; font-size: 0.72rem; letter-spacing: 1px; flex: 0 0 auto; }
+    .pv-review-date { font-size: 0.66rem; opacity: .72; margin-top: 2px; }
+    .pv-review-text { font-size: 0.76rem; line-height: 1.5; margin: 7px 0 0; }
     .pv-service-card.featured { background: var(--pv-feat-bg, #315B55); border-color: var(--pv-feat-bg, #315B55); }
     .pv-service-card.featured h3, .pv-service-card.featured .pv-service-price, .pv-service-card.featured li, .pv-service-card.featured p.pv-pdesc { color: var(--pv-feat-txt, #F8F5EF); }
     .pv-service-card.featured .pv-title-icon { background: rgba(248,245,239,.15); color: var(--pv-feat-txt, #F8F5EF); border: 1px solid rgba(248,245,239,.25); }
@@ -1010,13 +1022,19 @@
         <h3><i class="fa-solid fa-eye"></i> Anteprima live</h3>
         <button type="button" class="btn btn--soft btn--sm" id="btn-preview-refresh"><i class="fa-solid fa-rotate"></i> Aggiorna</button>
       </div>
-      <p class="preview-note" id="preview-note">L'anteprima resta vuota finché non inizi a compilare i campi di una sezione: appena scrivi compare solo l'anteprima di quella sezione, aggiornata mentre digiti.</p>
+      <p class="preview-note" id="preview-note">L'anteprima resta vuota finché non inizi a compilare i campi di una sezione: appena scrivi compare solo l'anteprima di quella sezione, aggiornata mentre digiti. Con «Aggiorna» la vedi subito, anche senza scrivere.</p>
       <div class="preview-scroll">
         <div class="pv-empty-state" id="pv-empty-state">
           <i class="fa-regular fa-eye-slash"></i>
           <p id="pv-empty-text">Apri una sezione e inizia a compilare i campi: qui vedrai l'anteprima di quella sezione.</p>
         </div>
 
+        <section class="pv-block" data-preview="recensioni" hidden>
+          <h4><i class="fa-solid fa-star"></i> Recensioni in Home — «Cosa dicono di me»</h4>
+          <p class="pv-hint">La recensione che stai scrivendo (bozza) e quelle già pubblicate, con lo stile con cui compaiono nella Home.</p>
+          <div id="pv-draft-review" class="pv-body"></div>
+          <div id="pv-reviews" class="pv-body"></div>
+        </section>
         <section class="pv-block pv-mini-home-block" data-preview="colori" hidden>
           <h4><i class="fa-solid fa-desktop"></i> Home — anteprima sezioni e bottoni</h4>
           <div id="pv-mini-home" class="pv-body"></div>
@@ -1038,7 +1056,7 @@
           </div>
           <div id="pv-quiz" class="pv-body pv-quiz-live"></div>
         </section>
-        <section class="pv-block" data-preview="servizi" hidden>
+        <section class="pv-block" id="pv-block-cq" data-preview="servizi" hidden>
           <h4><i class="fa-solid fa-clipboard-list"></i> Modulo di richiesta</h4>
           <div id="pv-draft-cq" class="pv-body"></div>
         </section>
@@ -1087,7 +1105,7 @@
           <ul>
             <li><strong>Barra laterale sinistra</strong>: le 7 sezioni (Recensioni, Test gratuito, Servizi e pacchetti, Colori &amp; stile, Aggiornamenti foto, Aggiornamento social, FAQ) più i pulsanti <strong>Istruzioni</strong> e <strong>Tutorial</strong>. In basso vedi l'account collegato e <strong>Esci</strong>.</li>
             <li><strong>Area centrale</strong>: il pannello della sezione scelta, con i moduli da compilare e gli elenchi dei contenuti già pubblicati.</li>
-            <li><strong>Colonna destra «Anteprima live»</strong>: una miniatura del sito che si aggiorna mentre scrivi, così vedi subito l'effetto delle modifiche.</li>
+            <li><strong>Colonna destra «Anteprima live»</strong>: una miniatura del sito che si aggiorna mentre scrivi, così vedi subito l'effetto delle modifiche. Il pulsante <strong>Aggiorna</strong> la rilegge dal database quando vuoi.</li>
           </ul>
           <p class="help-tip"><i class="fa-solid fa-lightbulb"></i> <strong>Regola d'oro:</strong> niente compare sul sito finché non premi il pulsante di salvataggio della sezione (Salva recensione, Salva domanda, Salva pacchetto, Salva colori, Salva foto, Salva social).</p>
         </section>
@@ -1120,7 +1138,7 @@
             <li><strong>Cerca per nome o iniziale del cognome</strong>: filtra la tabella mentre digiti (basta una lettera). Non modifica nulla: serve solo a trovare prima una recensione.</li>
             <li><strong>Tabella «Recensioni pubblicate»</strong>: mostra Nome, Iniziale, Stelle, Data, Descrizione e la colonna <strong>Azioni</strong>.</li>
             <li><strong>Matita</strong>: carica la recensione nel modulo per correggerla; <strong>Cestino</strong>: elimina (chiede sempre conferma); <strong>↑ ↓</strong> dove presenti cambiano l'ordine.</li>
-            <li><strong>Nota</strong>: le recensioni non sono replicate nella colonna «Anteprima live»; per vederle apri la Home.</li>
+            <li><strong>Anteprima live</strong>: appena scrivi nome o testo, la colonna di destra mostra la recensione come apparirà in Home (bordo tratteggiato = la bozza che stai compilando) e sotto le recensioni già pubblicate, dalla più recente. In Home finiscono nella sezione «Cosa dicono di me».</li>
           </ul>
         </section>
 
@@ -1240,8 +1258,8 @@
           <p>La colonna a destra <strong>parte vuota</strong>: compare l'anteprima solo quando sei su una sezione e inizi a compilare i suoi campi, e mostra <strong>solo i blocchi di quella sezione</strong>. Cambiando sezione torna vuota, così non vedi contenuti che non stai modificando.</p>
           <ul>
             <li><strong>Home</strong>: miniatura di Hero, Servizi, Metodo, Recensioni, FAQ e Footer con i colori scelti in «Colori &amp; stile».</li>
-            <li><strong>Pacchetti in Home</strong>, <strong>Test</strong>, <strong>Foto</strong>, <strong>Social</strong> e <strong>FAQ</strong>: replicano ciò che è salvato nel database, più la «bozza» che stai scrivendo in quel momento (evidenziata).</li>
-            <li><strong>Aggiorna</strong>: rilegge il database e ridisegna l'anteprima, utile dopo una modifica fatta da un altro dispositivo.</li>
+            <li><strong>Recensioni</strong>, <strong>Pacchetti in Home</strong>, <strong>Test</strong>, <strong>Foto</strong>, <strong>Social</strong> e <strong>FAQ</strong>: replicano ciò che è salvato nel database, più la «bozza» che stai scrivendo in quel momento (evidenziata con il bordo tratteggiato e l'etichetta «bozza»).</li>
+            <li><strong>Aggiorna</strong>: rilegge il database e mostra subito l'anteprima della sezione attiva anche senza scrivere nulla, utile dopo una modifica fatta da un altro dispositivo o se qualcosa non torna.</li>
             <li>Su schermi piccoli l'anteprima si sposta sotto il pannello invece di stare a destra.</li>
           </ul>
         </section>
@@ -1271,7 +1289,7 @@
           <details class="help-qa"><summary><span class="qa-mark">D</span><span>Quante foto posso caricare per ogni sezione?</span></summary><div class="qa-body"><p>Fino a 12 per gruppo. Con una sola foto l'immagine resta ferma, con due o più ruotano automaticamente ogni 4 secondi nella Home. Per Hero e Chi sono non puoi restare senza foto; lo Studio può anche essere svuotato.</p></div></details>
           <details class="help-qa"><summary><span class="qa-mark">D</span><span>Ho eliminato una recensione (o una FAQ) per errore: si può recuperare?</span></summary><div class="qa-body"><p>No, l'eliminazione è definitiva: per questo prima di cancellare viene sempre chiesta conferma. L'unico modo è reinserire il contenuto a mano dal modulo.</p></div></details>
           <details class="help-qa"><summary><span class="qa-mark">D</span><span>Perché l'anteprima a destra resta vuota?</span></summary><div class="qa-body"><p>È il comportamento previsto: l'anteprima si attiva quando inizi a lavorare in una sezione (basta scrivere in un campo, cambiare un colore o premere un pulsante di quella sezione). Prima resta vuota per non mostrarti contenuti che non stai modificando. Se hai appena cambiato sezione, scrivi qualcosa nei campi e apparirà.</p></div></details>
-          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Perché l'anteprima a destra non mostra le recensioni?</span></summary><div class="qa-body"><p>L'anteprima live mostra i pacchetti, il test, le foto, i social, le FAQ e la mini-Home con i colori, ma non le recensioni: quelle si vedono direttamente nella sezione «Cosa dicono di me» della Home. Anche per la sezione Recensioni la colonna resta quindi vuota, con un messaggio che lo spiega.</p></div></details>
+          <details class="help-qa"><summary><span class="qa-mark">D</span><span>Come vedo l'anteprima di una recensione?</span></summary><div class="qa-body"><p>Nella sezione <strong>Recensioni</strong>, appena scrivi il nome o il testo la colonna di destra mostra il blocco «Recensioni in Home»: la riga tratteggiata è la bozza che stai compilando, sotto ci sono le recensioni già pubblicate. In Home finiscono nella sezione «Cosa dicono di me», ordinate dalla più recente.</p></div></details>
           <details class="help-qa"><summary><span class="qa-mark">D</span><span>Chi può vedere i contenuti non ancora salvati?</span></summary><div class="qa-body"><p>Nessuno: restano solo nella tua pagina finché non premi salva. Anche la «bozza» dell'anteprima è visibile solo a te, dentro la dashboard.</p></div></details>
           <details class="help-qa"><summary><span class="qa-mark">D</span><span>Posso lavorare da due dispositivi contemporaneamente?</span></summary><div class="qa-body"><p>Puoi accedere da più dispositivi con lo stesso account, ma evita di modificare lo stesso contenuto in due punti nello stesso momento: l'ultimo salvataggio sovrascrive il precedente. L'anteprima live si aggiorna comunque da sola quando i dati cambiano.</p></div></details>
           <details class="help-qa"><summary><span class="qa-mark">D</span><span>Le modifiche ai link social valgono subito anche per chi è già sulla Home?</span></summary><div class="qa-body"><p>Sì: footer, popup e pulsanti social vengono riletti dal database in tempo reale, quindi si aggiornano senza ricaricare la pagina. In caso di dubbio usa <strong>Aggiorna</strong> nell'anteprima.</p></div></details>
@@ -1317,6 +1335,6 @@
   <!-- Firebase (config globale) + logica admin -->
   <script type="module" src="firebase-config.js"></script>
   <script src="quiz-defaults.js?v=20261028j"></script>
-  <script type="module" src="admin.js?v=20261029o"></script>
+  <script type="module" src="admin.js?v=20261029q"></script>
 </body>
 </html>

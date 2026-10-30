@@ -916,7 +916,13 @@
     if (!blocks.length) return;
     const own = blocks.filter(b => b.dataset.preview === activePanelKey);
     const show = own.length > 0 && !!previewActivated[activePanelKey];
-    blocks.forEach(b => { b.hidden = !(show && b.dataset.preview === activePanelKey); });
+    blocks.forEach(b => {
+      // Il riquadro «Modulo di richiesta» compare solo se c'è davvero una bozza:
+      // un blocco vuoto con il solo titolo confonde più di quanto aiuti.
+      const cqEmpty = b.id === 'pv-block-cq' &&
+        !((b.querySelector('#pv-draft-cq') || {}).textContent || '').trim();
+      b.hidden = !(show && b.dataset.preview === activePanelKey) || cqEmpty;
+    });
     const empty = $('#pv-empty-state');
     const emptyText = $('#pv-empty-text');
     if (!empty || !emptyText) return;
@@ -925,7 +931,7 @@
     const label = PREVIEW_PANEL_LABELS[activePanelKey] || '';
     emptyText.innerHTML = own.length
       ? 'Anteprima in attesa: inizia a compilare i campi di «' + label + '» e qui vedrai il risultato in tempo reale.'
-      : 'La sezione «' + label + '» non ha un\'anteprima: le recensioni salvate si vedono direttamente nella Home, nella sezione «Cosa dicono di me».';
+      : 'La sezione «' + label + '» non ha un\'anteprima: le modifiche si vedono direttamente nella Home.';
   }
 
   function activatePreview(key) {
@@ -1015,6 +1021,8 @@
     }
     // --- Foto in Home: hero / chi sono / studio (stile fedele al sito) ---
     renderPhotosPreview();
+    // --- Recensioni pubblicate (la bozza del modulo è gestita da renderDrafts) ---
+    renderReviewsPreview();
   }
 
   /* =============== SEZIONE: FAQ (Home «Le risposte che cercavi») =========
@@ -1708,6 +1716,7 @@
   const DRAFT_Q_IDS     = ['#q-text'];
   const DRAFT_PKG_IDS   = ['#pkg-name', '#pkg-price', '#pkg-tag'];
   const DRAFT_FAQ_IDS   = ['#faq-q', '#faq-a'];
+  const DRAFT_REV_IDS   = ['#rev-name', '#rev-initial', '#rev-date', '#rev-text'];
 
   function draftQuestionHtml() {
     const text = ($('#q-text').value || '').trim();
@@ -1762,17 +1771,67 @@
       </div>`;
   }
 
+  /* ---------- ANTEPRIMA RECENSIONI («Cosa dicono di me») ----------
+     La bozza si compone dai campi del modulo (nome, iniziale, stelle, data,
+     testo) e sotto compare l'elenco delle recensioni già pubblicate, con lo
+     stesso stile verde/avorio che hanno nella Home.                         */
+  function currentDraftReview() {
+    const val = id => { const el = $('#' + id); return el ? String(el.value || '').trim() : ''; };
+    const name = val('rev-name');
+    const description = val('rev-text');
+    if (!name && !description) return null;
+    return {
+      name: name || 'Nome della persona',
+      initial: val('rev-initial'),
+      stars: currentStarRating(),
+      date: val('rev-date'),
+      description
+    };
+  }
+
+  function pvReviewCardHtml(r, isDraft) {
+    const stars = Math.max(0, Math.min(5, Number(r.stars) || 0));
+    return `<div class="pv-review-card${isDraft ? ' pv-draft' : ''}">
+        <div class="pv-review-head">
+          <span class="pv-review-name">${esc(reviewDisplayName({ name: r.name || 'Nome', initial: r.initial }))}</span>
+          <span class="pv-review-stars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</span>
+        </div>
+        <div class="pv-review-date">${esc(fmtDateIT(r.date))}</div>
+        ${r.description
+          ? `<p class="pv-review-text">${esc(r.description)}</p>`
+          : '<p class="pv-review-text" style="opacity:.7;font-style:italic;">Il testo della recensione comparirà qui…</p>'}
+      </div>`;
+  }
+
+  function renderReviewsPreview() {
+    const draftBox = $('#pv-draft-review');
+    if (draftBox) {
+      const draft = currentDraftReview();
+      draftBox.innerHTML = draft ? pvReviewCardHtml(draft, true) : '';
+    }
+    const listBox = $('#pv-reviews');
+    if (listBox) {
+      const list = [...allReviews].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+      listBox.innerHTML = list.length
+        ? list.map(r => pvReviewCardHtml(r, false)).join('')
+        : '<p class="pv-empty">Nessuna recensione pubblicata: la prima che salvi comparirà qui e in Home.</p>';
+    }
+  }
+
   function renderDrafts() {
     const d2 = $('#pv-draft-question'); if (d2) d2.innerHTML = draftQuestionHtml();
     const d3 = $('#pv-draft-package');  if (d3) d3.innerHTML = draftPackageHtml();
     const d5 = $('#pv-draft-faq');      if (d5) d5.innerHTML = draftFaqHtml();
+    renderReviewsPreview();
     // La miniatura della Home segue la bozza del pacchetto mentre si scrive
     renderMiniHome();
+    // Il riquadro del modulo di richiesta può comparire/scomparire: riallinea il filtro
+    try { updatePreviewGate(); } catch (e) { /* nessun blocco */ }
   }
 
   // Svuota gli slot "bozza" (usato dopo un salvataggio: il dato reale entra nelle liste).
   function renderDraftsCleared() {
-    ['#pv-draft-question', '#pv-draft-package', '#pv-draft-faq']
+    ['#pv-draft-question', '#pv-draft-package', '#pv-draft-faq', '#pv-draft-review']
       .forEach(sel => { const el = $(sel); if (el) el.innerHTML = ''; });
   }
 
@@ -1783,7 +1842,7 @@
   }
 
   function initDraftLivePreview() {
-    [...DRAFT_Q_IDS, ...DRAFT_PKG_IDS, ...DRAFT_FAQ_IDS].forEach(sel => {
+    [...DRAFT_Q_IDS, ...DRAFT_PKG_IDS, ...DRAFT_FAQ_IDS, ...DRAFT_REV_IDS].forEach(sel => {
       const el = $(sel);
       if (!el) return;
       el.addEventListener('input', scheduleDraftRender);
@@ -1814,23 +1873,28 @@
   const THEME_COL = 'site_settings';
   const THEME_DOC = 'theme';
 
-  /* Default = colori reali di style.css della Home, così l'anteprima live
-     a destra parte identica al sito pubblico. */
+  /* Default = colori REALI con cui la Home viene disegnata oggi da
+     style.css. Sono gli stessi valori che il sito mostra quando il
+     documento site_settings/theme non esiste: così «Ripristina colori
+     originali» riporta dashboard, anteprima e sito esattamente a com'erano
+     prima di qualsiasi personalizzazione.
+     (Attenzione: problemi e Servizi usano .section--salvia #E3EBE5, Metodo è
+     avorio, Recensioni e Footer sono verde bosco #315B55 con testo avorio.) */
   const THEME_DEFAULTS = {
-    pageBg: '#F8F5EF', pageText: '#2e3734',
-    heroBg: '#F8F5EF', heroText: '#2e3734',
-    problemsBg: '#F8F5EF', problemsText: '#2e3734',
-    methodBg: '#E3EBE5', methodText: '#2e3734',
-    servicesBg: '#F8F5EF', servicesText: '#2e3734',
-    cardBg: '#ffffff', cardText: '#2e3734',
+    pageBg: '#F8F5EF', pageText: '#2E3734',
+    heroBg: '#F8F5EF', heroText: '#2E3734',
+    problemsBg: '#E3EBE5', problemsText: '#2E3734',
+    methodBg: '#F8F5EF', methodText: '#2E3734',
+    servicesBg: '#E3EBE5', servicesText: '#2E3734',
+    cardBg: '#FFFFFF', cardText: '#2E3734',
     featCardBg: '#315B55', featCardText: '#F8F5EF',
-    testimonialsBg: '#E3EBE5', testimonialsText: '#2e3734',
-    faqBg: '#F8F5EF', faqText: '#2e3734',
-    studioBg: '#F8F5EF', studioText: '#2e3734',
-    footerBg: '#22272b', footerText: '#dfe4dd',
+    testimonialsBg: '#315B55', testimonialsText: '#F8F5EF',
+    faqBg: '#F8F5EF', faqText: '#2E3734',
+    studioBg: '#F8F5EF', studioText: '#2E3734',
+    footerBg: '#315B55', footerText: '#F8F5EF',
     btnPrimaryBg: '#315B55', btnPrimaryText: '#F8F5EF',
     btnSecondaryBg: '#F8F5EF', btnSecondaryText: '#212121',
-    btnSageBg: '#C6D6CA', btnSageText: '#212121',
+    btnSageBg: '#E3EBE5', btnSageText: '#212121',
     btnNavBg: '#315B55', btnNavText: '#F8F5EF'
   };
 
@@ -2101,6 +2165,27 @@
     });
   }
 
+  /* Riporta TUTTI i campi colore ai valori originali del sito, incluse le
+     ultime voci extra salvate in passato (che non fanno parte del tema) e
+     anche il campo eventualmente a fuoco in quel momento. */
+  function resetThemeUi() {
+    const ae = document.activeElement;
+    if (ae && ae.blur && ae !== document.body) ae.blur();
+    currentTheme = { ...THEME_DEFAULTS };
+    $$('input[type="color"][data-tkey]').forEach(inp => {
+      const val = hexToCss(THEME_DEFAULTS[inp.dataset.tkey], '#000000');
+      if (inp.value !== val) inp.value = val;
+    });
+    $$('input.hexv[data-thex]').forEach(inp => {
+      const val = hexToCss(THEME_DEFAULTS[inp.dataset.thex], '#000000');
+      if (inp.value !== val) inp.value = val;
+    });
+    // Se manca qualche riga (tema vecchio/incompleto) la ricostruisce
+    buildColorRows('#theme-sections-grid', THEME_SECTIONS);
+    buildColorRows('#theme-buttons-grid', THEME_BUTTONS);
+    applyPreviewTheme(currentTheme);
+  }
+
   async function loadTheme() {
     setBusy(true);
     try {
@@ -2181,18 +2266,23 @@
     const resetBtn = $('#btn-theme-reset');
     if (saveBtn) saveBtn.addEventListener('click', saveTheme);
     if (resetBtn) resetBtn.addEventListener('click', () => {
-      confirmAction('Ripristinare i colori originali?', 'Il tema personalizzato verrà eliminato dal database e la Home tornerà ai colori di default.')
+      confirmAction('Ripristinare i colori originali?', 'Il tema personalizzato verrà eliminato dal database: dashboard, anteprima e sito pubblico tornano esattamente ai colori con cui è disegnata ora la Home.')
         .then(async (yes) => {
           if (!yes) return;
           setBusy(true);
           try {
-            await FB.deleteDoc(FB.doc(FB.db, THEME_COL, THEME_DOC)).catch(() => {});
-            currentTheme = { ...THEME_DEFAULTS };
-            buildColorRows('#theme-sections-grid', THEME_SECTIONS);
-            buildColorRows('#theme-buttons-grid', THEME_BUTTONS);
-            applyPreviewTheme(currentTheme);
-            toast('Colori originali ripristinati.');
-          } catch (err) { console.error(err); toast('Errore: ' + err.message, true); }
+            /* deleteDoc non deve essere inghiottito: se le regole Firebase
+               bloccano la scrittura l'utente deve saperlo, altrimenti la
+               dashboard mostrerebbe "ripristinato" con il tema ancora nel DB. */
+            await FB.deleteDoc(FB.doc(FB.db, THEME_COL, THEME_DOC));
+            resetThemeUi();
+            toast('Colori originali ripristinati: la Home è tornata ai colori di partenza.');
+          } catch (err) {
+            console.error(err);
+            toast(permHint(err, 'colori'), true);
+            // Riporta comunque i campi a ciò che è realmente salvato nel DB
+            await loadTheme();
+          }
           finally { setBusy(false); }
         });
     });
@@ -2221,7 +2311,7 @@
     { section: "Recensioni", sel: '#review-form button[type="submit"]', title: "Salva recensione", text: "Scrive nel database e pubblica la recensione in Home. In modifica diventa «Aggiorna recensione»: il modulo resta compilato finché non premi «Annulla modifica»." },
     { section: "Recensioni", sel: "#rev-search", title: "Cerca", text: "Filtra la tabella mentre digiti: basta una lettera del nome o dell'iniziale del cognome. Serve solo a trovare una voce, non modifica né elimina nulla." },
     { section: "Recensioni", sel: "#panel-recensioni .tbl-wrap", title: "Elenco e azioni", text: "Ogni riga mostra nome, iniziale, stelle, data e testo. La matita carica la recensione nel modulo per correggerla, il cestino la elimina dopo conferma (l'eliminazione è definitiva)." },
-    { section: "Recensioni", sel: "#preview-pane", title: "Perché non vedi l'anteprima", text: "Le recensioni non hanno un blocco di anteprima: sono pensate per essere lette nel contesto della Home. Dopo il salvataggio, Aprila Home per vederle nella sezione «Cosa dicono di me»." },
+    { section: "Recensioni", sel: "#preview-pane", title: "Anteprima della recensione", text: "Appena scrivi nome o testo, la colonna di destra mostra la recensione come apparirà in Home: la riga tratteggiata è la bozza che stai compilando, sotto ci sono le recensioni già pubblicate in ordine di data." },
 
     /* ---------- TEST GRATUITO ---------- */
     { section: "Test gratuito", sel: '[data-panel="test"]', title: "Test gratuito — cosa contiene", text: "Qui gestisci le domande del questionario che si apre con «Fai il test gratuito». Le domande hanno risposte solo testuali: le risposte scelte dal visitatore ti arrivano via email, il test non calcola punteggi né profili." },
@@ -2276,7 +2366,7 @@
 
     /* ---------- ANTEPRIMA LIVE ---------- */
     { section: "Anteprima live", sel: "#preview-pane", title: "Cosa mostra l'anteprima", text: "L'anteprima mostra solo la sezione su cui stai lavorando e solo dopo che inizi a compilare i campi: niente elenchi infiniti, solo il risultato di ciò che stai modificando." },
-    { section: "Anteprima live", sel: "#btn-preview-refresh", title: "Aggiorna", text: "Rilegge il database e ridisegna l'anteprima della sezione attiva: utile dopo una modifica fatta da un altro dispositivo o se qualcosa non ti torna." },
+    { section: "Anteprima live", sel: "#btn-preview-refresh", title: "Aggiorna", text: "Rilegge il database e mostra subito l'anteprima della sezione attiva, anche senza aver scritto nulla: utile dopo una modifica fatta da un altro dispositivo o se qualcosa non ti torna." },
 
     /* ---------- CONCLUSIONE ---------- */
     { section: "Conclusione", sel: "#btn-tutorial", title: "Ripeti il tutorial", text: "Puoi rivedere questo tour quando vuoi da qui. Con «Salta sezione» passi alle spiegazioni della sezione successiva, con Esc o «Chiudi» interrompi e riprendi più tardi." },
@@ -2451,13 +2541,18 @@
     });
     // Anteprima live: aggiorna anche manualmente
     const rb = $('#btn-preview-refresh');
-    if (rb) rb.addEventListener('click', () => {
-      loadReviews(); loadQuiz(); loadServices(); loadFaq();
+    if (rb) rb.addEventListener('click', async () => {
       // «Aggiorna» è una richiesta esplicita: mostra l'anteprima della sezione attiva.
       previewActivated[activePanelKey] = true;
       updatePreviewGate();
-      setTimeout(renderLivePreview, 700);
-      toast('Anteprima aggiornata.');
+      try {
+        await Promise.all([loadReviews(), loadQuiz(), loadServices(), loadFaq()]);
+      } finally {
+        // renderDrafts ricompone anche la bozza in corso: i caricamenti la svuotano.
+        renderDrafts();
+        updatePreviewGate();
+        toast('Anteprima aggiornata.');
+      }
     });
   }
 

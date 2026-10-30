@@ -1941,8 +1941,22 @@
 
   function isHex(v) { return /^#[0-9a-fA-F]{3,8}$/.test(String(v || '')); }
 
+  /* Toglie ogni traccia del tema personalizzato: il foglio di regole inline e
+     le variabili CSS impostate sul <html>. Serve quando la dashboard ripristina
+     i colori originali (documento eliminato): senza questa pulizia la Home
+     resterebbe colorata finché l'utente non ricarica la pagina. */
+  function clearSiteTheme() {
+    const st = document.getElementById('site-theme-style');
+    if (st && st.parentNode) st.parentNode.removeChild(st);
+    const root = document.documentElement;
+    Object.keys(THEME_CSS_MAP).forEach(key => {
+      const varName = THEME_CSS_MAP[key][1];
+      if (varName) root.style.removeProperty(varName);
+    });
+  }
+
   function applySiteTheme(t) {
-    if (!t) return;
+    if (!t) { clearSiteTheme(); return; }
     const root = document.documentElement;
     let css = '';
     Object.entries(THEME_CSS_MAP).forEach(([key, [sel, varName, prop]]) => {
@@ -1991,6 +2005,7 @@
       if (!window.firebaseDB || !window.firebaseDoc || !window.firebaseGetDoc) return;
       const snap = await window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB, 'site_settings', 'theme'));
       if (snap && snap.exists()) applySiteTheme(snap.data());
+      else clearSiteTheme(); // nessun tema salvato → colori originali di style.css
     } catch (e) { console.warn('Tema sito non applicato:', e && e.message); }
   }
 
@@ -2000,7 +2015,10 @@
     try {
       if (!window.firebaseDB || !window.firebaseDoc || !window.firebaseOnSnapshot) return;
       window.firebaseOnSnapshot(window.firebaseDoc(window.firebaseDB, 'site_settings', 'theme'), (snap) => {
+        /* Se il documento viene eliminato (Ripristina colori originali) la
+           Home torna subito ai colori di style.css, senza ricaricare. */
         if (snap && snap.exists()) applySiteTheme(snap.data());
+        else clearSiteTheme();
       }, () => {});
     } catch (e) { /* silenzio: resta valido il caricamento classico */ }
   }
